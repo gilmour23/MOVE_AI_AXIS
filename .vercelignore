@@ -4,10 +4,14 @@
 # 화면이 읽는 데이터는 이미 frontend/public/data/ 에 커밋되어 있다.
 # 이 파일이 없으면 Vercel 이 backend/ 를 FastAPI 웹서비스로 감지해
 # 멀티 서비스 프로젝트로 잡고 배포를 막는다.
+#
+# 주의: .gitignore 와 같은 문법이라 `data/` 처럼 쓰면 모든 깊이의 data 폴더가
+# 제외되어 frontend/public/data/ 까지 사라진다. 반드시 앞에 / 를 붙여
+# 저장소 루트에만 적용한다.
 
-backend/
-optimizer/
-scripts/
-data/
-docs/
-*.bat
+/backend/
+/optimizer/
+/scripts/
+/data/
+/docs/
+/*.bat
