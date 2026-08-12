@@ -1,0 +1,13 @@
+# 배포에 필요한 것은 frontend/ (정적 빌드) 와 api/ (서버리스 함수) 뿐이다.
+#
+# backend/ 는 정적 JSON 을 만드는 로컬 데이터 생성기이고,
+# 화면이 읽는 데이터는 이미 frontend/public/data/ 에 커밋되어 있다.
+# 이 파일이 없으면 Vercel 이 backend/ 를 FastAPI 웹서비스로 감지해
+# 멀티 서비스 프로젝트로 잡고 배포를 막는다.
+
+backend/
+optimizer/
+scripts/
+data/
+docs/
+*.bat
