@@ -18,10 +18,10 @@
 .item {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 7px 15px;
+  gap: 6px;
+  padding: 7px 11px;
   border-radius: var(--radius-pill);
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-muted);
   white-space: nowrap;
@@ -38,3 +38,4 @@
   font-weight: 600;
   box-shadow: var(--shadow-card);
 }
+

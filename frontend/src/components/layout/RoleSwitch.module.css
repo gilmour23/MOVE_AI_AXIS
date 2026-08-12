@@ -13,7 +13,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 13px;
+  padding: 6px 14px;
   border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
@@ -40,7 +40,9 @@
   display: none;
 }
 
-@media (max-width: 1399px) {
+/* 역할 전환은 이 제품의 핵심 개념이므로 폭을 마지막까지 양보하지 않는다.
+   좁아질 때는 네비게이션 여백을 먼저 줄인다 (TopNav.module.css). */
+@media (max-width: 1199px) {
   .label {
     display: none;
   }

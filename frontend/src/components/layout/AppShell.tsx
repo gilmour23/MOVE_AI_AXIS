@@ -8,6 +8,24 @@ import { useMeta } from '@/app/MetaContext';
 import { ROLES, roleFromPath } from '@/app/roles';
 import styles from './AppShell.module.css';
 
+/** 합성 데이터·프로토타입 시각 배지를 하나로 합친다.
+ *  실제 데이터로 교체되면 SUMMARY.json 값에 따라 자동으로 사라진다. */
+function buildDataSourceBadge(meta: ReturnType<typeof useMeta>['meta']) {
+  if (!meta) return null;
+  const parts: string[] = [];
+  const details: string[] = [];
+  if (meta.isSyntheticCarrierData) {
+    parts.push('Synthetic');
+    details.push(`carrier_data_source = ${meta.carrierDataSource}`);
+  }
+  if (meta.isPrototypeTimetable) {
+    parts.push('Prototype');
+    details.push(`candidate_timetable_source = ${meta.candidateTimetableSource}`);
+  }
+  if (parts.length === 0) return null;
+  return { label: `${parts.join(' · ')} data`, title: details.join('\n') };
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { meta, carrierId, setCarrierId } = useMeta();
   const location = useLocation();
@@ -17,6 +35,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const carrierLabel = carrierId ? carrierId.replace('CARRIER_', '선사 ') : '—';
   const initial = carrierId ? carrierId.replace('CARRIER_', '') : '?';
   const isKorail = roleId === 'korail';
+  const dataSourceBadge = buildDataSourceBadge(meta);
 
   return (
     <div className={styles.shell}>
@@ -37,15 +56,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className={styles.navSlot}>{role && <TopNav items={role.nav} />}</div>
 
           <div className={styles.headerRight}>
+            {/* 데이터 출처 배지. 헤더 폭이 한정되어 두 개를 하나로 합치고,
+                상세는 tooltip 으로 보여준다. 실제 데이터로 교체되면 사라진다. */}
             <div className={styles.metaBadges}>
-              {meta?.isSyntheticCarrierData && (
-                <StatusBadge tone="neutral" small title="carrier_data_source = SYNTHETIC_CARRIER_LEVEL_DATA">
-                  Synthetic demo data
-                </StatusBadge>
-              )}
-              {meta?.isPrototypeTimetable && (
-                <StatusBadge tone="neutral" small title="candidate_timetable_source = PROTOTYPE_SYNTHETIC">
-                  Prototype timetable
+              {dataSourceBadge && (
+                <StatusBadge tone="neutral" small title={dataSourceBadge.title}>
+                  {dataSourceBadge.label}
                 </StatusBadge>
               )}
             </div>
