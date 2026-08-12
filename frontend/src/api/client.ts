@@ -42,6 +42,27 @@ function toStaticPath(path: string): string | null {
   const segments = rawPath.replace(/^\/api\//, '').split('/');
 
   if (segments[0] === 'meta') return '/data/meta.json';
+
+  // KORAIL Control Tower
+  if (segments[0] === 'korail') {
+    const view = segments[1];
+    if (view === 'trains') {
+      // /korail/trains 또는 /korail/trains/{trainId}
+      return segments[2]
+        ? `/data/korail/train_details/${segments[2]}.json`
+        : '/data/korail/trains.json';
+    }
+    const fileByView: Record<string, string> = {
+      overview: 'overview.json',
+      needs: 'service_needs.json',
+      inventory: 'inventory.json',
+      operations: 'station_operations.json',
+      insights: 'insights.json',
+    };
+    const file = view ? fileByView[view] : undefined;
+    return file ? `/data/korail/${file}` : null;
+  }
+
   if (segments[0] !== 'carrier' || !segments[1]) return null;
 
   const base = `/data/carrier/${segments[1]}`;
@@ -50,6 +71,7 @@ function toStaticPath(path: string): string | null {
   const size = params.get('size') ?? '20FT';
 
   if (rest[0] === 'overview') return `${base}/overview.json`;
+  if (rest[0] === 'transport') return `${base}/transport_comparison.json`;
 
   if (rest[0] === 'inventory') {
     // /inventory?size=&mode=

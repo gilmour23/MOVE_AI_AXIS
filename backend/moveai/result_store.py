@@ -140,6 +140,47 @@ class ResultStore:
     def carrier_service_summary(self) -> pd.DataFrame:
         return self._result_csv("CARRIER_SERVICE_SUMMARY.csv")
 
+    # ------------------------------------------------- KORAIL 운영자 관점 소스
+    #
+    # 아래 파일들은 전 선사 물량을 담고 있다.
+    # KORAIL Control Tower 에서만 사용하고 선사 화면에는 노출하지 않는다.
+
+    @property
+    def train_operation_summary(self) -> pd.DataFrame:
+        return self._result_csv("FINAL_TRAIN_OPERATION_SUMMARY.csv")
+
+    @property
+    def carrier_allocation(self) -> pd.DataFrame:
+        return self._result_csv("CARRIER_ALLOCATION.csv")
+
+    @property
+    def segment_load(self) -> pd.DataFrame:
+        return self._result_csv("SEGMENT_LOAD.csv")
+
+    @property
+    def all_recommendations(self) -> pd.DataFrame:
+        """전 선사 추천. KORAIL 관점 집계에만 사용한다."""
+        return self._result_csv("CARRIER_RECOMMENDATIONS.csv")
+
+    @property
+    def truck_comparison(self) -> pd.DataFrame:
+        """MILP 산출물이 아닌 트럭 비교 입력 (data/ 폴더).
+
+        철도 측 값과 충돌하면 MILP 결과가 우선한다.
+        """
+
+        def load() -> pd.DataFrame:
+            path = (
+                Path(__file__).resolve().parents[2]
+                / "data"
+                / "TRUCK_COMPARISON_BY_RECOMMENDATION.csv"
+            )
+            if not path.exists():
+                return pd.DataFrame()
+            return _read_csv(path)
+
+        return self._cached("truck_comparison", load)
+
     @property
     def initial_inventory(self) -> pd.DataFrame:
         return self._input_csv("carrier_initial_inventory.csv")

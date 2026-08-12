@@ -12,7 +12,7 @@ import {
 } from '@/components/common/States';
 import { RailHubMap } from '@/components/map/RailHubMap';
 import { SizeTag } from '@/components/optimization/SizeTag';
-import { fetchOverview } from '@/api/carrier';
+import { fetchOverview, fetchTransportComparison } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
 import { useMeta } from '@/app/MetaContext';
 import { formatBoxes, formatDateShort, formatTime } from '@/lib/format';
@@ -28,6 +28,12 @@ export function OverviewPage() {
 
   const { data, loading, error, reload } = useAsync(
     (signal) => (carrierId ? fetchOverview(carrierId, signal) : Promise.resolve(null)),
+    [carrierId],
+  );
+
+  const transport = useAsync(
+    (signal) =>
+      carrierId ? fetchTransportComparison(carrierId, signal) : Promise.resolve(null),
     [carrierId],
   );
 
@@ -79,16 +85,31 @@ export function OverviewPage() {
             )}
           </Card>
 
-          {/* 이 영역은 다른 팀원 담당. 비교 숫자를 임의로 만들지 않는다 (§15.3) */}
-          <Card title="철도·트럭 운송 비교">
+          <Card title="철도·트럭 운송 비교" subtitle="자사 추천 전체 합계">
             <div className={styles.comparisonPlaceholder}>
-              <StatusBadge tone="neutral" small>
-                준비 중
-              </StatusBadge>
-              <p className={styles.comparisonText}>
-                철도와 트럭의 비용·시간·탄소 비교는 별도 화면에서 제공될 예정입니다.
-              </p>
-              <Link className={styles.comparisonLink} to="/comparison">
+              {transport.loading && <LoadingSkeleton rows={3} height={20} />}
+              {transport.data?.totals && (
+                <>
+                  <div className={styles.comparisonStats}>
+                    <ComparisonStat
+                      label="비용 절감"
+                      value={`₩${(transport.data.totals.costSavingKrw / 1_000_000).toFixed(1)}M`}
+                      sub={`${((transport.data.totals.costSavingRate ?? 0) * 100).toFixed(1)}% 절감`}
+                    />
+                    <ComparisonStat
+                      label="탄소 저감"
+                      value={`${(transport.data.totals.carbonSavingKg / 1000).toFixed(2)} t`}
+                      sub={`${((transport.data.totals.carbonSavingRate ?? 0) * 100).toFixed(1)}% 저감`}
+                    />
+                  </div>
+                  <p className={styles.comparisonText}>
+                    철도 리드타임은 트럭 대비 건당 평균{' '}
+                    {Math.abs(transport.data.totals.timeGapHours).toFixed(1)}시간
+                    {transport.data.totals.timeGapHours < 0 ? ' 더 걸립니다' : ' 짧습니다'}.
+                  </p>
+                </>
+              )}
+              <Link className={styles.comparisonLink} to="/carrier/transport">
                 상세 비교 <ArrowRight size={14} />
               </Link>
             </div>
@@ -115,7 +136,7 @@ export function OverviewPage() {
                   key={rec.recommendationId}
                   rec={rec}
                   onClick={() =>
-                    navigate(`/optimization#${rec.recommendationId}`)
+                    navigate(`/carrier/plan#${rec.recommendationId}`)
                   }
                 />
               ))}
@@ -125,7 +146,7 @@ export function OverviewPage() {
                 전체 {data.recommendationTotalCount}건 중{' '}
                 {data.recommendationPreview.length}건 표시
               </span>
-              <Link className={styles.previewAll} to="/optimization">
+              <Link className={styles.previewAll} to="/carrier/plan">
                 공컨 최적화에서 전체 보기 <ArrowRight size={14} />
               </Link>
             </div>
@@ -133,6 +154,24 @@ export function OverviewPage() {
         )}
       </Card>
     </PageContainer>
+  );
+}
+
+function ComparisonStat({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+}) {
+  return (
+    <div className={styles.comparisonStat}>
+      <span className={styles.comparisonStatLabel}>{label}</span>
+      <span className={styles.comparisonStatValue}>{value}</span>
+      <span className={styles.comparisonStatSub}>{sub}</span>
+    </div>
   );
 }
 

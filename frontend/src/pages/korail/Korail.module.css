@@ -1,0 +1,466 @@
+/* KORAIL Control Tower 공용 스타일.
+   원본 HTML 의 카드/표 밀도와 drawer 패턴을 유지하되
+   프로젝트 디자인 토큰(색·타이포·radius)으로 통일한다. */
+
+.kpiStrip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.kpi {
+  background: var(--surface);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.kpiLabel {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.kpiValue {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiSub {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: var(--card-gap);
+  align-items: start;
+}
+
+@media (max-width: 1099px) {
+  .grid2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── 표 ─────────────────────────────── */
+
+.scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table th {
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-size: var(--text-table-head);
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 13px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table th:first-child {
+  border-top-left-radius: var(--radius-md);
+}
+
+.table th:last-child {
+  border-top-right-radius: var(--radius-md);
+}
+
+.table td {
+  padding: 11px 13px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.rowClickable {
+  cursor: pointer;
+  transition: background 110ms ease;
+}
+
+.rowClickable:hover td {
+  background: var(--brand-softer);
+}
+
+.rowActive td {
+  background: var(--brand-soft);
+}
+
+.mono {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.right {
+  text-align: right;
+}
+
+/* ── 적재율 바 ─────────────────────────────── */
+
+.loadBar {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-sunken);
+  overflow: hidden;
+  min-width: 70px;
+  margin-top: 4px;
+}
+
+.loadFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 3px;
+  background: var(--brand);
+}
+
+.loadFillHigh {
+  background: var(--warning);
+}
+
+/* ── 네트워크 schematic ─────────────────────────────── */
+
+.network {
+  width: 100%;
+  height: 380px;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+}
+
+.networkSvg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.netLine {
+  fill: none;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  opacity: 0.5;
+}
+
+.netNode {
+  fill: var(--surface);
+  stroke: var(--brand);
+  stroke-width: 0.8;
+}
+
+.netNodeAlert {
+  stroke: var(--danger);
+  fill: var(--danger-soft);
+}
+
+.netLabel {
+  font-size: 2.7px;
+  font-weight: 600;
+  fill: var(--text);
+}
+
+.netSub {
+  font-size: 2.1px;
+  fill: var(--text-muted);
+}
+
+.netTrain {
+  font-size: 2.2px;
+  font-weight: 700;
+  fill: var(--brand-dark);
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendSwatch {
+  width: 16px;
+  height: 2px;
+  border-radius: 2px;
+}
+
+/* ── Drawer ─────────────────────────────── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.3);
+  backdrop-filter: blur(2px);
+  z-index: 70;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 520px;
+  max-width: calc(100vw - 24px);
+  background: var(--bg-shell);
+  box-shadow: var(--shadow-drawer);
+  z-index: 71;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.drawerTitle {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.drawerSub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.drawerClose {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 5px;
+  border-radius: 7px;
+  line-height: 0;
+}
+
+.drawerClose:hover {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+.drawerBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.sectionTitle {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.summaryLabel {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.summaryValue {
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Stop timeline ─────────────────────────────── */
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.stop {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.stopMarkerCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stopDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--brand);
+  background: var(--surface);
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.stopDotWork {
+  background: var(--brand);
+}
+
+.stopConnector {
+  flex: 1;
+  width: 2px;
+  background: var(--border-strong);
+  margin: 2px 0;
+  min-height: 22px;
+}
+
+.stopBody {
+  padding-bottom: 14px;
+  min-width: 0;
+}
+
+.stopName {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.stopTimes {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+
+.stopWork {
+  display: flex;
+  gap: 8px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+
+.workChip {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.workLoad {
+  background: var(--success-soft);
+  color: #3f7a4d;
+}
+
+.workUnload {
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+}
+
+/* ── 필터 ─────────────────────────────── */
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filterChip {
+  padding: 6px 13px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.filterChip:hover:not(.filterActive) {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.filterActive {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  font-weight: 600;
+}
+
+.note {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.65;
+  padding: 11px 13px;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+}
+
+.carrierLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.carrierLink:hover {
+  color: var(--brand-dark);
+  text-decoration: underline;
+}

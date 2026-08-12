@@ -13,6 +13,7 @@ interface ChatMessage {
 
 interface ChatDrawerProps {
   carrierId: string;
+  role: 'carrier' | 'korail';
   onClose: () => void;
 }
 
@@ -21,7 +22,7 @@ const NOT_CONFIGURED_TEXT =
 
 /** Copilot 은 read-only 설명 interface 다 (핸드오프 §19).
  *  API 가 없을 때 가짜 AI 답변을 하드코딩하지 않는다. */
-export function ChatDrawer({ carrierId, onClose }: ChatDrawerProps) {
+export function ChatDrawer({ carrierId, role, onClose }: ChatDrawerProps) {
   const status = useAsync((signal) => backendChatProvider.getStatus(signal), []);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -58,6 +59,7 @@ export function ChatDrawer({ carrierId, onClose }: ChatDrawerProps) {
     try {
       const reply = await backendChatProvider.sendMessage({
         carrierId,
+        role,
         message: trimmed,
         conversationId: conversationId.current,
       });
@@ -107,7 +109,7 @@ export function ChatDrawer({ carrierId, onClose }: ChatDrawerProps) {
             )}
             <div className={styles.suggestions}>
               <span className={styles.suggestionLabel}>추천 질문</span>
-              {SUGGESTED_QUESTIONS.map((question) => (
+              {SUGGESTED_QUESTIONS[role].map((question) => (
                 <button
                   key={question}
                   type="button"

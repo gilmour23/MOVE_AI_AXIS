@@ -26,8 +26,10 @@ from moveai import config  # noqa: E402
 from moveai.domain import CONTAINER_SIZES, HUBS  # noqa: E402
 from moveai.result_store import store  # noqa: E402
 from moveai.selectors import inventory as inv  # noqa: E402
+from moveai.selectors import korail as kr  # noqa: E402
 from moveai.selectors import optimization as opt  # noqa: E402
 from moveai.selectors import overview as ov  # noqa: E402
+from moveai.selectors import transport as tr  # noqa: E402
 
 OUT_ROOT = PROJECT_ROOT / "frontend" / "public" / "data"
 MODES = ["baseline", "postRail"]
@@ -114,6 +116,101 @@ def export_carrier(carrier_id: str) -> None:
         detail = opt.recommendation_detail(store, carrier_id, rec_id)
         write(f"{base}/optimization/recommendations/{rec_id}.json", detail)
 
+    # Rail vs Truck 비교 — rail 값은 canonical, truck 값만 data/ 입력
+    write(f"{base}/transport_comparison.json", tr.transport_comparison(store, carrier_id))
+
+
+def export_korail() -> None:
+    """KORAIL Control Tower — 운영자 관점이므로 전 선사 배정을 포함한다."""
+    write("korail/overview.json", kr.overview(store))
+    write("korail/trains.json", {"trains": kr.trains(store)})
+    write("korail/service_needs.json", kr.service_needs(store))
+    write("korail/inventory.json", kr.hub_inventory(store))
+    write("korail/station_operations.json", kr.station_operations(store))
+    write("korail/insights.json", kr.operational_insights(store))
+
+    for train in kr.trains(store):
+        train_id = train["trainId"]
+        write(f"korail/train_details/{train_id}.json", kr.train_detail(store, train_id))
+
+
+def verify_consistency() -> None:
+    """Single Source of Truth 정합성 검증.
+
+    Σ Recommendation TEU == Σ Carrier Allocation TEU
+                         == Σ Train Assigned TEU
+                         == Rail Served TEU
+    """
+    summary = store.summary
+    recs = store.all_recommendations
+    alloc = store.carrier_allocation
+    ops = store.train_operation_summary
+
+    rec_teu = int(recs["quantity_teu"].sum())
+    alloc_teu = int(alloc["teu"].sum())
+    train_teu = int(ops["assigned_teu"].sum())
+    served_teu = int(summary["rail_served_teu"])
+
+    print("\n  [정합성] TEU 4중 검증")
+    print(f"    Recommendation TEU  = {rec_teu}")
+    print(f"    Allocation TEU      = {alloc_teu}")
+    print(f"    Train Assigned TEU  = {train_teu}")
+    print(f"    Rail Served TEU     = {served_teu}")
+
+    if not (rec_teu == alloc_teu == train_teu == served_teu):
+        raise SystemExit(
+            f"TEU 불일치: rec={rec_teu} alloc={alloc_teu} "
+            f"train={train_teu} served={served_teu}"
+        )
+
+    selected = set(ops["train_id"])
+    rec_trains = set(recs["train_id"])
+    if not rec_trains <= selected:
+        raise SystemExit(f"선정 열차에 없는 train_id: {rec_trains - selected}")
+    print(f"    recommendation train_id ⊆ 선정 열차 {sorted(selected)}  OK")
+
+    # 열차별 allocation 합 == train assigned TEU
+    per_train = alloc.groupby("train_id")["teu"].sum()
+    for _, r in ops.iterrows():
+        expected = int(r["assigned_teu"])
+        actual = int(per_train.get(r["train_id"], 0))
+        if expected != actual:
+            raise SystemExit(
+                f"{r['train_id']} allocation 합 {actual} != assigned {expected}"
+            )
+    print("    열차별 allocation 합 == assigned TEU  OK")
+
+
+def verify_transport_join() -> None:
+    """Transport 비교가 canonical recommendation 과 정확히 join 되는지 검증."""
+    for carrier_id in CARRIERS:
+        payload = tr.transport_comparison(store, carrier_id)
+        rec_ids = {r["recommendationId"] for r in opt.recommendations(store, carrier_id)}
+        row_ids = {r["recommendationId"] for r in payload["rows"]}
+
+        if rec_ids != row_ids:
+            raise SystemExit(
+                f"{carrier_id} transport join 불일치: "
+                f"누락={rec_ids - row_ids} 초과={row_ids - rec_ids}"
+            )
+
+        missing = payload["missingTruckComparison"]
+        if missing:
+            print(f"    경고: 트럭 비교값 없는 recommendation {missing}")
+
+        # rail 측 값이 canonical 과 같은지 재확인
+        raw = store.recommendations(carrier_id).set_index("recommendation_id")
+        for row in payload["rows"]:
+            src = raw.loc[row["recommendationId"]]
+            assert row["boxes"] == int(src["quantity_boxes"])
+            assert row["teu"] == int(src["quantity_teu"])
+            assert row["trainId"] == src["train_id"]
+            assert row["originHub"] == src["origin_hub"]
+            assert row["destinationHub"] == src["destination_hub"]
+            assert abs(row["railChargeKrw"] - float(src["estimated_rail_charge_krw"])) < 0.01
+
+        print(f"    {carrier_id} transport join {len(row_ids)}건 · rail 값 canonical 일치  OK")
+
 
 def verify_no_other_carriers() -> None:
     """내보낸 파일에 다른 선사 식별자가 없는지 검증한다."""
@@ -121,7 +218,13 @@ def verify_no_other_carriers() -> None:
     others = [c for c in store.known_carriers() if c not in allowed]
     leaked: list[str] = []
 
+    # carrier/ 이하만 검사한다.
+    # korail/ 은 운영자 관점이므로 전 선사 배정을 포함하는 것이 정상이다.
+    checked = 0
     for path in _written:
+        if "carrier" not in path.relative_to(OUT_ROOT).parts[:1]:
+            continue
+        checked += 1
         text = path.read_text(encoding="utf-8")
         for other in others:
             if other in text:
@@ -129,9 +232,10 @@ def verify_no_other_carriers() -> None:
 
     if leaked:
         raise SystemExit(
-            "타 선사 데이터가 포함되었습니다:\n  " + "\n  ".join(leaked)
+            "선사 포털 파일에 타 선사 데이터가 포함되었습니다:\n  "
+            + "\n  ".join(leaked)
         )
-    print(f"  격리 검증 통과 (검사 대상 선사: {', '.join(others)})")
+    print(f"\n  [격리] carrier/ {checked}개 파일에 {', '.join(others)} 미포함  OK")
 
 
 def main() -> None:
@@ -145,11 +249,20 @@ def main() -> None:
     write("meta.json", build_meta())
     for carrier_id in CARRIERS:
         export_carrier(carrier_id)
+    export_korail()
 
+    verify_consistency()
+    print("\n  [Transport]")
+    verify_transport_join()
     verify_no_other_carriers()
 
     total = sum(p.stat().st_size for p in _written)
-    print(f"  {len(_written)}개 파일 / {total / 1024:.1f} KB")
+    carrier_files = sum(1 for p in _written if "carrier" in p.relative_to(OUT_ROOT).parts[:1])
+    korail_files = sum(1 for p in _written if "korail" in p.relative_to(OUT_ROOT).parts[:1])
+    print(
+        f"\n  {len(_written)}개 파일 / {total / 1024:.1f} KB"
+        f"  (carrier {carrier_files} · korail {korail_files})"
+    )
     print(f"  출력 위치: {OUT_ROOT}")
 
 

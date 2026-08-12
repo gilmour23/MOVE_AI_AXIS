@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ErrorState, LoadingSkeleton } from '@/components/common/States';
 import { fetchRecommendationDetail } from '@/api/carrier';
@@ -82,7 +84,12 @@ export function RecommendationRouteDetail({
             recommendation.availableTime,
           )}`}
         />
-        <MetaItem label="열차 ID" value={data.trainId} />
+        <div className={styles.metaItem}>
+          <span className={styles.metaLabel}>열차 ID</span>
+          <Link className={styles.trainLink} to={`/korail/trains?train=${data.trainId}`}>
+            {data.trainId} <ArrowRight size={12} />
+          </Link>
+        </div>
         <MetaItem
           label="공동 운송"
           value={`${formatNumber(data.participatingCarrierCount)}개 선사`}

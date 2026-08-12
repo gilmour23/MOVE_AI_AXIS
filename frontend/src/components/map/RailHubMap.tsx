@@ -158,7 +158,7 @@ export function RailHubMap({ hubs, selectedHub, onSelectHub }: RailHubMapProps) 
                 <Link
                   key={size}
                   className={styles.popoverLink}
-                  to={`/inventory?hub=${active.hubCode}&size=${size}`}
+                  to={`/carrier/inventory?hub=${active.hubCode}&size=${size}`}
                 >
                   {size} 재고 상세 보기 <ArrowRight size={13} />
                 </Link>

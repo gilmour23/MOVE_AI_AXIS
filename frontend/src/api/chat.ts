@@ -8,6 +8,8 @@ export interface ChatSendInput {
   carrierId: string;
   message: string;
   conversationId?: string | null;
+  /** 어느 화면에서 물었는지 — 서버리스 함수가 컨텍스트를 고를 때 쓴다. */
+  role?: 'carrier' | 'korail';
 }
 
 export interface ChatProvider {
@@ -27,15 +29,24 @@ export const backendChatProvider: ChatProvider = {
         carrierId: input.carrierId,
         message: input.message,
         conversationId: input.conversationId ?? null,
+        role: input.role ?? 'carrier',
       },
       signal,
     );
   },
 };
 
-export const SUGGESTED_QUESTIONS = [
-  '왜 약목으로 공컨을 보내나요?',
-  '우리 40FT 재고는 어떻게 바뀌나요?',
-  '이 공컨은 언제 사용 가능한가요?',
-  '어떤 열차에 배정됐나요?',
-];
+export const SUGGESTED_QUESTIONS: Record<'carrier' | 'korail', string[]> = {
+  carrier: [
+    '왜 약목으로 공컨을 보내나요?',
+    'REC0002는 어떤 열차에 배정됐나요?',
+    '우리 40FT 재고는 재배치 후 어떻게 바뀌나요?',
+    '철도가 트럭보다 얼마나 저렴한가요?',
+  ],
+  korail: [
+    'CAND0292에는 어떤 선사 물량이 실려 있나요?',
+    '적재율이 가장 낮은 구간은 어디인가요?',
+    '재배치로 부족이 가장 많이 줄어든 거점은?',
+    '철도로 해결되지 않은 수요는 얼마나 되나요?',
+  ],
+};

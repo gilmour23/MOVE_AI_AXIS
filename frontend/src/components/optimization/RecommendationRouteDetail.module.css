@@ -143,6 +143,21 @@
   font-variant-numeric: tabular-nums;
 }
 
+.trainLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+}
+
+.trainLink:hover {
+  color: var(--brand-dark);
+  text-decoration: underline;
+}
+
 .privacyNote {
   margin-top: 12px;
   font-size: 11.5px;

@@ -2,13 +2,21 @@ import { apiGet } from './client';
 import type {
   ContainerSize,
   InventoryMode,
+  KorailInsights,
+  KorailNeedRow,
+  KorailOverview,
+  KorailStationHub,
+  KorailTrain,
+  KorailTrainDetail,
   Meta,
   OptimizationData,
   OverviewData,
   RecommendationDetail,
+  TransportComparison,
   WeeklyInventoryMatrixData,
   WeeklyInventorySummaryData,
 } from '@/types/domain';
+import type { KorailHub } from '@/types/domain';
 
 export function fetchMeta(signal?: AbortSignal): Promise<Meta> {
   return apiGet<Meta>('/api/meta', signal);
@@ -62,4 +70,58 @@ export function fetchRecommendationDetail(
     `/api/carrier/${carrierId}/optimization/recommendations/${recommendationId}`,
     signal,
   );
+}
+
+export function fetchTransportComparison(
+  carrierId: string,
+  signal?: AbortSignal,
+): Promise<TransportComparison> {
+  return apiGet<TransportComparison>(
+    `/api/carrier/${carrierId}/transport`,
+    signal,
+  );
+}
+
+/* ── KORAIL Control Tower ─────────────────────────────────────── */
+
+export function fetchKorailOverview(signal?: AbortSignal): Promise<KorailOverview> {
+  return apiGet<KorailOverview>('/api/korail/overview', signal);
+}
+
+export function fetchKorailTrains(
+  signal?: AbortSignal,
+): Promise<{ trains: KorailTrain[] }> {
+  return apiGet<{ trains: KorailTrain[] }>('/api/korail/trains', signal);
+}
+
+export function fetchKorailTrainDetail(
+  trainId: string,
+  signal?: AbortSignal,
+): Promise<KorailTrainDetail> {
+  return apiGet<KorailTrainDetail>(`/api/korail/trains/${trainId}`, signal);
+}
+
+export function fetchKorailNeeds(signal?: AbortSignal): Promise<{
+  rows: KorailNeedRow[];
+  totals: KorailOverview['needTotals'];
+}> {
+  return apiGet('/api/korail/needs', signal);
+}
+
+export function fetchKorailInventory(signal?: AbortSignal): Promise<{
+  dates: string[];
+  weekEndDate: string;
+  hubs: KorailHub[];
+}> {
+  return apiGet('/api/korail/inventory', signal);
+}
+
+export function fetchKorailOperations(signal?: AbortSignal): Promise<{
+  hubs: KorailStationHub[];
+}> {
+  return apiGet('/api/korail/operations', signal);
+}
+
+export function fetchKorailInsights(signal?: AbortSignal): Promise<KorailInsights> {
+  return apiGet<KorailInsights>('/api/korail/insights', signal);
 }

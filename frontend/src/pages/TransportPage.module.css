@@ -1,0 +1,439 @@
+/* Transport_index.html 의 시각 구조·인터랙션을 유지하되
+   프로젝트 디자인 토큰으로 통일한다. */
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.select {
+  flex: 1;
+  min-width: 280px;
+  max-width: 520px;
+  padding: 9px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: var(--card-gap);
+  align-items: start;
+}
+
+@media (max-width: 1099px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── 운송 개요 ─────────────────────────────── */
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.fieldLabel {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.fieldValue {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fieldSub {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.trainLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+}
+
+.trainLink:hover {
+  color: var(--brand-dark);
+  text-decoration: underline;
+}
+
+/* ── 비교 행 ─────────────────────────────── */
+
+.compareRow {
+  display: grid;
+  grid-template-columns: 118px repeat(2, minmax(0, 1fr)) 132px;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.compareRow:last-of-type {
+  border-bottom: 0;
+}
+
+.compareLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.compareTitle {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.compareSub {
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+
+.modeCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+}
+
+.modeCellRail {
+  border-color: #d5e6ec;
+  background: var(--brand-softer);
+}
+
+.modeValue {
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.modeMeta {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.delta {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.deltaValue {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.deltaGood {
+  color: var(--success);
+}
+
+.deltaWarn {
+  color: var(--warning);
+}
+
+.deltaRate {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.modeHeader {
+  display: grid;
+  grid-template-columns: 118px repeat(2, minmax(0, 1fr)) 132px;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modeHeaderCell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.chartWrap {
+  height: 240px;
+  margin-top: 14px;
+}
+
+/* ── 우선순위 토글 ─────────────────────────────── */
+
+.priorityRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.priorityChip {
+  padding: 6px 13px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.priorityChip:hover:not(.priorityActive) {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.priorityActive {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  font-weight: 600;
+}
+
+/* ── 추천 목록 ─────────────────────────────── */
+
+.scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 780px;
+  max-width: 1180px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table th {
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-size: var(--text-table-head);
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table th:first-child {
+  border-top-left-radius: var(--radius-md);
+}
+
+.table th:last-child {
+  border-top-right-radius: var(--radius-md);
+}
+
+.table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  font-variant-numeric: tabular-nums;
+}
+
+.row {
+  cursor: pointer;
+  transition: background 110ms ease;
+}
+
+.row:hover td {
+  background: var(--brand-softer);
+}
+
+.rowActive td {
+  background: var(--brand-soft);
+}
+
+.recId {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.saving {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.detailButton {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.detailButton:hover {
+  border-color: var(--brand);
+  color: var(--brand-dark);
+}
+
+/* ── Drawer ─────────────────────────────── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.3);
+  backdrop-filter: blur(2px);
+  z-index: 70;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 440px;
+  max-width: calc(100vw - 24px);
+  background: var(--bg-shell);
+  box-shadow: var(--shadow-drawer);
+  z-index: 71;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.drawerTitle {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.drawerSub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.drawerClose {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 5px;
+  border-radius: 7px;
+  line-height: 0;
+}
+
+.drawerClose:hover {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+.drawerBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.metricList {
+  display: flex;
+  flex-direction: column;
+}
+
+.metricRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.metricRow:last-child {
+  border-bottom: 0;
+}
+
+.metricLabel {
+  color: var(--text-muted);
+}
+
+.metricValue {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.noteBox {
+  padding: 11px 13px;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+.selectButton {
+  margin-top: 4px;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--brand);
+  background: var(--brand);
+  color: var(--text-invert);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.selectButton:hover {
+  background: var(--brand-dark);
+}
+
+.selectButtonChosen {
+  background: var(--success-soft);
+  border-color: #d9e9dd;
+  color: #3f7a4d;
+}
+
+.toast {
+  position: fixed;
+  bottom: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 80;
+  padding: 11px 18px;
+  border-radius: var(--radius-pill);
+  background: var(--text);
+  color: var(--text-invert);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow-raised);
+}

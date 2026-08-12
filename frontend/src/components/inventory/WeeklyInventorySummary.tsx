@@ -88,7 +88,7 @@ export function WeeklyInventorySummary({
       {hasShortage && showOptimizationLink && (
         <Link
           className={styles.link}
-          to={`/optimization?hub=${summary.hubCode}&size=${summary.size}`}
+          to={`/carrier/plan?hub=${summary.hubCode}&size=${summary.size}`}
         >
           MOVE-AI 재배치안 보기 <ArrowRight size={14} />
         </Link>

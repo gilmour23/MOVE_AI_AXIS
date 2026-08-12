@@ -186,6 +186,270 @@ export interface OptimizationData {
   serviceSummary: CarrierServiceSummary | null;
 }
 
+/** Rail vs Truck 비교. rail 값은 canonical MILP, truck 값은 비교 입력 데이터. */
+export interface TransportRow {
+  recommendationId: string;
+  trainId: string;
+  carrierId: string;
+  originHub: string;
+  originName: string;
+  destinationHub: string;
+  destinationName: string;
+  size: ContainerSize;
+  boxes: number;
+  teu: number;
+  departureTime: string;
+  arrivalTime: string;
+  availableTime: string;
+  railChargeKrw: number;
+  railDistanceKm: number;
+  participatingCarrierCount: number;
+  trainLoadFactor: number;
+  railLoadStartTime: string | null;
+  railAvailableTime: string | null;
+  railHours: number | null;
+  roadDistanceKm: number | null;
+  truckVehicles: number | null;
+  truckCostKrw: number | null;
+  truckHours: number | null;
+  truckCo2Kg: number | null;
+  railCo2Kg: number | null;
+  costSavingKrw: number | null;
+  costSavingRate: number | null;
+  timeGapHours: number | null;
+  carbonSavingKg: number | null;
+  carbonSavingRate: number | null;
+}
+
+export interface TransportTotals {
+  recommendationCount: number;
+  boxes: number;
+  teu: number;
+  boxes20ft: number;
+  boxes40ft: number;
+  trainIds: string[];
+  railChargeKrw: number;
+  truckCostKrw: number;
+  costSavingKrw: number;
+  costSavingRate: number | null;
+  avgRailHours: number;
+  avgTruckHours: number;
+  timeGapHours: number;
+  railCo2Kg: number;
+  truckCo2Kg: number;
+  carbonSavingKg: number;
+  carbonSavingRate: number | null;
+}
+
+export interface TransportComparison {
+  carrierId: string;
+  rows: TransportRow[];
+  totals: TransportTotals | null;
+  missingTruckComparison: string[];
+  basis: Record<string, string>;
+}
+
+export type TransportPriority = 'cost' | 'time' | 'carbon';
+
+/* ── KORAIL Control Tower ─────────────────────────────────────── */
+
+export interface KorailTrain {
+  trainId: string;
+  route: string;
+  serviceFamily: string | null;
+  originTerminal: string | null;
+  destinationTerminal: string | null;
+  departureTime: string;
+  arrivalTime: string;
+  formation: string | null;
+  wagons: number;
+  capacityTeu: number;
+  assignedTeu: number;
+  loadFactor: number;
+  participatingCarrierCount: number;
+  boxes20ft: number;
+  boxes40ft: number;
+  totalBoxes: number;
+  candidateSource: string | null;
+  trainKm: number;
+  workStops: string[];
+}
+
+export interface KorailStop {
+  sequence: number;
+  hubCode: string;
+  hubName: string;
+  stopType: string | null;
+  loadStartTime: string | null;
+  arrivalTime: string | null;
+  departureTime: string | null;
+  availableTime: string | null;
+  loadTeu: number;
+  unloadTeu: number;
+}
+
+export interface KorailSegment {
+  sequence: number;
+  fromHub: string;
+  fromHubName: string;
+  toHub: string;
+  toHubName: string;
+  loadedTeu: number;
+  capacityTeu: number;
+  loadFactor: number;
+  physicalDistanceKm: number;
+}
+
+export interface KorailAllocationRow {
+  carrierId: string;
+  carrierLabel: string;
+  originHub: string;
+  originName: string;
+  destinationHub: string;
+  destinationName: string;
+  size: ContainerSize;
+  boxes: number;
+  teu: number;
+}
+
+export interface KorailCarrierBreakdown {
+  carrierId: string;
+  carrierLabel: string;
+  boxes: number;
+  teu: number;
+  boxes20ft: number;
+  boxes40ft: number;
+  lanes: number;
+}
+
+export interface KorailTrainDetail extends KorailTrain {
+  stops: KorailStop[];
+  segments: KorailSegment[];
+  allocation: KorailAllocationRow[];
+  carrierBreakdown: KorailCarrierBreakdown[];
+}
+
+export interface KorailHubSizeState {
+  baselineInventory: number;
+  postRailInventory: number;
+  demand: number;
+  externalSupply: number;
+  railInbound: number;
+  railOutbound: number;
+  baselineStockout: number;
+  postRailStockout: number;
+}
+
+export interface KorailHubCarrierRow {
+  carrierId: string;
+  carrierLabel: string;
+  sizes: Record<ContainerSize, {
+    baselineInventory: number;
+    postRailInventory: number;
+    baselineStockout: number;
+    postRailStockout: number;
+    railInbound: number;
+    railOutbound: number;
+  }>;
+}
+
+export interface KorailHub {
+  hubCode: string;
+  hubName: string;
+  shortName: string;
+  sizes: Record<ContainerSize, KorailHubSizeState>;
+  byCarrier: KorailHubCarrierRow[];
+  baselineStockout: number;
+  postRailStockout: number;
+  stockoutReduction: number;
+  status: string;
+}
+
+export interface KorailOverview {
+  scenario: string;
+  serviceNeedTeu: number;
+  railServedTeu: number;
+  railUnservedTeu: number;
+  railCoverage: number;
+  selectedTrainCount: number;
+  recommendationCount: number;
+  boxes20ft: number;
+  boxes40ft: number;
+  totalBoxes: number;
+  trainKm: number;
+  wagonKm: number;
+  teuKm: number;
+  avgLoadFactor: number;
+  avgCarriersPerTrain: number;
+  estimatedRailChargeKrw: number;
+  participatingCarrierCount: number;
+  trains: KorailTrain[];
+  hubs: KorailHub[];
+  needTotals: {
+    requiredBoxes: number;
+    requiredTeu: number;
+    railServedBoxes: number;
+    railUnservedBoxes: number;
+    needCount: number;
+  };
+}
+
+export interface KorailNeedRow {
+  carrierId: string;
+  carrierLabel: string;
+  hubCode: string;
+  hubName: string;
+  size: ContainerSize;
+  date: string;
+  weekday: string;
+  requiredBoxes: number;
+  requiredTeu: number;
+  railServedBoxes: number;
+  railUnservedBoxes: number;
+  needCount: number;
+  status: string;
+}
+
+export interface KorailStationOperation extends KorailStop {
+  trainId: string;
+}
+
+export interface KorailStationHub {
+  hubCode: string;
+  hubName: string;
+  shortName: string;
+  operations: KorailStationOperation[];
+  totalLoadTeu: number;
+  totalUnloadTeu: number;
+  operationCount: number;
+}
+
+export interface KorailInsightItem {
+  hubCode: string;
+  hubName: string;
+  size: ContainerSize;
+  baselineStockout: number;
+  postRailStockout: number;
+  reduction: number;
+  railInbound: number;
+  railOutbound: number;
+  resolved: boolean;
+}
+
+export interface KorailInsights {
+  stockoutImpacts: KorailInsightItem[];
+  totals: { baselineStockout: number; postRailStockout: number; reduction: number };
+  lowestLoadSegments: {
+    trainId: string;
+    fromHubName: string;
+    toHubName: string;
+    loadedTeu: number;
+    capacityTeu: number;
+    loadFactor: number;
+  }[];
+  highestLoadSegments: KorailInsights['lowestLoadSegments'];
+}
+
 export interface ChatStatus {
   configured: boolean;
   readOnly: boolean;
