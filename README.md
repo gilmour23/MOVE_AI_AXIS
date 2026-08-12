@@ -28,12 +28,34 @@ AXIS MOVE-AI MILP v7.1 결과 파일을 읽어 현재 선사의 재고·부족·
 
 | 영역 | 본선 전 상태 |
 |---|---|
-| **Gemini 기반 MOVE-AI Copilot** | UI shell·provider 추상화만 존재, **AI 연동 없음** |
+| **Gemini 기반 MOVE-AI Copilot** | UI shell·API 함수 골격만 존재, **AI 연동 없음** |
 | 철도·트럭 운송 비교 | placeholder 화면만 존재 |
 | KORAIL Control Tower 관점 | 미착수 |
 | 서비스 배포 | 미배포 |
 
 > 본선 당일 커밋 이력에서 위 항목의 구현 과정을 확인할 수 있습니다.
+
+---
+
+## 아키텍처 — 왜 정적인가
+
+MILP 결과는 한 계획 주기 동안 **고정**입니다. 사용자가 화면을 볼 때마다
+서버가 다시 계산할 이유가 없습니다.
+
+그래서 조회 API 응답을 미리 계산해 정적 JSON으로 내보내고, 화면은 그 파일을
+그대로 읽습니다. 상시 구동 서버가 없어 콜드 스타트나 서버 다운이 발생하지 않고,
+CDN에서 즉시 로드됩니다.
+
+```text
+MILP 결과 CSV ──[ scripts/export_static.py ]──> frontend/public/data/*.json ──> 화면
+                        (selectors 재사용)              36개 / 약 54KB
+```
+
+서버 코드가 필요한 곳은 **챗봇 하나뿐**입니다. API 키를 브라우저에 노출할 수 없어
+서버리스 함수(`api/chat.js`)로 프록시합니다.
+
+`backend/`는 삭제하지 않고 **정적 데이터 생성기 겸 로컬 개발용 API**로 유지합니다.
+정적 JSON과 백엔드 응답은 같은 `selectors/` 코드에서 나오므로 값이 항상 일치합니다.
 
 ---
 
@@ -45,24 +67,40 @@ AXIS MOVE-AI MILP v7.1 결과 파일을 읽어 현재 선사의 재고·부족·
 setup.bat
 ```
 
-실행:
+MILP 결과를 정적 JSON으로 내보내기 (결과가 갱신됐을 때만 다시 실행):
+
+```bash
+python scripts/export_static.py
+```
+
+화면 실행 — 정적 JSON을 읽으므로 백엔드 없이도 동작합니다:
+
+```bash
+cd frontend && npm run dev
+```
+
+백엔드까지 함께 띄우려면 (챗봇 개발·API 확인용):
 
 ```bash
 run_dev.bat
 ```
 
-- 백엔드 <http://127.0.0.1:8000> (FastAPI, API 문서는 `/docs`)
-- 프론트 <http://localhost:5173>
+---
 
-수동 실행:
+## 배포 (Vercel)
 
-```bash
-cd backend && python -m uvicorn app:app --port 8000 --reload
-```
+저장소를 Vercel에 연결하면 `vercel.json` 설정대로 배포됩니다.
 
-```bash
-cd frontend && npm run dev
-```
+| 설정 | 값 |
+|---|---|
+| Install | `cd frontend && npm ci` |
+| Build | `cd frontend && npm run build` |
+| Output | `frontend/dist` |
+| 서버리스 함수 | `api/chat.js`, `api/chat/status.js` |
+
+- 정적 파일과 데이터는 CDN에서 서빙됩니다.
+- SPA 딥링크(`/inventory` 등)는 `vercel.json`의 rewrite가 처리합니다.
+- `GEMINI_API_KEY`는 Vercel 환경변수로 주입합니다. **저장소에 커밋하지 않습니다.**
 
 ---
 
@@ -184,8 +222,13 @@ cd backend && python -m pytest -q
 ## MILP 결과 갱신
 
 ```text
-MILP 실행 → 05_RESULTS/AXIS_INTEGRATED 갱신 → 백엔드 재시작(또는 POST /api/admin/reload)
+MILP 실행 → 05_RESULTS/AXIS_INTEGRATED 갱신
+         → python scripts/export_static.py
+         → frontend/public/data/*.json 커밋 → 배포 자동 갱신
 ```
+
+정적 JSON은 저장소에 커밋합니다. 데이터가 고정이라 빌드 환경에 Python이
+없어도 되고, 심사자가 저장소에서 화면에 표시되는 값을 그대로 확인할 수 있습니다.
 
 사용자에게 `재최적화` 버튼은 제공하지 않습니다.
 

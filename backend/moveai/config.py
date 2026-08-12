@@ -43,12 +43,6 @@ DEV_MODE = os.environ.get("DEV_MODE", "true").lower() in {"1", "true", "yes"}
 CHAT_API_URL = os.environ.get("CHAT_API_URL", "").strip()
 CHAT_API_KEY = os.environ.get("CHAT_API_KEY", "").strip()
 
-# 배포 시 빌드된 프론트엔드를 같은 서버에서 서빙한다 (단일 URL 제출용).
-# 로컬 개발에서는 Vite dev server 를 쓰므로 이 경로가 없어도 정상이다.
-STATIC_DIR = Path(
-    os.environ.get("FRONTEND_DIST_DIR", str(PROJECT_ROOT / "frontend" / "dist"))
-).resolve()
-
 CORS_ORIGINS = [
     o.strip()
     for o in os.environ.get(

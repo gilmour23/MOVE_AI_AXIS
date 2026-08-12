@@ -182,38 +182,3 @@ def carrier_recommendation_detail(carrier_id: str, recommendation_id: str) -> di
     if detail is None:
         raise HTTPException(404, f"추천을 찾을 수 없습니다: {recommendation_id}")
     return detail
-
-
-# --------------------------------------------------------- 프론트엔드 정적 서빙
-#
-# 배포 환경에서는 빌드된 프론트엔드를 같은 서버가 서빙해 URL 하나로 접속하게 한다.
-# API 라우트를 모두 등록한 뒤에 마운트해야 /api 경로가 가려지지 않는다.
-# 로컬 개발(Vite dev server)에서는 dist 가 없으므로 이 블록이 건너뛰어진다.
-
-if config.STATIC_DIR.is_dir():
-    from fastapi.responses import FileResponse
-    from fastapi.staticfiles import StaticFiles
-
-    _INDEX = config.STATIC_DIR / "index.html"
-
-    app.mount(
-        "/assets",
-        StaticFiles(directory=config.STATIC_DIR / "assets"),
-        name="assets",
-    )
-
-    @app.get("/{full_path:path}", include_in_schema=False)
-    def spa_fallback(full_path: str):
-        """SPA 라우팅 지원.
-
-        /inventory 같은 경로로 직접 들어오거나 새로고침해도 index.html 을 돌려준다.
-        (BrowserRouter 를 쓰므로 이 fallback 이 없으면 404 가 난다)
-        """
-        candidate = (config.STATIC_DIR / full_path).resolve()
-        if (
-            full_path
-            and candidate.is_file()
-            and candidate.is_relative_to(config.STATIC_DIR)
-        ):
-            return FileResponse(candidate)
-        return FileResponse(_INDEX)
