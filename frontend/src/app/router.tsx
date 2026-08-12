@@ -6,10 +6,8 @@ import { OptimizationPage } from '@/pages/OptimizationPage';
 import { TransportPage } from '@/pages/TransportPage';
 import { TrackingPage } from '@/pages/TrackingPage';
 import { KorailOverviewPage } from '@/pages/korail/KorailOverviewPage';
-import { KorailNeedsPage } from '@/pages/korail/KorailNeedsPage';
+import { KorailCargoPage } from '@/pages/korail/KorailCargoPage';
 import { KorailTrainsPage } from '@/pages/korail/KorailTrainsPage';
-import { KorailInventoryPage } from '@/pages/korail/KorailInventoryPage';
-import { KorailInsightsPage } from '@/pages/korail/KorailInsightsPage';
 import { KorailOperationsPage } from '@/pages/korail/KorailOperationsPage';
 
 export function AppRoutes() {
@@ -24,15 +22,16 @@ export function AppRoutes() {
       <Route path="/carrier/transport" element={<TransportPage />} />
       <Route path="/carrier/tracking" element={<TrackingPage />} />
 
-      {/* KORAIL Control Tower */}
+      {/* KORAIL Control Tower — 종합계획 → 운송물량 → 열차운행 → 거점작업 */}
       <Route path="/korail" element={<KorailOverviewPage />} />
-      <Route path="/korail/needs" element={<KorailNeedsPage />} />
+      <Route path="/korail/cargo" element={<KorailCargoPage />} />
       <Route path="/korail/trains" element={<KorailTrainsPage />} />
-      <Route path="/korail/inventory" element={<KorailInventoryPage />} />
-      <Route path="/korail/insights" element={<KorailInsightsPage />} />
       <Route path="/korail/operations" element={<KorailOperationsPage />} />
 
       {/* 이전 경로 호환 */}
+      <Route path="/korail/needs" element={<Navigate to="/korail/cargo" replace />} />
+      <Route path="/korail/inventory" element={<Navigate to="/korail" replace />} />
+      <Route path="/korail/insights" element={<Navigate to="/korail" replace />} />
       <Route path="/inventory" element={<Navigate to="/carrier/inventory" replace />} />
       <Route path="/optimization" element={<Navigate to="/carrier/plan" replace />} />
       <Route path="/comparison" element={<Navigate to="/carrier/transport" replace />} />

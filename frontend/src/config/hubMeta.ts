@@ -49,13 +49,3 @@ export function hubShortName(code: string): string {
 export function hubFullName(code: string): string {
   return HUB_BY_CODE[code]?.name ?? code;
 }
-
-/** 'UIWANG > BUGANG > BUSAN' 같은 코드 경로를 사용자 표기로 바꾼다.
- *  매핑에 없는 코드는 그대로 남긴다 (임의로 이름을 만들지 않는다). */
-export function formatRoute(route: string): string {
-  if (!route) return route;
-  return route
-    .split('>')
-    .map((part) => hubShortName(part.trim()))
-    .join(' → ');
-}

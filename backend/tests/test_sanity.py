@@ -289,6 +289,61 @@ def test_operations_sorted_by_work_start():
         assert keys == sorted(keys), hub["hubCode"]
 
 
+def test_transport_allocation_totals_match_train_summary():
+    """열차별 운송물량 합계는 열차 요약과 정확히 일치해야 한다."""
+    rows = kr.transport_allocations(store)["rows"]
+    assert rows
+    for train in kr.trains(store):
+        mine = [r for r in rows if r["trainId"] == train["trainId"]]
+        assert sum(r["boxes"] for r in mine) == train["totalBoxes"], train["trainId"]
+        assert sum(r["teu"] for r in mine) == train["assignedTeu"], train["trainId"]
+
+
+def test_transport_allocation_times_come_from_od_stops():
+    """allocation 시각은 열차 전체가 아니라 그 OD 의 stop 에서 와야 한다.
+
+    한 열차에 여러 OD 가 섞여 있으므로 열차 최종 도착을 쓰면 틀린 값이 된다.
+    """
+    payload = kr.transport_allocations(store)
+    assert payload["skipped"] == []
+
+    stops = {(s["train_id"], s["hub"]): s for _, s in store.stop_work_plan.iterrows()}
+
+    for row in payload["rows"]:
+        origin = stops[(row["trainId"], row["originHub"])]
+        destination = stops[(row["trainId"], row["destinationHub"])]
+
+        assert int(origin["stop_sequence"]) < int(destination["stop_sequence"])
+        assert row["originDepartureTime"] == kr._text(origin.get("actual_departure_time"))
+        assert row["originLoadStartTime"] == kr._text(origin.get("actual_load_start_time"))
+        assert row["destinationArrivalTime"] == kr._text(
+            destination.get("actual_arrival_time")
+        )
+        assert row["destinationAvailableTime"] == kr._text(
+            destination.get("actual_available_time")
+        )
+
+
+def test_intermediate_destination_does_not_use_final_arrival():
+    """중간 거점에서 하차하는 물량에 열차 최종 도착시각을 쓰지 않는다."""
+    rows = kr.transport_allocations(store)["rows"]
+    summary = {t["trainId"]: t for t in kr.trains(store)}
+
+    intermediate = [
+        r for r in rows if r["destinationHub"] != summary[r["trainId"]]["destinationTerminal"]
+    ]
+    assert intermediate, "중간 하차 allocation 이 없으면 이 검증이 무의미하다"
+
+    for row in intermediate:
+        assert row["destinationArrivalTime"] != summary[row["trainId"]]["arrivalTime"]
+
+
+def test_allocation_train_ids_are_selected_trains():
+    selected = {t["trainId"] for t in kr.trains(store)}
+    rows = kr.transport_allocations(store)["rows"]
+    assert {r["trainId"] for r in rows} <= selected
+
+
 def test_train_detail_stops_carry_box_counts():
     """Train Detail 의 stop 도 같은 규격별 박스 수를 갖는다."""
     train_id = kr.trains(store)[0]["trainId"]

@@ -8,6 +8,7 @@ import type {
   KorailStationHub,
   KorailTrain,
   KorailTrainDetail,
+  KorailTransportAllocation,
   Meta,
   OptimizationData,
   OverviewData,
@@ -124,4 +125,12 @@ export function fetchKorailOperations(signal?: AbortSignal): Promise<{
 
 export function fetchKorailInsights(signal?: AbortSignal): Promise<KorailInsights> {
   return apiGet<KorailInsights>('/api/korail/insights', signal);
+}
+
+/** 선정 열차에 실제 배정된 공컨 운송물량 (CARRIER_ALLOCATION 기준).
+ *  시각은 각 건의 origin/destination stop 에서 join 된 값이다. */
+export function fetchKorailCargo(signal?: AbortSignal): Promise<{
+  rows: KorailTransportAllocation[];
+}> {
+  return apiGet('/api/korail/cargo', signal);
 }

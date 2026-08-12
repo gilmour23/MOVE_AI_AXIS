@@ -32,49 +32,79 @@ export function formatKrw(value: number): string {
   return `${numberFormatter.format(Math.round(value))}원`;
 }
 
-/** '2026-08-10 06:00' 또는 ISO 문자열을 안전하게 파싱한다 (모든 시각은 KST 기준). */
-function parse(value: string): Date | null {
-  const normalized = value.includes('T') ? value : value.replace(' ', 'T');
-  const date = new Date(normalized);
-  return Number.isNaN(date.getTime()) ? null : date;
+/** MOVE-AI 의 모든 timestamp 는 **KST wall-clock 계획시각**이다.
+ *
+ *  `new Date('2026-08-10T06:00')` 처럼 timezone 없는 문자열을 파싱하면
+ *  브라우저 지역시간으로 해석되어 UTC·미주 환경에서 날짜와 시각이 밀린다.
+ *  따라서 문자열의 숫자 component 를 그대로 읽어 표시한다. */
+export interface WallClock {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+}
+
+const TIMESTAMP = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/;
+
+export function parseWallClock(value: string | null): WallClock | null {
+  if (!value) return null;
+  const matched = TIMESTAMP.exec(value.trim());
+  if (!matched) return null;
+  return {
+    year: Number(matched[1]),
+    month: Number(matched[2]),
+    day: Number(matched[3]),
+    hour: Number(matched[4] ?? 0),
+    minute: Number(matched[5] ?? 0),
+  };
+}
+
+/** 같은 wall-clock 끼리의 상대 시간 계산용 숫자 좌표.
+ *  timezone 변환 목적이 아니라 차이를 정확히 유지하기 위해 UTC 를 쓴다. */
+export function wallClockMs(value: string | null): number | null {
+  const w = parseWallClock(value);
+  if (!w) return null;
+  return Date.UTC(w.year, w.month - 1, w.day, w.hour, w.minute);
 }
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
+const pad = (n: number) => String(n).padStart(2, '0');
+
 export function weekdayOf(value: string): string {
-  const date = parse(value);
-  return date ? WEEKDAYS[date.getDay()] : '';
+  const w = parseWallClock(value);
+  if (!w) return '';
+  return WEEKDAYS[new Date(Date.UTC(w.year, w.month - 1, w.day)).getUTCDay()];
 }
 
 /** '08.10' */
 export function formatMonthDay(value: string): string {
-  const date = parse(value);
-  if (!date) return value;
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  return `${mm}.${dd}`;
+  const w = parseWallClock(value);
+  if (!w) return value;
+  return `${pad(w.month)}.${pad(w.day)}`;
 }
 
 /** '08.10 (월)' */
 export function formatDateShort(value: string): string {
-  const date = parse(value);
-  if (!date) return value;
-  return `${formatMonthDay(value)} (${WEEKDAYS[date.getDay()]})`;
+  const w = parseWallClock(value);
+  if (!w) return value;
+  return `${pad(w.month)}.${pad(w.day)} (${weekdayOf(value)})`;
 }
 
 /** '06:00' */
 export function formatTime(value: string | null): string {
   if (!value) return '-';
-  const date = parse(value);
-  if (!date) return value;
-  const hh = String(date.getHours()).padStart(2, '0');
-  const mi = String(date.getMinutes()).padStart(2, '0');
-  return `${hh}:${mi}`;
+  const w = parseWallClock(value);
+  if (!w) return value;
+  return `${pad(w.hour)}:${pad(w.minute)}`;
 }
 
 /** '08.10 (월) 06:00' */
 export function formatDateTime(value: string | null): string {
   if (!value) return '-';
+  const w = parseWallClock(value);
+  if (!w) return value;
   return `${formatDateShort(value)} ${formatTime(value)}`;
 }
 
@@ -82,9 +112,9 @@ export function formatDateTime(value: string | null): string {
  *  시간만 보여주면 21:00 → 00:00 을 같은 날로 오해할 수 있다. */
 export function formatDateTimeCompact(value: string | null): string {
   if (!value) return '-';
-  const date = parse(value);
-  if (!date) return value;
-  return `${formatMonthDay(value)} ${formatTime(value)}`;
+  const w = parseWallClock(value);
+  if (!w) return value;
+  return `${pad(w.month)}.${pad(w.day)} ${pad(w.hour)}:${pad(w.minute)}`;
 }
 
 /** 규격 표시 라벨 */

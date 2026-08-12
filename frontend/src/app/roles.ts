@@ -6,9 +6,7 @@ import {
   MapPinned,
   Radar,
   Route,
-  Sparkles,
   Train,
-  Warehouse,
 } from 'lucide-react';
 
 export type RoleId = 'carrier' | 'korail';
@@ -50,15 +48,14 @@ export const ROLES: Record<RoleId, RoleDefinition> = {
     id: 'korail',
     label: 'KORAIL Control Tower',
     shortLabel: 'KORAIL',
-    description: '열차 운영과 거점 수급을 총괄합니다.',
+    description: '공컨 전용열차 운송계획과 거점 작업계획을 관리합니다.',
     home: '/korail',
+    // 전체 → 화물 → 열차 → 거점 순서로 읽히게 한다.
     nav: [
-      { to: '/korail', label: '대시보드', icon: LayoutDashboard, end: true },
-      { to: '/korail/needs', label: '수요·배정', icon: Warehouse },
-      { to: '/korail/trains', label: '운행계획', icon: Train },
-      { to: '/korail/inventory', label: '거점 재고', icon: Boxes },
-      { to: '/korail/insights', label: '수급·적재 분석', icon: Sparkles },
-      { to: '/korail/operations', label: '거점 작업', icon: MapPinned },
+      { to: '/korail', label: '종합계획', icon: LayoutDashboard, end: true },
+      { to: '/korail/cargo', label: '운송물량', icon: Boxes },
+      { to: '/korail/trains', label: '열차운행', icon: Train },
+      { to: '/korail/operations', label: '거점작업', icon: MapPinned },
     ],
   },
 };

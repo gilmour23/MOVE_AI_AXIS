@@ -41,3 +41,24 @@
   box-shadow: var(--shadow-card);
 }
 
+/* KORAIL — 메뉴가 4개뿐이므로 여유 있게 보여준다.
+   shared 값을 전역으로 키우면 Carrier 5개 메뉴 레이아웃이 깨지므로
+   variant class 로만 적용한다. */
+.navWide {
+  gap: 6px;
+  padding: 5px;
+}
+
+.navWide .item {
+  font-size: 14px;
+  padding: 8px 16px;
+  gap: 7px;
+}
+
+.navWide .active {
+  color: var(--brand-dark);
+  font-weight: 700;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border);
+}
+

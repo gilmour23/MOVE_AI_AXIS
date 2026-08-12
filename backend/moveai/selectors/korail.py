@@ -237,6 +237,76 @@ def train_detail(store: ResultStore, train_id: str) -> dict | None:
     }
 
 
+# ------------------------------------------------------------------ 운송물량
+
+def transport_allocations(store: ResultStore) -> dict:
+    """선정 열차에 실제 배정된 공컨 운송물량 (KORAIL 조회 전용).
+
+    CARRIER_ALLOCATION 한 행이 하나의 운송 건이다.
+    행을 합치거나 나누지 않고, 시각만 STOP_WORK_PLAN 에서 join 한다.
+
+    시간 join 이 이 selector 의 핵심이다.
+    한 열차 안에 서로 다른 OD 가 함께 존재하므로
+    (예: 의왕→약목, 의왕→부산신항, 약목→부산신항)
+    allocation 의 시각에 열차 전체 출발/최종 도착을 대입하면 틀린 값이 된다.
+    반드시 그 allocation 의 origin/destination hub stop 에서 가져온다.
+    """
+    stops = store.stop_work_plan
+    by_stop: dict[tuple[str, str], dict] = {}
+    for _, s in stops.iterrows():
+        by_stop[(s["train_id"], s["hub"])] = {
+            "sequence": int(s["stop_sequence"]),
+            "loadStartTime": _text(s.get("actual_load_start_time")),
+            "arrivalTime": _text(s.get("actual_arrival_time")),
+            "departureTime": _text(s.get("actual_departure_time")),
+            "availableTime": _text(s.get("actual_available_time")),
+        }
+
+    selected = {t["trainId"] for t in trains(store)}
+
+    rows = []
+    skipped: list[str] = []
+    for _, a in store.carrier_allocation.iterrows():
+        train_id = a["train_id"]
+        origin = a["origin"]
+        destination = a["destination"]
+
+        origin_stop = by_stop.get((train_id, origin))
+        destination_stop = by_stop.get((train_id, destination))
+
+        # 정차 계획에 없는 OD 는 시각을 만들어낼 수 없으므로 제외하고 보고한다.
+        if train_id not in selected or origin_stop is None or destination_stop is None:
+            skipped.append(f"{train_id} {origin}->{destination}")
+            continue
+        if origin_stop["sequence"] >= destination_stop["sequence"]:
+            skipped.append(f"{train_id} {origin}->{destination} (stop 순서 역전)")
+            continue
+
+        rows.append(
+            {
+                "carrierId": a["carrier_id"],
+                "carrierLabel": carrier_label(a["carrier_id"]),
+                "originHub": origin,
+                "originName": hub_name(origin),
+                "destinationHub": destination,
+                "destinationName": hub_name(destination),
+                "size": a["container_size"],
+                "boxes": int(_num(a["boxes"])),
+                "teu": int(_num(a["teu"])),
+                "trainId": train_id,
+                "originLoadStartTime": origin_stop["loadStartTime"],
+                "originDepartureTime": origin_stop["departureTime"],
+                "destinationArrivalTime": destination_stop["arrivalTime"],
+                "destinationAvailableTime": destination_stop["availableTime"],
+            }
+        )
+
+    rows.sort(
+        key=lambda r: (r["originDepartureTime"] or "", r["trainId"], r["carrierId"], r["size"])
+    )
+    return {"rows": rows, "skipped": skipped}
+
+
 # ------------------------------------------------------------------ 수송 수요
 
 def service_needs(store: ResultStore) -> dict:

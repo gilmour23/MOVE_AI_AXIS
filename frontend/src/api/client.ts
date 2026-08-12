@@ -53,10 +53,12 @@ function toStaticPath(path: string): string | null {
         : '/data/korail/trains.json';
     }
     const fileByView: Record<string, string> = {
+      cargo: 'transport_allocations.json',
+      operations: 'station_operations.json',
+      // legacy — 현재 KORAIL 4페이지에서는 사용하지 않는다.
       overview: 'overview.json',
       needs: 'service_needs.json',
       inventory: 'inventory.json',
-      operations: 'station_operations.json',
       insights: 'insights.json',
     };
     const file = view ? fileByView[view] : undefined;

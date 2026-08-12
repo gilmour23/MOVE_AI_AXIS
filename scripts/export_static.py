@@ -127,6 +127,7 @@ def export_korail() -> None:
     write("korail/service_needs.json", kr.service_needs(store))
     write("korail/inventory.json", kr.hub_inventory(store))
     write("korail/station_operations.json", kr.station_operations(store))
+    write("korail/transport_allocations.json", kr.transport_allocations(store))
     write("korail/insights.json", kr.operational_insights(store))
 
     for train in kr.trains(store):
@@ -244,6 +245,47 @@ def verify_stop_box_counts() -> None:
     )
 
 
+def verify_transport_allocations() -> None:
+    """운송물량이 열차 요약과 맞고, 시각이 실제 stop 에서 온 값인지 검증."""
+    payload = kr.transport_allocations(store)
+    rows = payload["rows"]
+
+    if payload["skipped"]:
+        raise SystemExit(f"운송물량에서 제외된 allocation: {payload['skipped']}")
+
+    stops = {
+        (s["train_id"], s["hub"]): s for _, s in store.stop_work_plan.iterrows()
+    }
+
+    for row in rows:
+        origin = stops[(row["trainId"], row["originHub"])]
+        destination = stops[(row["trainId"], row["destinationHub"])]
+        if row["originDepartureTime"] != kr._text(origin.get("actual_departure_time")):
+            raise SystemExit(f"{row['trainId']} 출발시각이 origin stop 과 다름")
+        if row["destinationArrivalTime"] != kr._text(
+            destination.get("actual_arrival_time")
+        ):
+            raise SystemExit(f"{row['trainId']} 도착시각이 destination stop 과 다름")
+        if int(origin["stop_sequence"]) >= int(destination["stop_sequence"]):
+            raise SystemExit(f"{row['trainId']} stop 순서 역전")
+
+    # 열차별 합계가 열차 요약과 일치해야 한다.
+    for train in kr.trains(store):
+        mine = [r for r in rows if r["trainId"] == train["trainId"]]
+        boxes = sum(r["boxes"] for r in mine)
+        teu = sum(r["teu"] for r in mine)
+        if boxes != train["totalBoxes"] or teu != train["assignedTeu"]:
+            raise SystemExit(
+                f"{train['trainId']} 운송물량 합 불일치: "
+                f"{boxes}개/{teu}TEU vs 요약 {train['totalBoxes']}개/{train['assignedTeu']}TEU"
+            )
+
+    print(
+        f"  [운송물량] {len(rows)}건 · OD stop 시각 join 검증 · "
+        f"열차별 Box/TEU 합 = 열차 요약 일치  OK"
+    )
+
+
 def verify_no_other_carriers() -> None:
     """내보낸 파일에 다른 선사 식별자가 없는지 검증한다."""
     allowed = set(CARRIERS)
@@ -285,6 +327,7 @@ def main() -> None:
 
     verify_consistency()
     verify_stop_box_counts()
+    verify_transport_allocations()
     print("\n  [Transport]")
     verify_transport_join()
     verify_no_other_carriers()

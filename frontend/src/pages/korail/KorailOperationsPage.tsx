@@ -5,16 +5,23 @@ import { Card } from '@/components/common/Card';
 import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/common/States';
 import { fetchKorailOperations } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
-import { formatDateTimeCompact, formatNumber } from '@/lib/format';
+import { formatDateTimeCompact } from '@/lib/format';
 import type { KorailStationHub, KorailStationOperation } from '@/types/domain';
 import styles from './Korail.module.css';
 
-/** 거점 작업 계획 — STOP_WORK_PLAN 기준.
- *  새로운 작업량을 임의로 생성하지 않고 결과 파일 값만 집계한다.
+function opKey(op: KorailStationOperation): string {
+  return `${op.trainId}-${op.sequence}`;
+}
+
+function trainCount(hub: KorailStationHub): number {
+  return new Set(hub.operations.map((op) => op.trainId)).size;
+}
+
+/** 거점별 열차 작업계획 — STOP_WORK_PLAN 기준.
  *
- *  시간 필드는 각각 독립된 계획시각이다. STOP_WORK_PLAN 에는
- *  loadStartTime < arrivalTime 인 stop 이 존재하므로
- *  "도착 후 작업 시작" 같은 인과관계를 UI 에서 새로 정의하지 않는다.
+ *  각 시각은 독립된 계획값이다. 상·하차가 0인 정차도 KORAIL 에게는
+ *  의미가 있으므로 남기되, 작업 개시·사용 가능 시각은 실제 작업이
+ *  있는 경우에만 표시한다.
  *
  *  ?hub=BUSAN 으로 진입하면 해당 거점이 선택된 상태로 열린다. */
 export function KorailOperationsPage() {
@@ -34,6 +41,7 @@ export function KorailOperationsPage() {
       : undefined;
     if (fromQuery) {
       setHubCode(fromQuery.hubCode);
+      setSelectedOp(null);
       return;
     }
     if (!hubCode) {
@@ -47,12 +55,12 @@ export function KorailOperationsPage() {
     [data, hubCode],
   );
 
-  /** 현재 데이터의 stopType 이 한 종류뿐이면 `구분` 컬럼은 정보 가치가 없다.
-   *  타입/데이터는 그대로 두고 표시 여부만 조건부로 처리한다. */
-  const showStopType = useMemo(() => {
-    if (!hub) return false;
-    return new Set(hub.operations.map((op) => op.stopType).filter(Boolean)).size > 1;
-  }, [hub]);
+  // 첫 작업을 기본 선택해 우측 상세가 비어 보이지 않게 한다.
+  useEffect(() => {
+    if (hub && hub.operations.length > 0 && !selectedOp) {
+      setSelectedOp(opKey(hub.operations[0]));
+    }
+  }, [hub, selectedOp]);
 
   const selected = useMemo(
     () => hub?.operations.find((op) => opKey(op) === selectedOp) ?? null,
@@ -60,10 +68,7 @@ export function KorailOperationsPage() {
   );
 
   return (
-    <PageContainer
-      title="거점 작업 계획"
-      description="선정 열차의 역별 상·하차 작업 일정입니다."
-    >
+    <PageContainer title="거점별 열차 작업계획">
       {error && <ErrorState error={error} onRetry={reload} />}
       {loading && (
         <Card>
@@ -73,68 +78,52 @@ export function KorailOperationsPage() {
 
       {data && (
         <>
-          <Card
-            title="거점별 계획 취급량"
-            subtitle="상차 + 하차 TEU 기준 · 막대를 클릭하면 해당 거점 일정이 열립니다"
-          >
-            <HandlingChart
-              hubs={data.hubs}
-              selectedHub={hubCode}
-              onSelect={(code) => {
-                setHubCode(code);
-                setSelectedOp(null);
-              }}
-            />
-          </Card>
+          <div className={styles.hubBar}>
+            {data.hubs.map((h) => (
+              <button
+                key={h.hubCode}
+                type="button"
+                aria-pressed={h.hubCode === hubCode}
+                className={[styles.hubChip, h.hubCode === hubCode ? styles.hubChipActive : '']
+                  .filter(Boolean)
+                  .join(' ')}
+                onClick={() => {
+                  setHubCode(h.hubCode);
+                  setSelectedOp(null);
+                }}
+              >
+                <span className={styles.hubChipName}>{h.shortName}</span>
+                <span className={styles.hubChipCount}>{trainCount(h)}편</span>
+              </button>
+            ))}
+          </div>
 
           {hub && (
-            <>
-              <div className={styles.kpiStrip}>
-                <Kpi label="작업 횟수" value={`${hub.operationCount}회`} />
-                <Kpi
-                  label="총 상차"
-                  value={`${formatNumber(hub.totalLoadBoxes)}개`}
-                  sub={`${formatNumber(hub.totalLoadTeu)} TEU`}
-                />
-                <Kpi
-                  label="총 하차"
-                  value={`${formatNumber(hub.totalUnloadBoxes)}개`}
-                  sub={`${formatNumber(hub.totalUnloadTeu)} TEU`}
-                />
-                <Kpi
-                  label="총 취급량"
-                  value={`${formatNumber(hub.totalLoadBoxes + hub.totalUnloadBoxes)}개`}
-                  sub={`${formatNumber(hub.totalHandlingTeu)} TEU`}
-                />
-              </div>
-
-              <Card
-                title={`${hub.hubName} 작업 일정`}
-                subtitle="각 시각은 독립된 계획시각입니다 · 행을 클릭하면 상세가 열립니다"
-              >
+            <div className={styles.opsLayout}>
+              <Card title={`${hub.hubName} 작업 일정`}>
                 {hub.operations.length === 0 ? (
                   <EmptyState
                     title="이 거점에는 예정된 작업이 없습니다."
                     description="선정된 열차의 정차 계획에 포함되지 않았습니다."
                   />
                 ) : (
-                  <>
-                    <div className={styles.scroll}>
-                      <table className={styles.table}>
-                        <thead>
-                          <tr>
-                            <th>열차</th>
-                            {showStopType && <th>구분</th>}
-                            <th>작업 개시</th>
-                            <th>열차 도착</th>
-                            <th>열차 출발</th>
-                            <th className={styles.right}>상차</th>
-                            <th className={styles.right}>하차</th>
-                            <th>사용 가능</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {hub.operations.map((op) => (
+                  <div className={styles.scroll}>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th>열차</th>
+                          <th>작업 개시</th>
+                          <th>열차 도착</th>
+                          <th>열차 출발</th>
+                          <th className={styles.right}>상차</th>
+                          <th className={styles.right}>하차</th>
+                          <th>사용 가능</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {hub.operations.map((op) => {
+                          const hasHandling = op.loadBoxesTotal + op.unloadBoxesTotal > 0;
+                          return (
                             <tr
                               key={opKey(op)}
                               className={[
@@ -143,15 +132,12 @@ export function KorailOperationsPage() {
                               ]
                                 .filter(Boolean)
                                 .join(' ')}
-                              onClick={() =>
-                                setSelectedOp(opKey(op) === selectedOp ? null : opKey(op))
-                              }
+                              onClick={() => setSelectedOp(opKey(op))}
                             >
                               <td className={styles.mono}>{op.trainId}</td>
-                              {showStopType && (
-                                <td className={styles.muted}>{op.stopType ?? '-'}</td>
-                              )}
-                              <td>{formatDateTimeCompact(op.loadStartTime)}</td>
+                              <td>
+                                {hasHandling ? formatDateTimeCompact(op.loadStartTime) : '-'}
+                              </td>
                               <td>{formatDateTimeCompact(op.arrivalTime)}</td>
                               <td>{formatDateTimeCompact(op.departureTime)}</td>
                               <td className={styles.right}>
@@ -170,70 +156,32 @@ export function KorailOperationsPage() {
                                   b40={op.unloadBoxes40ft}
                                 />
                               </td>
-                              <td>{formatDateTimeCompact(op.availableTime)}</td>
+                              <td>
+                                {op.unloadBoxesTotal > 0
+                                  ? formatDateTimeCompact(op.availableTime)
+                                  : '-'}
+                              </td>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {selected && <OperationDetail op={selected} />}
-                  </>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </Card>
-            </>
+
+              <Card title="선택 작업 상세">
+                {selected ? (
+                  <OperationDetail op={selected} hubName={hub.hubName} />
+                ) : (
+                  <EmptyState title="작업을 선택하세요." />
+                )}
+              </Card>
+            </div>
           )}
         </>
       )}
     </PageContainer>
-  );
-}
-
-function opKey(op: KorailStationOperation): string {
-  return `${op.trainId}-${op.sequence}`;
-}
-
-/** 거점별 계획 취급량 비교.
- *  실제 CY 작업 capacity 데이터가 없으므로 과부하·처리한계로 판단하지 않는다. */
-function HandlingChart({
-  hubs,
-  selectedHub,
-  onSelect,
-}: {
-  hubs: KorailStationHub[];
-  selectedHub: string | null;
-  onSelect: (hubCode: string) => void;
-}) {
-  const max = Math.max(1, ...hubs.map((h) => h.totalHandlingTeu));
-
-  return (
-    <div className={styles.handlingChart}>
-      {hubs.map((hub) => (
-        <button
-          key={hub.hubCode}
-          type="button"
-          aria-pressed={hub.hubCode === selectedHub}
-          className={[
-            styles.handlingRow,
-            hub.hubCode === selectedHub ? styles.handlingRowActive : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-          onClick={() => onSelect(hub.hubCode)}
-        >
-          <span className={styles.handlingName}>{hub.shortName}</span>
-          <span className={styles.handlingTrack}>
-            <span
-              className={styles.handlingFill}
-              style={{ width: `${(hub.totalHandlingTeu / max) * 100}%` }}
-            />
-          </span>
-          <span className={styles.handlingValue}>
-            {formatNumber(hub.totalHandlingTeu)} TEU
-          </span>
-        </button>
-      ))}
-    </div>
   );
 }
 
@@ -260,36 +208,49 @@ function BoxCell({
   );
 }
 
-/** 선택한 train-stop 상세. 모든 row 에 반복하지 않고 하나만 표시한다. */
-function OperationDetail({ op }: { op: KorailStationOperation }) {
+function OperationDetail({ op, hubName }: { op: KorailStationOperation; hubName: string }) {
+  const hasHandling = op.loadBoxesTotal + op.unloadBoxesTotal > 0;
+
   return (
     <div className={styles.opDetail}>
       <div className={styles.opDetailHead}>
         <span className={styles.mono}>{op.trainId}</span>
-        <span className={styles.muted}>{op.hubName} 작업 상세</span>
+        <span className={styles.muted}>{hubName}</span>
       </div>
+
       <div className={styles.opDetailGrid}>
-        <DetailItem label="작업 개시" value={formatDateTimeCompact(op.loadStartTime)} />
+        <DetailItem
+          label="작업 개시"
+          value={hasHandling ? formatDateTimeCompact(op.loadStartTime) : '-'}
+        />
         <DetailItem label="열차 도착" value={formatDateTimeCompact(op.arrivalTime)} />
         <DetailItem label="열차 출발" value={formatDateTimeCompact(op.departureTime)} />
-        <DetailItem label="사용 가능" value={formatDateTimeCompact(op.availableTime)} />
-      </div>
-      <div className={styles.opDetailWork}>
-        <WorkBlock
-          label="상차"
-          b20={op.loadBoxes20ft}
-          b40={op.loadBoxes40ft}
-          total={op.loadBoxesTotal}
-          teu={op.loadTeu}
-        />
-        <WorkBlock
-          label="하차"
-          b20={op.unloadBoxes20ft}
-          b40={op.unloadBoxes40ft}
-          total={op.unloadBoxesTotal}
-          teu={op.unloadTeu}
+        <DetailItem
+          label="사용 가능"
+          value={op.unloadBoxesTotal > 0 ? formatDateTimeCompact(op.availableTime) : '-'}
         />
       </div>
+
+      {hasHandling ? (
+        <div className={styles.opDetailWork}>
+          <WorkBlock
+            label="상차"
+            b20={op.loadBoxes20ft}
+            b40={op.loadBoxes40ft}
+            total={op.loadBoxesTotal}
+            teu={op.loadTeu}
+          />
+          <WorkBlock
+            label="하차"
+            b20={op.unloadBoxes20ft}
+            b40={op.unloadBoxes40ft}
+            total={op.unloadBoxesTotal}
+            teu={op.unloadTeu}
+          />
+        </div>
+      ) : (
+        <div className={styles.stopNoWork}>상하차 없음 · 정차 계획만 있습니다</div>
+      )}
     </div>
   );
 }
@@ -325,16 +286,6 @@ function DetailItem({ label, value }: { label: string; value: string }) {
     <div className={styles.summaryItem}>
       <span className={styles.summaryLabel}>{label}</span>
       <span className={styles.summaryValue}>{value}</span>
-    </div>
-  );
-}
-
-function Kpi({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return (
-    <div className={styles.kpi}>
-      <span className={styles.kpiLabel}>{label}</span>
-      <span className={styles.kpiValue}>{value}</span>
-      {sub && <span className={styles.kpiSub}>{sub}</span>}
     </div>
   );
 }

@@ -421,6 +421,25 @@ export interface KorailStationOperation extends KorailStop {
   trainId: string;
 }
 
+/** 선정 열차에 배정된 운송 건 하나 (CARRIER_ALLOCATION 1행).
+ *  시각은 열차 전체가 아니라 이 건의 origin/destination stop 에서 온 값이다. */
+export interface KorailTransportAllocation {
+  carrierId: string;
+  carrierLabel: string;
+  originHub: string;
+  originName: string;
+  destinationHub: string;
+  destinationName: string;
+  size: ContainerSize;
+  boxes: number;
+  teu: number;
+  trainId: string;
+  originLoadStartTime: string | null;
+  originDepartureTime: string | null;
+  destinationArrivalTime: string | null;
+  destinationAvailableTime: string | null;
+}
+
 export interface KorailStationHub {
   hubCode: string;
   hubName: string;

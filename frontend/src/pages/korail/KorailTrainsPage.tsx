@@ -8,22 +8,20 @@ import { WeeklyTimeline } from './WeeklyTimeline';
 import { fetchKorailTrains } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
 import { useMeta } from '@/app/MetaContext';
-import { formatDateShort, formatPercent, formatTime } from '@/lib/format';
-import { formatRoute } from '@/config/hubMeta';
+import { formatDateShort, formatTime } from '@/lib/format';
+import { hubShortName } from '@/config/hubMeta';
+import { viaHubLabel } from './trainInfo';
 import styles from './Korail.module.css';
 
-/** 공컨테이너 운행계획.
- *  ?train=CAND0292 로 진입하면 해당 열차 상세가 바로 열린다
- *  (선사 포털의 Train ID drill-down 진입점). */
+/** 공컨 전용열차 운행계획.
+ *  ?train=CAND0292 로 진입하면 해당 열차 상세가 바로 열린다.
+ *  Train Detail 의 진입점은 이 경로 하나로 통일한다. */
 export function KorailTrainsPage() {
   const [params, setParams] = useSearchParams();
   const trainId = params.get('train');
   const { meta } = useMeta();
 
-  const { data, loading, error, reload } = useAsync(
-    (signal) => fetchKorailTrains(signal),
-    [],
-  );
+  const { data, loading, error, reload } = useAsync((signal) => fetchKorailTrains(signal), []);
 
   const setTrainId = useCallback(
     (next: string | null) => {
@@ -36,10 +34,7 @@ export function KorailTrainsPage() {
   );
 
   return (
-    <PageContainer
-      title="공컨테이너 운행계획"
-      description="이번 계획주기에 선정된 공컨 전용 화물열차의 운행 및 배정 계획입니다."
-    >
+    <PageContainer title="공컨 전용열차 운행계획">
       {error && <ErrorState error={error} onRetry={reload} />}
       {loading && (
         <Card>
@@ -54,75 +49,68 @@ export function KorailTrainsPage() {
       )}
 
       {data && data.trains.length > 0 && meta?.horizonStart && meta?.horizonEnd && (
-        <Card
-          title="주간 계획 타임라인"
-          subtitle="계획주기 위의 출발~도착 구간입니다 · 중간 정차는 열차 상세에서 확인합니다"
-        >
+        <Card title="주간 운행 시간표">
           <WeeklyTimeline
             trains={data.trains}
             horizonStart={meta.horizonStart}
             horizonEnd={meta.horizonEnd}
+            onSelect={setTrainId}
           />
         </Card>
       )}
 
       {data && data.trains.length > 0 && (
-        <Card title={`선정 열차 ${data.trains.length}편`} subtitle="행을 클릭하면 상세가 열립니다">
+        <Card title="열차 운행계획">
           <div className={styles.scroll}>
             <table className={styles.table}>
               <thead>
                 <tr>
                   <th>열차</th>
-                  <th>노선</th>
+                  <th>출발지</th>
+                  <th>도착지</th>
                   <th>출발</th>
                   <th>도착</th>
                   <th className={styles.right}>편성</th>
-                  <th className={styles.right}>배정 / 용량</th>
-                  <th className={styles.right}>적재율</th>
-                  <th className={styles.right}>참여 선사</th>
+                  <th className={styles.right}>운송 공컨</th>
+                  <th>경유 거점</th>
                 </tr>
               </thead>
               <tbody>
-                {data.trains.map((train) => (
-                  <tr
-                    key={train.trainId}
-                    className={[
-                      styles.rowClickable,
-                      train.trainId === trainId ? styles.rowActive : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
-                    onClick={() => setTrainId(train.trainId)}
-                  >
-                    <td className={styles.mono}>{train.trainId}</td>
-                    <td className={styles.muted}>{formatRoute(train.route)}</td>
-                    <td>
-                      {formatTime(train.departureTime)}
-                      <div className={styles.kpiSub}>{formatDateShort(train.departureTime)}</div>
-                    </td>
-                    <td>
-                      {formatTime(train.arrivalTime)}
-                      <div className={styles.kpiSub}>{formatDateShort(train.arrivalTime)}</div>
-                    </td>
-                    <td className={styles.right}>
-                      {train.formation ?? '-'}
-                      <div className={styles.kpiSub}>{train.wagons}량</div>
-                    </td>
-                    <td className={styles.right}>
-                      {train.assignedTeu} / {train.capacityTeu} TEU
-                    </td>
-                    <td className={styles.right}>
-                      {formatPercent(train.loadFactor)}
-                      <div className={styles.loadBar}>
-                        <span
-                          className={styles.loadFill}
-                          style={{ width: `${Math.min(100, train.loadFactor * 100)}%` }}
-                        />
-                      </div>
-                    </td>
-                    <td className={styles.right}>{train.participatingCarrierCount}개</td>
-                  </tr>
-                ))}
+                {data.trains.map((train) => {
+                  const via = viaHubLabel(train);
+                  return (
+                    <tr
+                      key={train.trainId}
+                      className={[
+                        styles.rowClickable,
+                        train.trainId === trainId ? styles.rowActive : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      onClick={() => setTrainId(train.trainId)}
+                    >
+                      <td className={styles.mono}>{train.trainId}</td>
+                      <td>{hubShortName(train.originTerminal ?? '')}</td>
+                      <td>{hubShortName(train.destinationTerminal ?? '')}</td>
+                      {/* 자정을 넘기는 운행이 있으므로 날짜를 항상 함께 보여준다. */}
+                      <td>
+                        {formatDateShort(train.departureTime)}
+                        <div className={styles.kpiSub}>{formatTime(train.departureTime)}</div>
+                      </td>
+                      <td>
+                        {formatDateShort(train.arrivalTime)}
+                        <div className={styles.kpiSub}>{formatTime(train.arrivalTime)}</div>
+                      </td>
+                      <td className={styles.right}>{train.wagons}량</td>
+                      <td className={styles.right}>
+                        {train.totalBoxes}개
+                        <div className={styles.kpiSub}>{train.assignedTeu} TEU</div>
+                      </td>
+                      {/* workStops 는 정차 계획이며 상·하차 발생을 뜻하지 않는다. */}
+                      <td className={styles.muted}>{via ?? '-'}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

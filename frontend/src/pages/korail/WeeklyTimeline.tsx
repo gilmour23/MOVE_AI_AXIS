@@ -1,53 +1,59 @@
-import { formatMonthDay, formatTime } from '@/lib/format';
-import { formatRoute } from '@/config/hubMeta';
+import { formatMonthDay, formatTime, parseWallClock, wallClockMs } from '@/lib/format';
 import type { KorailTrain } from '@/types/domain';
+import { trainOdLabel, viaHubLabel } from './trainInfo';
 import styles from './Korail.module.css';
-
-/** 'YYYY-MM-DD' 또는 'YYYY-MM-DDTHH:mm:ss' 의 날짜 부분을 로컬 자정으로 파싱한다.
- *  new Date('2026-08-10') 은 UTC 로 해석되어 하루가 밀릴 수 있으므로 직접 만든다. */
-function localMidnight(value: string): Date | null {
-  const [datePart] = value.split(/[T ]/);
-  const [y, m, d] = datePart.split('-').map(Number);
-  if (!y || !m || !d) return null;
-  return new Date(y, m - 1, d);
-}
-
-function parseTimestamp(value: string | null): Date | null {
-  if (!value) return null;
-  const date = new Date(value.includes('T') ? value : value.replace(' ', 'T'));
-  return Number.isNaN(date.getTime()) ? null : date;
-}
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** 주간 계획 타임라인.
+/** 계획주기 축의 하루 단위 눈금. 모든 좌표는 KST wall-clock 을
+ *  같은 기준으로 숫자화한 값이라 브라우저 timezone 과 무관하다. */
+function dayAxis(horizonStart: string, horizonEnd: string) {
+  const start = parseWallClock(horizonStart);
+  const end = parseWallClock(horizonEnd);
+  if (!start || !end) return null;
+
+  const startMs = Date.UTC(start.year, start.month - 1, start.day);
+  // 마지막 날의 끝(다음날 자정)까지를 축으로 잡는다.
+  const endMs = Date.UTC(end.year, end.month - 1, end.day) + DAY_MS;
+  const span = endMs - startMs;
+  if (span <= 0) return null;
+
+  const dayCount = Math.round(span / DAY_MS);
+  const days = Array.from({ length: dayCount }, (_, i) => {
+    const d = new Date(startMs + i * DAY_MS);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(
+      d.getUTCDate(),
+    ).padStart(2, '0')}`;
+  });
+
+  return { startMs, span, dayCount, days };
+}
+
+/** 주간 운행 스케줄.
  *
- *  계획주기 위에 각 열차의 출발~도착 구간만 표시한다.
- *  중간 정차 marker 는 넣지 않는다 — 균등 간격으로 임의 배치하면
- *  실제 정차 시각과 다른 정보를 만들어내기 때문이다.
+ *  계획주기 위에 각 열차의 출발~도착 구간만 그린다.
+ *  중간 정차 marker 는 넣지 않는다 — per-stop 시각을 쓰지 않고
+ *  균등 간격으로 배치하면 실제와 다른 정보를 만들어내기 때문이다.
  *  실시간 운행 상태가 아니라 계획값이다. */
 export function WeeklyTimeline({
   trains,
   horizonStart,
   horizonEnd,
+  showCargo = false,
+  onSelect,
 }: {
   trains: KorailTrain[];
   horizonStart: string;
   horizonEnd: string;
+  /** 종합계획처럼 화차·물량·경유까지 함께 읽어야 할 때 켠다. */
+  showCargo?: boolean;
+  onSelect?: (trainId: string) => void;
 }) {
-  const start = localMidnight(horizonStart);
-  const endDay = localMidnight(horizonEnd);
-  if (!start || !endDay) return null;
+  const axis = dayAxis(horizonStart, horizonEnd);
+  if (!axis) return null;
 
-  // 마지막 날의 끝(다음날 자정)까지를 축으로 잡는다.
-  const end = new Date(endDay.getTime() + DAY_MS);
-  const span = end.getTime() - start.getTime();
-  if (span <= 0) return null;
-
-  const dayCount = Math.round(span / DAY_MS);
-  const days = Array.from({ length: dayCount }, (_, i) => new Date(start.getTime() + i * DAY_MS));
-
-  const pct = (date: Date) => ((date.getTime() - start.getTime()) / span) * 100;
+  const { startMs, span, dayCount, days } = axis;
+  const pct = (ms: number) => ((ms - startMs) / span) * 100;
 
   return (
     <div className={styles.timelineWrap}>
@@ -58,43 +64,52 @@ export function WeeklyTimeline({
           style={{ gridTemplateColumns: `repeat(${dayCount}, minmax(0, 1fr))` }}
         >
           {days.map((day) => (
-            <span key={day.toISOString()} className={styles.timelineDay}>
-              {formatMonthDay(
-                `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(
-                  day.getDate(),
-                ).padStart(2, '0')}`,
-              )}
+            <span key={day} className={styles.timelineDay}>
+              {formatMonthDay(day)}
             </span>
           ))}
         </div>
       </div>
 
       {trains.map((train) => {
-        const from = parseTimestamp(train.departureTime);
-        const to = parseTimestamp(train.arrivalTime);
-        if (!from || !to) return null;
+        const from = wallClockMs(train.departureTime);
+        const to = wallClockMs(train.arrivalTime);
+        if (from === null || to === null) return null;
 
         const left = Math.max(0, Math.min(100, pct(from)));
         const right = Math.max(0, Math.min(100, pct(to)));
         // 아주 짧은 운행도 보이도록 최소 폭을 준다.
         const width = Math.max(1.2, right - left);
+        const via = viaHubLabel(train);
 
         return (
-          <div key={train.trainId} className={styles.timelineRow}>
-            <span className={[styles.timelineName, styles.mono].join(' ')}>{train.trainId}</span>
-            <span
-              className={styles.timelineTrack}
-              style={{
-                backgroundSize: `${100 / dayCount}% 100%`,
-              }}
-            >
+          <div
+            key={train.trainId}
+            className={[styles.scheduleRow, onSelect ? styles.rowClickable : '']
+              .filter(Boolean)
+              .join(' ')}
+            onClick={onSelect ? () => onSelect(train.trainId) : undefined}
+          >
+            <div className={styles.scheduleInfo}>
+              <span className={styles.scheduleId}>{train.trainId}</span>
+              <span className={styles.scheduleOd}>{trainOdLabel(train)}</span>
+              <span className={styles.scheduleMeta}>
+                {formatMonthDay(train.departureTime)} {formatTime(train.departureTime)} →{' '}
+                {formatMonthDay(train.arrivalTime)} {formatTime(train.arrivalTime)}
+                {showCargo && (
+                  <>
+                    {' · '}
+                    {train.wagons}량 · {train.totalBoxes}개 / {train.assignedTeu} TEU
+                    {via && ` · 경유: ${via}`}
+                  </>
+                )}
+              </span>
+            </div>
+            <span className={styles.timelineTrack}>
               <span
                 className={styles.timelineBar}
                 style={{ left: `${left}%`, width: `${width}%` }}
-                title={`${formatRoute(train.route)} · ${formatTime(train.departureTime)} → ${formatTime(train.arrivalTime)}`}
-              >
-                <span className={styles.timelineBarText}>{formatRoute(train.route)}</span>
-              </span>
+              />
             </span>
           </div>
         );

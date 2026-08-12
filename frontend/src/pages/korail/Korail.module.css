@@ -1,142 +1,19 @@
 /* KORAIL Control Tower 공용 스타일.
-   원본 HTML 의 카드/표 밀도와 drawer 패턴을 유지하되
-   프로젝트 디자인 토큰(색·타이포·radius)으로 통일한다. */
+   운영 table + schedule board 중심으로 유지한다.
+   KPI 카드·적재율 bar·재고 network 관련 스타일은 사용하지 않는다. */
 
-.kpiStrip {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1px;
-  background: var(--border);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
+/* ── 계획 요약 한 줄 ─────────────────────────────── */
 
-.kpi {
-  background: var(--surface);
-  padding: 14px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.kpiLabel {
-  font-size: 11.5px;
+.planSummary {
+  font-size: 14px;
   color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  margin: -4px 0 0;
 }
 
-.kpiValue {
-  font-size: 21px;
+.planSummary strong {
+  color: var(--text);
   font-weight: 700;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-}
-
-.kpiSub {
-  font-size: 11px;
-  color: var(--text-faint);
-  font-variant-numeric: tabular-nums;
-}
-
-/* 상세 화면으로 이동하는 KPI */
-.kpiLink {
-  color: inherit;
-  text-decoration: none;
-  transition: background 110ms ease;
-}
-
-.kpiLink:hover {
-  background: var(--brand-softer);
-}
-
-.kpiLink:hover .kpiLabel {
-  color: var(--brand-dark);
-}
-
-/* 카드 헤더 우측의 보조 요약 (핵심 KPI 를 밀어내지 않는 정보) */
-.cardMeta {
-  font-size: var(--text-small);
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-/* KPI 논리 그룹 — 배정 / 운행 / 수급.
-   그룹마다 다른 컬러 카드를 만들지 않고 label 과 간격으로만 구분한다. */
-.kpiGroups {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) minmax(0, 1fr);
-  gap: var(--space-5);
-  align-items: end;
-}
-
-.kpiGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.kpiGroupLabel {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-faint);
-  letter-spacing: 0.06em;
-}
-
-@media (max-width: 1099px) {
-  .kpiGroups {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-4);
-  }
-}
-
-/* 최대 구간 적재율 — 카드가 아니라 한 줄 요약으로 둔다. */
-.peakStrip {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-  padding: 11px 15px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  font-size: 12.5px;
-}
-
-.peakLabel {
-  font-size: 11.5px;
-  color: var(--text-muted);
-}
-
-.peakValue {
-  font-size: 17px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
-}
-
-.peakDetail {
-  color: var(--text-muted);
-}
-
-.peakRemain {
-  margin-left: auto;
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.grid2 {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: var(--card-gap);
-  align-items: start;
-}
-
-@media (max-width: 1099px) {
-  .grid2 {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 /* ── 표 ─────────────────────────────── */
@@ -176,6 +53,7 @@
   background: var(--surface);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
+  vertical-align: top;
 }
 
 .table tbody tr:last-child td {
@@ -204,107 +82,260 @@
   color: var(--text-muted);
 }
 
-/* 삭제하지 않되 우선순위를 낮춘 보조 컬럼 */
-.secondaryCol {
-  color: var(--text-faint);
-}
-
 .right {
   text-align: right;
 }
 
-/* ── 적재율 바 ─────────────────────────────── */
-
-.loadBar {
-  position: relative;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--surface-sunken);
-  overflow: hidden;
-  min-width: 70px;
-  margin-top: 4px;
+.kpiSub {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
 }
 
-.loadFill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  border-radius: 3px;
-  background: var(--brand);
-}
-
-/* 적재율에는 경고색을 쓰지 않는다. 높은 적재율은 효율적인 용량 활용일 수 있으므로
-   '높은 적재율 = 위험' 으로 자동 해석하지 않는다. */
-
-/* ── 네트워크 schematic ─────────────────────────────── */
-
-.network {
-  width: 100%;
-  height: 380px;
-  border-radius: var(--radius-md);
-  background: var(--surface-soft);
-  border: 1px solid var(--border);
-}
-
-.networkSvg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.netLine {
-  fill: none;
-  stroke-width: 1.2;
-  stroke-linecap: round;
-  opacity: 0.5;
-}
-
-.netNode {
-  fill: var(--surface);
-  stroke: var(--brand);
-  stroke-width: 0.8;
-}
-
-.netNodeAlert {
-  stroke: var(--danger);
-  fill: var(--danger-soft);
-}
-
-.netLabel {
-  font-size: 2.7px;
-  font-weight: 600;
-  fill: var(--text);
-}
-
-.netSub {
-  font-size: 2.1px;
-  fill: var(--text-muted);
-}
-
-.netTrain {
-  font-size: 2.2px;
-  font-weight: 700;
-  fill: var(--brand-dark);
-}
-
-.legend {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-top: 10px;
+.cardMeta {
   font-size: var(--text-small);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── 주간 운행 스케줄 ─────────────────────────────── */
+
+.timelineWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.timelineHead,
+.scheduleRow {
+  display: grid;
+  grid-template-columns: minmax(210px, 260px) minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+}
+
+.timelineName {
+  font-size: 12px;
+}
+
+.timelineDays {
+  display: grid;
+}
+
+.timelineDay {
+  font-size: 10.5px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  padding-left: 3px;
+}
+
+.scheduleRow {
+  padding: 9px 6px;
+  border-radius: var(--radius-md);
+  border-bottom: 1px solid var(--border);
+}
+
+.scheduleRow:last-child {
+  border-bottom: 0;
+}
+
+.scheduleRow:hover {
+  background: var(--brand-softer);
+}
+
+.scheduleInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.scheduleId {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.scheduleOd {
+  font-size: 12.5px;
+}
+
+.scheduleMeta {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.timelineTrack {
+  position: relative;
+  display: block;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-sunken);
+  /* 하루 경계선 */
+  background-image: linear-gradient(to right, var(--border) 0 1px, transparent 1px);
+  background-repeat: repeat-x;
+  background-size: calc(100% / 7) 100%;
+}
+
+.timelineBar {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--brand);
+  min-width: 4px;
+}
+
+/* ── 거점 selector ─────────────────────────────── */
+
+.hubBar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hubChip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 9px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  min-width: 92px;
+}
+
+.hubChip:hover:not(.hubChipActive) {
+  border-color: var(--border-strong);
+}
+
+.hubChipActive {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.hubChipName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.hubChipActive .hubChipName {
+  color: var(--brand-dark);
+}
+
+.hubChipCount {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 거점작업 2단 레이아웃 ─────────────────────────────── */
+
+.opsLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 65fr) minmax(0, 35fr);
+  gap: var(--card-gap);
+  align-items: start;
+}
+
+@media (max-width: 1199px) {
+  .opsLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.opDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.opDetailHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.opDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px 14px;
+}
+
+.opDetailWork {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px 14px;
+  padding-top: 11px;
+  border-top: 1px solid var(--border);
+}
+
+.workBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ── 필터 ─────────────────────────────── */
+
+.filterBar {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+}
+
+.filterField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.filterLabel {
+  font-size: 11px;
   color: var(--text-muted);
 }
 
-.legendItem {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.filterSelect {
+  padding: 6px 9px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12.5px;
+  font-family: inherit;
+  max-width: 190px;
 }
 
-.legendSwatch {
-  width: 16px;
-  height: 2px;
-  border-radius: 2px;
+.filterSelect:hover {
+  border-color: var(--border-strong);
+}
+
+.filterSelect:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+
+.filterReset {
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.filterReset:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
 }
 
 /* ── Drawer ─────────────────────────────── */
@@ -322,8 +353,6 @@
   top: 0;
   right: 0;
   height: 100%;
-  /* 정차 타임라인·구간 적재·선사 배정을 함께 읽을 수 있는 폭.
-     좁은 화면에서는 max-width 가 계속 보호한다. */
   width: 620px;
   max-width: calc(100vw - 24px);
   background: var(--bg-shell);
@@ -392,23 +421,6 @@
   letter-spacing: 0.02em;
 }
 
-/* Drawer 정보 계층 — 운행계획 / 작업계획 / 배정.
-   새 탭을 만들지 않고 divider 와 label 로만 구분한다. */
-.groupLabel {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-faint);
-  letter-spacing: 0.06em;
-  padding-top: 6px;
-  border-top: 1px solid var(--border);
-}
-
-.drawerBody > .groupLabel:first-child {
-  padding-top: 0;
-  border-top: 0;
-}
-
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -418,7 +430,7 @@
 
 .summaryGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 10px 14px;
 }
 
@@ -439,7 +451,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Stop timeline ─────────────────────────────── */
+/* ── 정차·작업 타임라인 ─────────────────────────────── */
 
 .timeline {
   display: flex;
@@ -462,13 +474,14 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  border: 2px solid var(--brand);
+  border: 2px solid var(--border-strong);
   background: var(--surface);
   margin-top: 4px;
   flex-shrink: 0;
 }
 
 .stopDotWork {
+  border-color: var(--brand);
   background: var(--brand);
 }
 
@@ -486,8 +499,18 @@
 }
 
 .stopName {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
   font-size: 13.5px;
   font-weight: 600;
+}
+
+.stopIndex {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
 }
 
 .stopLink {
@@ -518,6 +541,12 @@
   flex-wrap: wrap;
 }
 
+.stopNoWork {
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
 .workChip {
   display: inline-flex;
   flex-direction: column;
@@ -544,328 +573,4 @@
 .workUnload {
   background: var(--brand-soft);
   color: var(--brand-dark);
-}
-
-/* ── 필터 ─────────────────────────────── */
-
-.filterRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-/* 다중 조건 필터 바 — 표 위에 붙는 조밀한 컨트롤 줄 */
-.filterBar {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding-bottom: 14px;
-}
-
-.filterField {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.filterLabel {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-.filterSelect {
-  padding: 6px 9px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  font-size: 12.5px;
-  font-family: inherit;
-  max-width: 190px;
-}
-
-.filterSelect:hover {
-  border-color: var(--border-strong);
-}
-
-.filterSelect:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 1px;
-}
-
-.filterReset {
-  padding: 6px 12px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-muted);
-  font-size: 12.5px;
-  font-weight: 500;
-}
-
-.filterReset:hover {
-  border-color: var(--border-strong);
-  color: var(--text);
-}
-
-.filterChip {
-  padding: 6px 13px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--text-muted);
-}
-
-.filterChip:hover:not(.filterActive) {
-  border-color: var(--border-strong);
-  color: var(--text);
-}
-
-.filterActive {
-  border-color: var(--brand);
-  background: var(--brand-soft);
-  color: var(--brand-dark);
-  font-weight: 600;
-}
-
-/* ── 주간 계획 타임라인 ─────────────────────────────── */
-
-.timelineWrap {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.timelineHead,
-.timelineRow {
-  display: grid;
-  grid-template-columns: 78px minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-}
-
-.timelineName {
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.timelineDays {
-  display: grid;
-}
-
-.timelineDay {
-  font-size: 10.5px;
-  color: var(--text-faint);
-  font-variant-numeric: tabular-nums;
-  text-align: left;
-  padding-left: 3px;
-}
-
-.timelineTrack {
-  position: relative;
-  display: block;
-  height: 22px;
-  border-radius: var(--radius-sm);
-  background-color: var(--surface-sunken);
-  /* 하루 경계선 — background-size 로 열 수를 맞춘다 */
-  background-image: linear-gradient(to right, var(--border) 0 1px, transparent 1px);
-  background-repeat: repeat-x;
-}
-
-.timelineBar {
-  position: absolute;
-  top: 3px;
-  bottom: 3px;
-  border-radius: var(--radius-sm);
-  background: var(--brand);
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  min-width: 4px;
-}
-
-.timelineBarText {
-  font-size: 10.5px;
-  color: var(--text-invert);
-  padding: 0 6px;
-  white-space: nowrap;
-}
-
-/* ── 미배정 집중 현황 ─────────────────────────────── */
-
-.hotspotStrip {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 10px;
-  padding: 11px 15px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-}
-
-.hotspotLabel {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-muted);
-  margin-right: 2px;
-}
-
-.hotspotEmpty {
-  font-size: 12.5px;
-  color: var(--text-muted);
-}
-
-.hotspot {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 5px 11px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--danger-border);
-  background: var(--danger-soft);
-  font-size: 12.5px;
-  font-variant-numeric: tabular-nums;
-}
-
-.hotspot:hover {
-  border-color: var(--danger);
-}
-
-.hotspotName {
-  color: var(--text);
-}
-
-.hotspotValue {
-  color: var(--danger);
-  font-weight: 700;
-}
-
-/* ── 거점별 계획 취급량 ─────────────────────────────── */
-
-.handlingChart {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.handlingRow {
-  display: grid;
-  grid-template-columns: 84px minmax(0, 1fr) 82px;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 8px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  background: transparent;
-  text-align: left;
-  font-size: 12.5px;
-  color: var(--text-muted);
-  transition: background 110ms ease;
-}
-
-.handlingRow:hover {
-  background: var(--brand-softer);
-}
-
-.handlingRowActive {
-  background: var(--brand-soft);
-  border-color: var(--brand);
-  color: var(--brand-dark);
-  font-weight: 600;
-}
-
-.handlingName {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.handlingTrack {
-  height: 10px;
-  border-radius: 3px;
-  background: var(--surface-sunken);
-  overflow: hidden;
-}
-
-.handlingFill {
-  display: block;
-  height: 100%;
-  border-radius: 3px;
-  background: var(--brand);
-  min-width: 2px;
-}
-
-.handlingValue {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-}
-
-/* ── 선택한 작업 상세 ─────────────────────────────── */
-
-.opDetail {
-  margin-top: 14px;
-  padding: 13px 15px;
-  border: 1px solid var(--brand);
-  border-radius: var(--radius-md);
-  background: var(--brand-softer);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.opDetailHead {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  font-size: 13px;
-}
-
-.opDetailGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 10px 14px;
-}
-
-.opDetailWork {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px 14px;
-  padding-top: 11px;
-  border-top: 1px solid var(--border);
-}
-
-.workBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.note {
-  font-size: 11.5px;
-  color: var(--text-muted);
-  line-height: 1.65;
-  padding: 11px 13px;
-  border-radius: var(--radius-md);
-  background: var(--surface-soft);
-  border: 1px solid var(--border);
-}
-
-.carrierLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--brand);
-  font-weight: 600;
-}
-
-.carrierLink:hover {
-  color: var(--brand-dark);
-  text-decoration: underline;
 }
