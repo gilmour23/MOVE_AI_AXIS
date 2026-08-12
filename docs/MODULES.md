@@ -49,7 +49,7 @@ M00 Environment
 
 | | |
 |---|---|
-| **소유** | `.gitignore` · `.vercelignore` · `frontend/{package.json,package-lock.json,tsconfig.json,vite.config.ts,index.html}` · `frontend/src/main.tsx` · `backend/requirements.txt` · `backend/.env.example` · `setup.bat` · `run_dev.bat` · `vercel.json` |
+| **소유** | `.gitignore` · `.vercelignore` · `frontend/{package.json,package-lock.json,tsconfig.json,vite.config.ts,index.html}` · `frontend/src/main.tsx` · `frontend/src/vite-env.d.ts` · `frontend/public/favicon.svg` · `backend/requirements.txt` · `backend/.env.example` · `backend/pytest.ini` · `setup.bat` · `run_dev.bat` · `vercel.json` · `.claude/launch.json` |
 | **입력** | 없음 |
 | **출력** | 빌드 가능한 개발환경 |
 | **의존** | 없음 |
@@ -121,14 +121,17 @@ carrier_timeline(carrierId) · known_carriers()
 |---|---|
 | **소유** | `backend/moveai/selectors/korail.py` |
 | **입력** | `ResultStore` (전 선사) |
-| **출력** | UI 필수 4종 + grounding 4종 (아래) |
+| **출력** | UI 필수 4종 + legacy 4종 (아래) |
 | **의존** | M02 |
 | **완료 테스트** | allocation origin.sequence < destination.sequence · 열차별 allocation 합 = `assignedTeu` · 상하차 0인 stop 유지 |
 
 ```text
 UI 필수      trains · train_detail · station_operations · transport_allocations
-grounding용  overview · service_needs · hub_inventory · operational_insights
+legacy 4종   overview · service_needs · hub_inventory · operational_insights
 ```
+
+legacy 4종은 KORAIL 4페이지가 쓰지 않지만 **M21 grounding이 실제로 읽는다.**
+`overview`는 추가로 `pages/LandingPage.tsx`가 진입 화면 요약에 쓴다. 삭제 금지 (M21 참조).
 
 `transport_allocations`: `CARRIER_ALLOCATION` 1행 = 운송 1건. 시각은 반드시
 `STOP_WORK_PLAN`을 `(trainId, hubCode)`로 join해서 만든다.
@@ -154,6 +157,20 @@ grounding용  overview · service_needs · hub_inventory · operational_insights
 ```
 
 `export_static.py`와 `client.ts`는 **한 세트**다. 한쪽만 바꾸면 404가 난다.
+
+## 모듈 밖 — 로컬 개발 전용 백엔드 표면
+
+아래 파일은 어느 모듈에도 속하지 않는다. **배포 경로가 아니기 때문이다.**
+`.vercelignore`가 `backend/`를 통째로 제외하므로 배포된 사이트는 이 코드를 실행하지 않는다.
+
+| 파일 | 역할 |
+|---|---|
+| `backend/app.py` | M02 store + M03 selector를 로컬 FastAPI로 노출 (`run_dev.bat`) |
+| `backend/moveai/chat/{provider,router}.py` | 로컬 개발용 챗봇 provider 추상화. 배포 정본은 M22 `api/chat.js` |
+| `backend/moveai/{,chat/,selectors/}__init__.py` | 빈 패키지 마커 |
+
+`backend/app.py`는 selector 계산을 다시 하지 않고 M03 함수를 그대로 호출한다.
+따라서 로컬 API 응답과 정적 JSON은 **같은 코드에서 나온다.**
 
 ---
 
@@ -202,14 +219,20 @@ grounding용  overview · service_needs · hub_inventory · operational_insights
 
 | | |
 |---|---|
-| **소유** | `app/{App,MetaContext,roles,router}.tsx` · `components/layout/{AppShell,RoleSwitch,TopNav,PageContainer}` |
-| **입력** | `meta.json` · 현재 pathname |
-| **출력** | 역할별 navigation · 전역 meta |
+| **소유** | `app/App.tsx` · `app/MetaContext.tsx` · `app/roles.ts` · `app/router.tsx` · `pages/LandingPage.{tsx,module.css}` · `components/layout/{AppShell,RoleSwitch,TopNav,PageContainer}.{tsx,module.css}` |
+| **입력** | `meta.json` · `korail/overview.json`(진입 화면 요약) · 현재 pathname |
+| **출력** | 역할 선택 진입 화면 · 역할별 navigation · 전역 meta |
 | **의존** | M07 |
-| **완료 테스트** | `/carrier/*`→Carrier nav · `/korail/*`→KORAIL nav · RoleSwitch 이동 · 모든 deep link 직접 접속 |
+| **완료 테스트** | `/`→역할 선택 · `/carrier/*`→Carrier nav · `/korail/*`→KORAIL nav · RoleSwitch 이동 · 모든 deep link 직접 접속 |
+
+**`roles.ts`만 `.ts`이고 나머지 셋은 `.tsx`다.** JSX를 담지 않는 순수 정의 파일이기 때문이다.
 
 `router.tsx`와 `roles.ts`의 path는 항상 일치해야 한다 (Seam 4).
 `TopNav`는 `wide` variant로 KORAIL만 여백을 키운다 — Carrier에 영향 주지 않는다.
+
+`LandingPage`는 역할 선택 진입 화면이라 Carrier·KORAIL 어느 쪽에도 속하지 않는다.
+`AppShell` 안에서 그려지지만 `/`에서는 `roleFromPath`가 `null`이므로
+`TopNav`·`RoleSwitch`가 렌더되지 않는다 (`AppShell.tsx:35-36,62,76`).
 
 ## M09 — Shared UI Primitives & Design System
 
@@ -267,7 +290,7 @@ KORAIL 디렉터리의 CSS·helper를 참조하지 않는다.
 
 | | |
 |---|---|
-| **소유** | `pages/TransportPage.{tsx,module.css}` · `backend/moveai/selectors/transport.py` · `data/TRUCK_COMPARISON_BY_RECOMMENDATION.csv` |
+| **소유** | `pages/TransportPage.{tsx,module.css}` · `backend/moveai/selectors/transport.py` · `data/TRUCK_COMPARISON_BY_RECOMMENDATION.csv` · `data/README.md` |
 | **입력** | `TransportComparison` |
 | **출력** | 비용·시간·탄소 우선순위 비교 · 그래프 · 상세 |
 | **의존** | M03 · M07 · M09 |
@@ -381,14 +404,17 @@ UI 표기는 `경유거점`·`정차거점`이며 `작업거점`이라 부르지
 **KORAIL grounding은 legacy JSON 4종에 여전히 의존한다.**
 
 ```text
-korail/overview.json       항상
-korail/inventory.json      재고·부족·거점 질문
-korail/service_needs.json  수요·배정 질문
-korail/insights.json       분석·권고·영향 질문
+korail/overview.json       항상            _grounding.js:66
+korail/inventory.json      재고·부족·거점   _grounding.js:68
+korail/service_needs.json  수요·배정        _grounding.js:71
+korail/insights.json       분석·권고·영향   _grounding.js:74
 ```
 
-이 4개를 "UI가 안 쓴다"는 이유로 삭제하면 **챗봇 grounding이 약해진다.**
+이 4개를 "KORAIL 4페이지가 안 쓴다"는 이유로 삭제하면 **챗봇 grounding이 약해진다.**
 삭제하려면 grounding을 4페이지 데이터 구조로 먼저 재설계해야 한다.
+
+`korail/overview.json`은 여기에 더해 **`pages/LandingPage.tsx`(M08)도 읽는다.**
+UI 미사용 파일이 아니다.
 
 ## M22 — Gemini Serverless API
 
@@ -439,11 +465,16 @@ cd frontend && npm run typecheck && npm run build
 
 | | |
 |---|---|
-| **소유** | `README.md` · `docs/MODULES.md` |
-| **입력** | 실제 구현 상태 |
+| **소유** | `README.md` · `docs/MODULES.md` · `docs/README.md` · `docs/planning/**` · `docs/prototypes/**` |
+| **입력** | 실제 구현 상태 · git 이력 |
 | **출력** | 구현과 일치하는 문서 |
 | **의존** | 전부 |
-| **완료 테스트** | README가 현재 화면·데이터·배포와 일치 · 참조 검색 없이 파일을 지우지 않음 |
+| **완료 테스트** | README가 현재 화면·데이터·배포와 일치 · 개발 시점 서술이 git 이력으로 입증 가능 · 참조 검색 없이 파일을 지우지 않음 |
+
+`docs/planning`·`docs/prototypes`는 실행 코드가 아니다. 그 안의 숫자는 mock이며 정본이 아니다.
+
+**개발 시점을 쓸 때는 `git log`로 확인한 사실만 쓴다.** 특정 시점 이후 구현이라고
+적으려면 그 시점 이후의 커밋이 실제로 존재해야 한다.
 
 ---
 
