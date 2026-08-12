@@ -1,0 +1,101 @@
+/* loading / empty / error 공용 상태 표현 (핸드오프 §25) */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-sunken) 25%,
+    #e6ebee 37%,
+    var(--surface-sunken) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+.skeletonStack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  text-align: center;
+  padding: var(--space-8) var(--space-5);
+  min-height: 160px;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  color: var(--text-faint);
+}
+
+.iconError {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.iconWarning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.title {
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.description {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  max-width: 460px;
+  white-space: pre-line;
+}
+
+.retry {
+  margin-top: var(--space-1);
+  padding: 7px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.retry:hover {
+  background: var(--surface-soft);
+}
+
+.inlineNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--warning-soft);
+  background: var(--warning-soft);
+  color: #8a6224;
+  font-size: var(--text-small);
+}
+
+.inlineNoticeDanger {
+  border-color: var(--danger-border);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.noticeTitle {
+  font-weight: 700;
+  margin-bottom: 2px;
+}

@@ -1,0 +1,109 @@
+﻿check,pass,detail
+params_loaded_from_xlsx,True,"{'HARDCODED_FROM_XLSX_NETWORK_BASIS', 'XLSX'}"
+distance_validation_all_pass,True,[]
+physical_vs_tariff_fully_explained,True,[]
+segment_and_tariff_tables_present,True,segments=10 tariff=22
+policy_rejects::v6.1 legacy key 'type',True,expected=MISSING_FIELD got=MISSING_FIELD
+policy_error_structured::v6.1 legacy key 'type',True,
+policy_rejects::plan-doc rule_type MIN_INVENTORY,True,expected=UNKNOWN_RULE_TYPE got=UNKNOWN_RULE_TYPE
+policy_error_structured::plan-doc rule_type MIN_INVENTORY,True,
+policy_rejects::soft TARGET_INVENTORY,True,expected=RULE_TYPE_NOT_IMPLEMENTED got=RULE_TYPE_NOT_IMPLEMENTED
+policy_error_structured::soft TARGET_INVENTORY,True,
+policy_rejects::unknown hub,True,expected=UNKNOWN_HUB got=UNKNOWN_HUB
+policy_error_structured::unknown hub,True,
+policy_rejects::unknown carrier,True,expected=UNKNOWN_CARRIER got=UNKNOWN_CARRIER
+policy_error_structured::unknown carrier,True,
+policy_rejects::time outside horizon,True,expected=TIME_OUTSIDE_HORIZON got=TIME_OUTSIDE_HORIZON
+policy_error_structured::time outside horizon,True,
+policy_rejects::negative value,True,expected=BAD_VALUE got=BAD_VALUE
+policy_error_structured::negative value,True,
+policy_rejects::unknown field,True,expected=UNKNOWN_FIELD got=UNKNOWN_FIELD
+policy_error_structured::unknown field,True,
+policy_MIN_INVENTORY_RANGE_applied,True,needs 147 -> 149
+policy_recorded_in_ACTIVE_POLICY,True,
+policy_ORIGIN_RELEASE_RESTRICTION_parsed,True,"{('CARRIER_A', 'BUSAN', '40FT'): (0, 0, 167)}"
+all_stages_proven_optimal,True,
+solver_has_tiebreak_stage,True,7
+multi_carrier_consolidation_happens,True,"[5, 6]"
+integer_assignment,True,
+segment_capacity_respected,True,
+min_consolidation_respected,True,"[{'train_id': 'CAND0159', 'distance_weighted_load_factor': 0.5013}, {'train_id': 'CAND0706', 'distance_weighted_load_factor': 0.5037}]"
+formation_selected,True,
+due_time_respected,True,
+earliness_within_cap,True,48.0
+no_departure_slot_conflict,True,
+carrier_ownership_preserved,True,0 violations
+source_release_capacity_respected,True,[]
+carrier_view_equals_korail_view,True,rec=90 alloc=90 served=90
+recommendation_detail_sums_match,True,90/90/90/90/90
+explanation_context_generated,True,21 vs 21
+explanation_context_numeric_only,True,"['recommendation_id', 'carrier_id', 'destination_hub', 'container_size', 'linked_service_need_teu', 'linked_need_count', 'linked_need_due_min', 'linked_need_due_max']"
+per_carrier_files_generated,True,6
+per_carrier_file_isolation,True,[]
+no_negotiation_identifiers_in_core,True,[]
+removed::load_negotiation,True,
+removed::create_accept_all_actions,True,
+removed::diagnose_commitment_conflict,True,
+run_has_no_run_mode,True,"('hourly_path', 'initial_path', 'root', 'min_load_factor', 'policies_path', 'operations_path', 'scenario', 'time_limit', 'mip_gap', 'verbose', 'max_earliness', 'carrier_subset', 'params_xlsx', 'origin_loading_h', 'intermediate_handling_h', 'destination_unloading_h', 'candidates_dir', 'strict_lexicographic', 'validate_inputs')"
+run_has_no_actions_path,True,"('hourly_path', 'initial_path', 'root', 'min_load_factor', 'policies_path', 'operations_path', 'scenario', 'time_limit', 'mip_gap', 'verbose', 'max_earliness', 'carrier_subset', 'params_xlsx', 'origin_loading_h', 'intermediate_handling_h', 'destination_unloading_h', 'candidates_dir', 'strict_lexicographic', 'validate_inputs')"
+build_milp_has_no_proposal_reference,True,
+ext::fixture_present,True,
+ext::external_candidate_not_overwritten,True,"before=['TRAIN_CANDIDATE.csv', 'TRAIN_FORMATION_OPTION.csv', 'TRAIN_SEGMENT.csv', 'TRAIN_STOP_TIME.csv'] after=['TRAIN_CANDIDATE.csv', 'TRAIN_FORMATION_OPTION.csv', 'TRAIN_SEGMENT.csv', 'TRAIN_STOP_TIME.csv']"
+ext::external_candidate_hash_unchanged,True,
+ext::synthetic_generator_not_called,True,no generated file written into candidate dir
+ext::candidate_source_preserved,True,KORAIL_FEASIBLE_PATH
+ext::candidate_input_sources_recorded,True,['KORAIL_FEASIBLE_PATH']
+ext::selected_train_sources_recorded,True,['KORAIL_FEASIBLE_PATH']
+ext::external_train_id_used,True,['KTEST002']
+ext::actual_departure_minute_preserved_in_train_plan,True,['2026-08-11 06:35']
+ext::model_departure_slot_separate,True,"[{'model_origin_departure_slot': 31, 'model_origin_departure_time': '2026-08-11 07:00'}]"
+ext::actual_departure_minute_preserved_in_carrier_view,True,"['2026-08-11 11:40', '2026-08-11 06:35', '2026-08-11 06:35', '2026-08-11 06:35', '2026-08-11 11:40', '2026-08-11 06:35', '2026-08-11 06:35', '2026-08-11 11:40', '2026-08-11 06:35', '2026-08-11 06:35', '2026-08-11 11:40', '2026-08-11 06:35']"
+ext::actual_arrival_0940_preserved_in_candidate_object,True,2026-08-10 09:40:00
+ext::external_formation_capacity_used,True,"[{'formation': 'KF44', 'capacity_teu': 88, 'wagons': 44}]"
+ext::external_segment_distance_used,True,"[120.4, 140.9, 155.1]"
+ext::external_train_km_matches_fixture,True,train_km=416.4 seg_sum=416.4
+input::valid_file_accepted,True,"{'carriers': ['CARRIER_A', 'CARRIER_B', 'CARRIER_C', 'CARRIER_D', 'CARRIER_E', 'CARRIER_F'], 'hubs': ['BUGANG', 'BUSAN', 'DONGSAN', 'GWANGYANG', 'UIWANG', 'YAKMOK'], 'sizes': ['20FT', '40FT'], 'timestamps': 168, 'rows': 12096, 'initial_rows': 72}"
+input::duplicate_row_rejected,True,"CARRIER_INPUT_INVALID: hourly row 12098: duplicate (carrier,timestamp,hub,size) ('CARRIER_A', datetime."
+input::missing_hour_rejected,True,"CARRIER_INPUT_INVALID: incomplete carrier x hub x size x time grid: 12092 rows, expected 12096"
+input::negative_demand_rejected,True,CARRIER_INPUT_INVALID: hourly row 2: demand=-3 must be nonnegative
+input::unknown_hub_rejected,True,CARRIER_INPUT_INVALID: hourly row 2: unknown hub_code 'SEOUL'
+input::fractional_demand_rejected,True,CARRIER_INPUT_INVALID: hourly row 2: demand=1.5 must be an integer (container count)
+input::carrier_all_dongsan_rows_removed_rejected,True,CARRIER_INPUT_INVALID: hourly hub set must equal the six AXIS hubs: missing=['DONGSAN'] extra=[]
+input::carrier_all_40ft_rows_removed_rejected,True,"CARRIER_INPUT_INVALID: hourly container_size set must equal ['20FT', '40FT']: missing=['40FT'] extra=[]"
+input::blank_carrier_id_rejected,True,CARRIER_INPUT_INVALID: hourly row 2: carrier_id must be a nonblank string
+input::empty_hourly_file_rejected,True,CARRIER_INPUT_INVALID: carrier hourly plan must contain at least one data row
+input::initial_inventory_missing_rejected,True,CARRIER_INPUT_INVALID
+input::carrier_set_mismatch_rejected,True,CARRIER_INPUT_INVALID
+input::empty_initial_file_rejected,True,CARRIER_INPUT_INVALID
+cand::valid_fixture_accepted,True,"{'train_count': 2, 'candidate_sources': ['KORAIL_FEASIBLE_PATH'], 'horizon': None}"
+cand::canonical_candidate_set_valid,True,1084
+cand::missing_file_rejected,True,CANDIDATE_FILE_MISSING: 
+cand::distance_sum_mismatch_rejected,True,CANDIDATE_INPUT_INVALID: KTEST001: service_distance_km 160.5 != Σ segment_distance_km 150.5 (tolerance 0.
+cand::bad_formation_rejected,True,CANDIDATE_INPUT_INVALID: KTEST001/KF44: capacity_teu must be > 0
+cand::stop_order_broken_rejected,True,CANDIDATE_INPUT_INVALID: KTEST001/BUSAN: available_slot < arrival_slot
+cand::korail_work_stops_missing_rejected,True,CANDIDATE_INPUT_INVALID: KTEST001: KORAIL_FEASIBLE_PATH requires explicit work_stops
+baseline::external_candidate_not_overwritten,True,"['TRAIN_CANDIDATE.csv', 'TRAIN_FORMATION_OPTION.csv', 'TRAIN_SEGMENT.csv', 'TRAIN_STOP_TIME.csv']"
+baseline::candidate_hash_recorded,True,"{'TRAIN_CANDIDATE.csv': '136ef8a9f76388d2ff3a52557b0cb133034ab30b05701f2e7ab2a13507928ba2', 'TRAIN_STOP_TIME.csv': 'cac0d47703eebed369bb10b2f64a88e4da955e479c5aa79ff569b4741687e5f5', 'TRAIN_SEGMENT.csv': 'f10b12c7fac4852313c5703b9acf1fbe56e47f53c106c0fac9fc63c4b121d998', 'TRAIN_FORMATION_OPTION.csv': '31dda848ffb52212f2bd20795878f261b20a5a4f75c1690898bb08d0a2a63957'}"
+chat::run_present,True,
+chat::inventory_timeline_generated,True,12096
+chat::post_rail_inventory_nonnegative,True,0.0
+chat::impact_summary_generated,True,72
+chat::stockout_not_increased,True,0
+chat::carrier_service_summary_generated,True,6
+chat::coverage_within_0_1,True,
+chat::ambiguous_shortage_column_removed,True,"['recommendation_id', 'carrier_id', 'destination_hub', 'container_size', 'linked_service_need_teu', 'linked_need_count']"
+chat::context_has::linked_service_need_teu,True,
+chat::context_has::linked_need_count,True,
+chat::context_has::source_release_capacity_cumulative_boxes,True,
+chat::context_has::assigned_outbound_cumulative_boxes_through_load,True,
+chat::context_has::source_release_remaining_after_assignment_boxes,True,
+chat::per_carrier_context_generated,True,6
+chat::carrier_context_isolation,True,[]
+chat::carrier_scoped_raw_text_has_no_other_carrier_id,True,[]
+chat::final_train_operation_summary_generated,True,C:\Users\yunho\AppData\Local\Temp\axis_v71_test_ajo9a7jp\AXIS_INTEGRATED\FINAL_TRAIN_OPERATION_SUMMARY.csv
+chat::recommendation_due_range_present,True,"['recommendation_id', 'carrier_id', 'container_size', 'quantity_boxes', 'quantity_teu', 'origin_hub', 'origin_name', 'destination_hub']"
+chat::single_due_column_removed,True,
+chat::unserved_reason_not_false_specific,True,"{'NO_CANDIDATE_AFTER_CONSOLIDATION_PRUNING': 37, 'UNSERVED_AFTER_JOINT_OPTIMIZATION': 33}"
+chat::unserved_reason_flagged_unproven,True,
+policy::min_above_max_rejected,True,POLICY_CONFLICT
+determinism_run_4,False,

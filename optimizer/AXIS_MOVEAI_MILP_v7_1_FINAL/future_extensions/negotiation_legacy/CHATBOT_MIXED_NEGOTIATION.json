@@ -1,0 +1,45 @@
+{
+  "negotiation_round": 2,
+  "proposal_actions": [
+    {
+      "proposal_id": "PROP0002",
+      "proposal_uuid": "a3f7e3b4-3aab-5533-a1c3-d7b24d899ef1",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0007",
+      "proposal_uuid": "e5cdecb3-e0fa-549d-ad2b-39be2da8050a",
+      "proposal_version": 1,
+      "action": "ACCEPT_EXACT_PLAN"
+    },
+    {
+      "proposal_id": "PROP0010",
+      "proposal_uuid": "e633ed89-fe96-5655-8605-b5b1388f85a0",
+      "proposal_version": 1,
+      "action": "MODIFY_SERVICE",
+      "constraints": {
+        "quantity": 2
+      },
+      "commit": false
+    },
+    {
+      "proposal_id": "PROP0014",
+      "proposal_uuid": "2e2da140-0bee-53ea-9c2a-bb8fbbd0df4d",
+      "proposal_version": 1,
+      "action": "REJECT_OPTION"
+    },
+    {
+      "proposal_id": "PROP0019",
+      "proposal_uuid": "b2b705b3-a4da-5899-b0e1-b4ad157ad414",
+      "proposal_version": 1,
+      "action": "DECLINE_RAIL_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0021",
+      "proposal_uuid": "62b827fc-e4c5-50b9-aa87-e02d7fdd4272",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    }
+  ]
+}

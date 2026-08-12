@@ -1,0 +1,56 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.soft {
+  background: var(--surface-soft);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-5) 0;
+}
+
+.headerText {
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--text-card-title);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.subtitle {
+  margin-top: 3px;
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.action {
+  flex-shrink: 0;
+}
+
+.body {
+  padding: var(--space-5);
+  flex: 1;
+  min-width: 0;
+}
+
+.bodyWithHeader {
+  padding-top: var(--space-4);
+}
+
+.flush {
+  padding: 0;
+}

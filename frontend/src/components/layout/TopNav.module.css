@@ -1,0 +1,40 @@
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.nav::-webkit-scrollbar {
+  display: none;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 15px;
+  border-radius: var(--radius-pill);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.item:hover:not(.active) {
+  color: var(--text);
+}
+
+.active {
+  background: var(--surface);
+  color: var(--brand-dark);
+  font-weight: 600;
+  box-shadow: var(--shadow-card);
+}

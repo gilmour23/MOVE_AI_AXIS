@@ -1,0 +1,4 @@
+﻿label,min_load_factor,max_earliness_hours,handling_hours,candidate_assignments,candidate_trains,service_need_teu,status,rail_served_teu,rail_unserved_teu,train_count,train_km,wagon_km,teu_km,avg_distance_weighted_load_factor,avg_carriers_per_train,avg_earliness_hours,max_earliness_observed,expected_korail_revenue_krw,runtime_sec
+LF_50,0.5,48.0,3.0,1673,24,180,OPTIMAL,90,90,2,798.7,26357.1,26487.7,0.5025,5.5,22.99,48.0,9616860.79,102.3
+LF_60,0.6,48.0,3.0,366,4,180,OPTIMAL,0,180,0,0.0,0.0,0,0.0,0.0,0.0,0.0,0,1.3
+LF_70,0.7,48.0,3.0,0,0,180,NO_FEASIBLE_ASSIGNMENT,0,180,0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.7

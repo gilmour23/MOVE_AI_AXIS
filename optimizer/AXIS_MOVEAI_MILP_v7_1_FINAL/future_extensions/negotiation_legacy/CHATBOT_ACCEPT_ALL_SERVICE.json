@@ -1,0 +1,149 @@
+{
+  "negotiation_round": 2,
+  "proposal_actions": [
+    {
+      "proposal_id": "PROP0001",
+      "proposal_uuid": "2001fa73-b1a5-591a-94cf-671a60ff5def",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0002",
+      "proposal_uuid": "a3f7e3b4-3aab-5533-a1c3-d7b24d899ef1",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0003",
+      "proposal_uuid": "b558edf0-0da4-51a2-874a-6f4a33517146",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0004",
+      "proposal_uuid": "41106063-649e-59b8-b71c-4fbb787fe3f8",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0005",
+      "proposal_uuid": "4e768846-72b4-59b2-a1e8-166bdbc9402b",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0006",
+      "proposal_uuid": "a9cda23d-9ba3-5e01-b276-1225c57bc27f",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0007",
+      "proposal_uuid": "e5cdecb3-e0fa-549d-ad2b-39be2da8050a",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0008",
+      "proposal_uuid": "6f42c6d7-3e5c-533f-b710-9eb430adda13",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0009",
+      "proposal_uuid": "b1b4ca8c-66b0-53d8-b2e9-3ea1434bfa63",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0010",
+      "proposal_uuid": "e633ed89-fe96-5655-8605-b5b1388f85a0",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0011",
+      "proposal_uuid": "26054a5e-7208-5eba-ba26-9039fb062be2",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0012",
+      "proposal_uuid": "6844bc6f-c406-5a12-b068-ed63b35dd210",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0013",
+      "proposal_uuid": "ee209b83-b2f1-5a92-b535-bf7e46dffcff",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0014",
+      "proposal_uuid": "2e2da140-0bee-53ea-9c2a-bb8fbbd0df4d",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0015",
+      "proposal_uuid": "e0a89b65-4cb2-5d41-bda5-21496dec88d0",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0016",
+      "proposal_uuid": "2ba6be2b-cf62-52c2-95fe-6d179bddfb75",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0017",
+      "proposal_uuid": "a492c99f-bea0-5b1a-ba27-b05c29ac9584",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0018",
+      "proposal_uuid": "00b832bf-d1f5-539a-867c-d312fa4ef357",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0019",
+      "proposal_uuid": "b2b705b3-a4da-5899-b0e1-b4ad157ad414",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0020",
+      "proposal_uuid": "811845e2-5de8-594a-b0d8-37c503bced8c",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0021",
+      "proposal_uuid": "62b827fc-e4c5-50b9-aa87-e02d7fdd4272",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0022",
+      "proposal_uuid": "a62aa625-0248-5cc3-a855-70ac5d1348fc",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0023",
+      "proposal_uuid": "45f80dc1-06fc-57dc-9e6f-81f2f27a0267",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    },
+    {
+      "proposal_id": "PROP0024",
+      "proposal_uuid": "7e6fc376-b684-5558-b738-3df80d847c7f",
+      "proposal_version": 1,
+      "action": "ACCEPT_SERVICE"
+    }
+  ]
+}

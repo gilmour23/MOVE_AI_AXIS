@@ -1,0 +1,10 @@
+﻿check,pass,detail
+laden_rate_positive,True,"{'20FT': 516.0, '40FT': 800.0}"
+empty_discount_in_range,True,0.74
+min_charge_positive,True,100.0
+avg_speed_reasonable,True,68.37960339943344
+handling_times_nonnegative,True,"(3.0, 3.0, 3.0)"
+all_corridor_od_have_tariff_distance,True,[]
+all_corridor_segments_have_physical_distance,True,[]
+distance_delta_fully_explained,True,all deltas are 0 or 5.8km (BUGANG 인입선 왕복 2 x 2.9km)
+tariff_distance_symmetric,True,

@@ -1,0 +1,18 @@
+{
+  "_comment": "전부 의도적으로 잘못된 예시. v7 은 조용히 무시하지 않고 구조화된 오류를 낸다. 하나씩 분리해서 시험할 것.",
+  "_expected_errors": {
+    "legacy_type_key": "MISSING_FIELD",
+    "plandoc_rule_type": "UNKNOWN_RULE_TYPE",
+    "soft_target": "RULE_TYPE_NOT_IMPLEMENTED",
+    "outside_horizon": "TIME_OUTSIDE_HORIZON"
+  },
+  "inventory_policies": [
+    {
+      "rule_type": "TARGET_INVENTORY",
+      "carrier_id": "CARRIER_A",
+      "hub_code": "YAKMOK",
+      "container_size": "40FT",
+      "value": 25
+    }
+  ]
+}

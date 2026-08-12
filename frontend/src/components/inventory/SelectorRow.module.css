@@ -1,0 +1,75 @@
+/* 규격 선택 → 거점 선택으로 이어지는 두 선택 행이 같은 시각 언어를 쓰도록 공유한다. */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+}
+
+.chip:hover:not(.active) {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.active {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  font-weight: 600;
+}
+
+/* 규격 선택은 흐름의 시작점이므로 조금 더 크게 잡는다. */
+.primary .chip {
+  padding: 9px 20px;
+  font-size: 14px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+  flex-shrink: 0;
+}
+
+.hint {
+  margin-left: auto;
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+@media (max-width: 767px) {
+  .hint {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+}

@@ -1,0 +1,2 @@
+﻿proposal_id,carrier_id,origin,destination,container_size,train_id,boxes,reason
+PROP0007,CARRIER_B,UIWANG,BUSAN,20FT,CAND0054,10,EXACT_PLAN_TRAIN_NO_LONGER_AVAILABLE

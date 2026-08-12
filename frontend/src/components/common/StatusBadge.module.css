@@ -1,0 +1,60 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-small);
+  font-weight: 600;
+  line-height: 1.45;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.normal {
+  background: var(--success-soft);
+  color: #3f7a4d;
+  border-color: #d9e9dd;
+}
+
+.shortage {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: var(--danger-border);
+}
+
+.neutral {
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+
+.info {
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  border-color: #d5e6ec;
+}
+
+.accent {
+  background: var(--accent-soft);
+  color: #6b48b3;
+  border-color: #e3d9f7;
+}
+
+.warning {
+  background: var(--warning-soft);
+  color: #a4762c;
+  border-color: #f0e2c8;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.small {
+  padding: 2px 7px;
+  font-size: 11.5px;
+}

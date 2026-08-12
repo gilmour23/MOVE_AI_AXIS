@@ -1,0 +1,80 @@
+.scroll {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+}
+
+.table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--text-body);
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-size: var(--text-table-head);
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table th:first-child {
+  border-top-left-radius: var(--radius-md);
+}
+
+.table th:last-child {
+  border-top-right-radius: var(--radius-md);
+}
+
+.table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.alignRight {
+  text-align: right;
+}
+
+.alignCenter {
+  text-align: center;
+}
+
+.clickable {
+  cursor: pointer;
+  transition: background 110ms ease;
+}
+
+.clickable:hover {
+  background: var(--brand-softer);
+}
+
+.selected {
+  background: var(--brand-soft);
+}
+
+.highlighted {
+  animation: highlightPulse 2.4s ease-out 1;
+}
+
+@keyframes highlightPulse {
+  0%,
+  40% {
+    background: var(--brand-soft);
+  }
+  100% {
+    background: transparent;
+  }
+}

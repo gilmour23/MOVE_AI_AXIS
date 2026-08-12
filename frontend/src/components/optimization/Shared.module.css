@@ -1,0 +1,79 @@
+.sizeTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.size40 {
+  background: var(--accent-soft);
+  border-color: #e3d9f7;
+  color: #6b48b3;
+}
+
+.qty {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.subtext {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.shortageText {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.route {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.routeArrow {
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+.timeCell {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.timeDay {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-right: 5px;
+}
+
+.expandButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+}
+
+.expandButton:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}

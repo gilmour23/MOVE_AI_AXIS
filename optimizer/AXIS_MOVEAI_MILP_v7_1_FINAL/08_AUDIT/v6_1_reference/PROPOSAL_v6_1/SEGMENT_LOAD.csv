@@ -1,0 +1,5 @@
+﻿train_id,segment_sequence,from_hub,to_hub,load_teu,capacity_teu,load_factor,segment_distance_km
+CAND0177,1,BUSAN,YAKMOK,37,66,0.5606,143.7
+CAND0367,1,UIWANG,BUGANG,49,66,0.7424,111.8
+CAND0367,2,BUGANG,DONGSAN,63,66,0.9545,130.2
+CAND0367,3,DONGSAN,GWANGYANG,42,66,0.6364,148.6

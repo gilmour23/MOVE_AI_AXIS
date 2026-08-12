@@ -1,0 +1,5 @@
+﻿type,status,rule,constrained_groups
+PATH_SLOT_CAPACITY,NOT_APPLIED_NO_DATA,KORAIL 실제 운영자원 데이터가 제공되지 않아 비활성. 구조는 구현되어 있으며 값만 넣으면 즉시 적용된다.,
+RESOURCE_CAPACITY,NOT_APPLIED_NO_DATA,KORAIL 실제 운영자원 데이터가 제공되지 않아 비활성. 구조는 구현되어 있으며 값만 넣으면 즉시 적용된다.,
+DEPARTURE_SLOT_CONFLICT,APPLIED,"at most one new train per (origin_terminal, departure_slot)",17
+SHARED_TRUNK_CONFLICT,APPLIED,at most one new train per shared trunk segment per hour,8

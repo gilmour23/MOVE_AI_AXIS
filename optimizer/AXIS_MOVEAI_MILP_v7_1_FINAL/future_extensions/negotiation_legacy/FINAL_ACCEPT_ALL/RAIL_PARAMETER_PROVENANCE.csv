@@ -1,0 +1,13 @@
+﻿parameter,value,unit,evidence_level,source_url,note,loaded_from
+laden_rate_20ft,516.0,KRW/km/container,Official,https://info.korail.com/info/contents.do?key=873,영컨테이너,XLSX
+laden_rate_40ft,800.0,KRW/km/container,Official,https://info.korail.com/info/contents.do?key=873,영컨테이너,XLSX
+empty_discount_ratio,0.74,ratio,Official,https://info.korail.com/info/contents.do?key=873,공컨 = 영컨 임률의 74%,XLSX
+min_charge_distance,100.0,km,Official,https://info.korail.com/info/contents.do?key=873,컨테이너 최저운임,XLSX
+benchmark_avg_speed,68.37960339943344,km/h,Formula,https://info.korail.com/info/selectBbsNttView.do?bbsNo=199&key=911&nttNo=16264,402.3/(5h53m),XLSX
+container_loading_limit,3.0,h,Official,https://info.korail.com/info/contents.do?key=873,적재통지 후 컨테이너 적재 3시간,XLSX
+container_unloading_limit,3.0,h,Official,https://info.korail.com/info/contents.do?key=873,도착 후 컨테이너 하화 3시간,XLSX
+teu_per_wagon,2.0,TEU/wagon,Official-derived,https://info.korail.com/info/selectBbsNttView.do?bbsNo=199&key=911&nttNo=16264,"33량=66TEU, 50량=100TEU",XLSX
+base_max_wagons,40.0,wagons/train,Official-reference,https://info.korail.com/info/contents.do?key=870,2024-01 40량 컨테이너 화물열차 증결운행,XLSX
+literature_min_load_factor,0.7,ratio,Literature,https://www.mdpi.com/2071-1050/14/8/4697,Song et al. (2022): 50/60/70% 비교,XLSX
+tariff_distance_km,22 OD,km,OFFICIAL_RECONSTRUCTED,https://www.data.go.kr/data/15137040/fileData.do,OD_PARAMETER!rail_distance_km,XLSX
+physical_distance_km,10 segments,km,OFFICIAL_RECONSTRUCTED,https://www.data.go.kr/data/15137040/fileData.do,adjacent segments incl. terminal 인입선 at each stop,HARDCODED_FROM_XLSX_NETWORK_BASIS

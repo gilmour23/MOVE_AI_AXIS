@@ -1,0 +1,3 @@
+﻿train_id,formation_id,wagon_count,capacity_teu,basis
+KTEST001,KF44,44,88,KORAIL_PROVIDED
+KTEST002,KF44,44,88,KORAIL_PROVIDED

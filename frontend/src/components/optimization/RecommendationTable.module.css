@@ -1,0 +1,128 @@
+.scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 860px;
+  max-width: 1180px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table th {
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-size: var(--text-table-head);
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table th:first-child {
+  border-top-left-radius: var(--radius-md);
+}
+
+.table th:last-child {
+  border-top-right-radius: var(--radius-md);
+}
+
+.row {
+  cursor: pointer;
+  transition: background 110ms ease;
+}
+
+.row:hover td {
+  background: var(--brand-softer);
+}
+
+.row td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  background: var(--surface);
+}
+
+.rowOpen td {
+  background: var(--brand-soft);
+}
+
+.rowOpen:hover td {
+  background: var(--brand-soft);
+}
+
+.rowHighlight td {
+  animation: highlightFlash 2.6s ease-out 1;
+}
+
+@keyframes highlightFlash {
+  0%,
+  35% {
+    background: #fdf3d8;
+  }
+  100% {
+    background: var(--surface);
+  }
+}
+
+.detailRow td {
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-soft);
+}
+
+.alignRight {
+  text-align: right;
+}
+
+.alignCenter {
+  text-align: center;
+}
+
+.hubName {
+  font-weight: 500;
+}
+
+.timeCell {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.timeDay {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-right: 6px;
+}
+
+.availableHint {
+  font-size: 11.5px;
+  color: var(--brand);
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+.expandCell {
+  width: 44px;
+  text-align: center;
+}
+
+.chevron {
+  color: var(--text-faint);
+  transition: transform 140ms ease;
+  display: inline-flex;
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+  color: var(--brand);
+}
+
+.badgeRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}

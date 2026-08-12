@@ -1,0 +1,15 @@
+{
+  "inventory_policies": [
+    {
+      "rule_id": "POL-002",
+      "carrier_id": "CARRIER_A",
+      "rule_type": "MIN_INVENTORY_AT_TIME",
+      "hub_code": "BUSAN",
+      "container_size": "20FT",
+      "target_time": "2026-08-14 18:00",
+      "value": 50,
+      "hard_constraint": true,
+      "note": "\"금요일 18시까지 부산신항에 20FT 50개 확보해줘\""
+    }
+  ]
+}

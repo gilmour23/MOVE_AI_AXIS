@@ -1,0 +1,17 @@
+node_modules/
+dist/
+__pycache__/
+*.pyc
+.pytest_cache/
+.vite/
+
+# 시크릿 — 절대 커밋하지 말 것 (Gemini API key 등)
+.env
+.env.local
+.env.*.local
+
+.venv/
+venv/
+*.log
+.DS_Store
+Thumbs.db

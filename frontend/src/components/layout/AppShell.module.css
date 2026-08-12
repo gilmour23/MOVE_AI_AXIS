@@ -1,0 +1,155 @@
+.shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-app);
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  background: rgba(247, 248, 248, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.headerInner {
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  padding: 0 var(--page-padding);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+.brandMark {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--brand);
+  color: var(--text-invert);
+  display: grid;
+  place-items: center;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.brandName {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.brandSub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.navSlot {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.metaBadges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.carrier {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+}
+
+.carrierAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.carrierText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.carrierName {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.carrierRole {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.devSelect {
+  font-size: 12px;
+  padding: 5px 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+}
+
+@media (max-width: 1099px) {
+  .headerInner {
+    gap: var(--space-4);
+  }
+
+  .navSlot {
+    justify-content: flex-start;
+  }
+
+  .brandSub,
+  .carrierText {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .metaBadges {
+    display: none;
+  }
+}

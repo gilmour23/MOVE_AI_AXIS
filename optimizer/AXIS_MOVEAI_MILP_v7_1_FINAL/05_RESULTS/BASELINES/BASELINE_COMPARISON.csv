@@ -1,0 +1,4 @@
+﻿scenario,rail_served_teu,rail_unserved_teu,train_count,train_km,wagon_km,teu_km,avg_distance_weighted_load_factor,avg_carriers_per_train,estimated_rail_charge_krw,movement_count
+A_NO_REPOSITIONING,0,180,0,0.0,0.0,0.0,0.0,0.0,0.0,0
+B_CARRIER_SEPARATE,34,146,1,143.7,4742.1,4885.8,0.5152,1.0,1643560.16,21
+C_AXIS_INTEGRATED,138,42,3,942.4,31099.2,33802.4,0.5381,4.0,12242088.67,113

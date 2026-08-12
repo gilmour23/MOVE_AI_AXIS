@@ -1,0 +1,4 @@
+﻿label,min_load_factor,max_earliness_hours,handling_hours,candidate_assignments,candidate_trains,service_need_teu,status,error,runtime_sec,rail_served_teu,rail_unserved_teu,train_count,train_km,wagon_km,teu_km,avg_distance_weighted_load_factor,avg_carriers_per_train,avg_earliness_hours,max_earliness_observed,expected_korail_revenue_krw
+H_0,0.5,48.0,0.0,1971,27,180,NOT_PROVEN_OPTIMAL,stage 'Z5_earliness_teu_hours' not proven optimal (status=1): Time limit reached. (HiGHS Status 13: model_status is Time limit reached; primal_status is None). A time-limited or infeasible stage must ,2307.7,,,,,,,,,,,
+H_3,0.5,48.0,3.0,1673,24,180,OPTIMAL,,143.9,90,90,2,798.7,26357.1,26487.7,0.5025,5.5,22.99,48.0,9616860.79
+H_6,0.5,48.0,6.0,1428,20,180,OPTIMAL,,20.6,90,90,2,798.7,26357.1,26470.6,0.5022,5.5,23.83,48.0,9597524.02

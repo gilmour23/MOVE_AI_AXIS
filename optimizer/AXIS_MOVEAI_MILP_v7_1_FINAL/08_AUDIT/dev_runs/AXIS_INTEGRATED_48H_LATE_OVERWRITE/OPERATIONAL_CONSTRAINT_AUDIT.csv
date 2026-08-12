@@ -1,0 +1,5 @@
+﻿type,status,constrained_groups,scope,rule
+DUPLICATE_CANDIDATE_GUARD_DEPARTURE_SLOT,APPLIED,8,PROTOTYPE_DUPLICATE_CANDIDATE_GUARD,"at most one new train per (origin_terminal, departure_slot). NOT a full track-occupancy / headway model."
+DUPLICATE_CANDIDATE_GUARD_SHARED_TRUNK,APPLIED,8,PROTOTYPE_DUPLICATE_CANDIDATE_GUARD,at most one new train per shared trunk segment per hour. NOT a full track-occupancy / headway model.
+PATH_SLOT_CAPACITY,NOT_APPLIED_NO_DATA,,,KORAIL 실제 운영자원 데이터가 제공되지 않아 비활성. 구조는 구현되어 있으며 값만 넣으면 즉시 적용된다.
+RESOURCE_CAPACITY,NOT_APPLIED_NO_DATA,,,KORAIL 실제 운영자원 데이터가 제공되지 않아 비활성. 구조는 구현되어 있으며 값만 넣으면 즉시 적용된다.

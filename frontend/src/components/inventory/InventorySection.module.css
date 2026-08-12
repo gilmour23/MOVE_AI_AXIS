@@ -1,0 +1,18 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--card-gap);
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr);
+  gap: var(--card-gap);
+  align-items: stretch;
+}
+
+@media (max-width: 1099px) {
+  .detailGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

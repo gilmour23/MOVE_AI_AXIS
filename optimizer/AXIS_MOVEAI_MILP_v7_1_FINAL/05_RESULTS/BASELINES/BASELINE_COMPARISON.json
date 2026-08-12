@@ -1,0 +1,69 @@
+{
+  "min_load_factor": 0.5,
+  "default_max_earliness_hours": 72.0,
+  "total_service_need_teu": 180,
+  "total_service_need_count": 147,
+  "carriers": [
+    "CARRIER_A",
+    "CARRIER_B",
+    "CARRIER_C",
+    "CARRIER_D",
+    "CARRIER_E",
+    "CARRIER_F"
+  ],
+  "return_wagon_movement_included": false,
+  "candidate_directory": "C:\\26-1\\Korail\\AXIS_MOVEAI_MILP_v7_1_PATCHED\\04_MODEL_INPUTS",
+  "candidate_train_count": 1084,
+  "candidate_file_sha256": {
+    "TRAIN_CANDIDATE.csv": "10593e144c4dc70a7c47eaa03536d820d5659bb0d57b012d5e9b27de76bc85f7",
+    "TRAIN_STOP_TIME.csv": "0b6d94596f784b4db1c03e0496504736d5abffbc2787ffabd3a9faeef42bd3f2",
+    "TRAIN_SEGMENT.csv": "dd8d2615370df38832d7a108274eb8ca49a0d48b745aef19cc0a24760b15ba02",
+    "TRAIN_FORMATION_OPTION.csv": "a6575fb8c6a01f6732d267ecd588f88dcc67d1b7d2716d7c684467200f483891"
+  },
+  "parameter_file_sha256": "b8c8b3e88d9b56ec32d0965d1d01b34e51b9477490a902240974f13509d1f354",
+  "scenarios": {
+    "A": {
+      "scenario": "A_NO_REPOSITIONING",
+      "rail_served_teu": 0,
+      "rail_unserved_teu": 180,
+      "train_count": 0,
+      "train_km": 0.0,
+      "wagon_km": 0.0,
+      "teu_km": 0.0,
+      "avg_distance_weighted_load_factor": 0.0,
+      "avg_carriers_per_train": 0.0,
+      "estimated_rail_charge_krw": 0.0,
+      "movement_count": 0,
+      "no_rail_unmet_demand_teu": 180,
+      "shortage_event_count": 147
+    },
+    "B": {
+      "scenario": "B_CARRIER_SEPARATE",
+      "rail_served_teu": 34,
+      "rail_unserved_teu": 146,
+      "train_count": 1,
+      "train_km": 143.7,
+      "wagon_km": 4742.1,
+      "teu_km": 4885.8,
+      "avg_distance_weighted_load_factor": 0.5152,
+      "avg_carriers_per_train": 1.0,
+      "estimated_rail_charge_krw": 1643560.16,
+      "movement_count": 21,
+      "carriers_with_rail_service": 1
+    },
+    "C": {
+      "scenario": "C_AXIS_INTEGRATED",
+      "rail_served_teu": 138,
+      "rail_unserved_teu": 42,
+      "train_count": 3,
+      "train_km": 942.4,
+      "wagon_km": 31099.2,
+      "teu_km": 33802.4,
+      "avg_distance_weighted_load_factor": 0.5381,
+      "avg_carriers_per_train": 4.0,
+      "estimated_rail_charge_krw": 12242088.67,
+      "movement_count": 113
+    }
+  },
+  "note": "B is not tuned to produce zero trains; identical timetable, formation options, minimum load factor and handling assumptions as C."
+}

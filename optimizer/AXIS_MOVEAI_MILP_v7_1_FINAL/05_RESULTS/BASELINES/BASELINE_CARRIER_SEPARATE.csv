@@ -1,0 +1,7 @@
+﻿carrier_id,rail_served_teu,rail_unserved_teu,train_count,train_km,wagon_km,teu_km,avg_distance_weighted_load_factor,avg_carriers_per_train,estimated_rail_charge_krw,movement_count,feasible_assignments
+CARRIER_A,0,67,0,0.0,0.0,0.0,0.0,0.0,0.0,0,0
+CARRIER_B,0,38,0,0.0,0.0,0.0,0.0,0.0,0.0,0,0
+CARRIER_C,0,15,0,0.0,0.0,0.0,0.0,0.0,0.0,0,0
+CARRIER_D,0,6,0,0.0,0.0,0.0,0.0,0.0,0.0,0,0
+CARRIER_E,0,26,0,0.0,0.0,0.0,0.0,0.0,0.0,0,0
+CARRIER_F,0,28,0,0.0,0.0,0.0,0.0,0.0,0.0,0,0

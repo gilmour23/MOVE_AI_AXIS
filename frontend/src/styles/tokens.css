@@ -1,0 +1,80 @@
+/* 디자인 토큰 (핸드오프 §14.2)
+   참고 이미지의 밝고 차분한 enterprise dashboard 성격만 차용한다.
+   glassmorphism / neon / AI풍 gradient 는 사용하지 않는다. */
+
+:root {
+  /* surface */
+  --bg-app: #eef1f4;
+  --bg-shell: #f7f8f8;
+  --surface: #ffffff;
+  --surface-soft: #f5f7f8;
+  --surface-sunken: #eff2f4;
+  --border: #e2e6e9;
+  --border-strong: #cfd6db;
+
+  /* text */
+  --text: #12161b;
+  --text-muted: #737b84;
+  --text-faint: #98a1a9;
+  --text-invert: #ffffff;
+
+  /* brand */
+  --brand: #1f6f8b;
+  --brand-dark: #154b61;
+  --brand-soft: #e8f1f4;
+  --brand-softer: #f2f7f9;
+  --accent: #8a62d8;
+  --accent-soft: #f0ebfb;
+
+  /* status */
+  --success: #5aa56a;
+  --success-soft: #eaf4ec;
+  --warning: #d39b43;
+  --warning-soft: #fbf3e6;
+  --danger: #c75b5b;
+  --danger-soft: #fbeeee;
+  --danger-border: #f0d5d5;
+
+  /* radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  /* shadow — 아주 약하게 */
+  --shadow-card: 0 1px 2px rgba(18, 22, 27, 0.04);
+  --shadow-raised: 0 4px 14px rgba(18, 22, 27, 0.08);
+  --shadow-drawer: 0 12px 40px rgba(18, 22, 27, 0.16);
+
+  /* spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+
+  /* layout */
+  --app-max-width: 1480px;
+  --page-padding: 28px;
+  --card-gap: 18px;
+  --section-gap: 32px;
+  --header-height: 66px;
+
+  /* typography */
+  --font-sans: 'Pretendard', 'Pretendard Variable', -apple-system,
+    BlinkMacSystemFont, system-ui, 'Segoe UI', 'Noto Sans KR', 'Malgun Gothic',
+    sans-serif;
+  --font-numeric: 'Pretendard', system-ui, 'Segoe UI', sans-serif;
+
+  --text-page-title: 25px;
+  --text-section-title: 18px;
+  --text-card-title: 15px;
+  --text-body: 14px;
+  --text-table-head: 13px;
+  --text-small: 12.5px;
+  --text-metric: 26px;
+}

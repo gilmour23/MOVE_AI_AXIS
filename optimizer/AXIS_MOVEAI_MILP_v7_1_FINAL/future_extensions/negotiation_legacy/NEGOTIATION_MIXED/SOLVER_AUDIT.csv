@@ -1,0 +1,8 @@
+﻿stage,status,success,message,objective,mip_gap_requested,mip_gap_achieved,mip_dual_bound,runtime_sec,rows,cols
+Z1_unserved_teu,0,True,Optimization terminated successfully. (HiGHS Status 7: Optimal),47.999999999999986,0.0,0.0,47.999999999999986,14.16,1267,5129
+Z2_train_count,0,True,Optimization terminated successfully. (HiGHS Status 7: Optimal),3.0,0.0,0.0,3.0,36.253,1268,5129
+Z3_train_km,0,True,Optimization terminated successfully. (HiGHS Status 7: Optimal),942.4,0.001,0.0,942.4000000000001,10.881,1269,5129
+Z4_wagon_km,0,True,Optimization terminated successfully. (HiGHS Status 7: Optimal),31099.200000000004,0.001,0.0,31099.200000000004,3.673,1270,5129
+Z5_earliness_teu_hours,0,True,Optimization terminated successfully. (HiGHS Status 7: Optimal),4303.0,0.001,0.0,4303.0,6.017,1271,5129
+Z6_rail_charge_krw,0,True,Optimization terminated successfully. (HiGHS Status 7: Optimal),12214650.159999998,0.001,0.0,12214650.16,4.078,1272,5129
+Z7_deterministic_tiebreak,0,True,Optimization terminated successfully. (HiGHS Status 7: Optimal),243214.09100000001,0.001,9.14438253675421e-05,243191.85057313566,8.589,1273,5129

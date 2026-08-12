@@ -1,0 +1,127 @@
+.scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table th {
+  font-size: var(--text-table-head);
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 9px 10px;
+  text-align: center;
+  background: var(--surface-soft);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.hubHead {
+  text-align: left !important;
+  width: 168px;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  border-top-left-radius: var(--radius-md);
+}
+
+.table th:last-child {
+  border-top-right-radius: var(--radius-md);
+}
+
+.hubCell {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--surface);
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.hubButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+}
+
+.hubName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cell {
+  padding: 8px 6px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  min-width: 74px;
+}
+
+.cell:last-child {
+  border-right: 0;
+}
+
+.cellShortage {
+  background: var(--danger-soft);
+}
+
+.value {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+}
+
+.valueZero {
+  color: var(--text-faint);
+}
+
+.shortage {
+  margin-top: 2px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--danger);
+  font-variant-numeric: tabular-nums;
+}
+
+.selectedRow .hubCell {
+  background: var(--brand-soft);
+}
+
+.selectedRow .cell:not(.cellShortage) {
+  background: var(--brand-softer);
+}
+
+.tbody tr:last-child .hubCell,
+.tbody tr:last-child .cell {
+  border-bottom: 0;
+}
+
+.rowClickable {
+  cursor: pointer;
+}
+
+.rowClickable:hover .cell:not(.cellShortage) {
+  background: var(--surface-soft);
+}
+
+.footnote {
+  margin-top: 10px;
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}

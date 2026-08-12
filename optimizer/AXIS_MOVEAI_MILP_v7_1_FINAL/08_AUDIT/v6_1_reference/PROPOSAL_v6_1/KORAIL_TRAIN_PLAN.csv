@@ -1,0 +1,3 @@
+﻿train_id,plan_status,service_family,origin_terminal,destination_terminal,path,origin_departure_time,formation_id,wagon_count,capacity_teu,service_distance_km,peak_load_teu,peak_load_factor,distance_weighted_load_factor,participating_carriers,carrier_list
+CAND0177,PROVISIONAL,GYEONGBU,BUSAN,YAKMOK,BUSAN > YAKMOK,2026-08-12 06:00,F33,33,66,143.7,37,0.5606,0.5606,4,CARRIER_A|CARRIER_B|CARRIER_C|CARRIER_E
+CAND0367,PROVISIONAL,SOUTHWEST,UIWANG,GWANGYANG,UIWANG > BUGANG > DONGSAN > GWANGYANG,2026-08-11 00:00,F33,33,66,390.6,63,0.9545,0.7728,6,CARRIER_A|CARRIER_B|CARRIER_C|CARRIER_D|CARRIER_E|CARRIER_F

@@ -1,0 +1,19 @@
+﻿check,pass,detail
+aggregate_demand_preservation,True,mismatch_rows=0/2016
+aggregate_supply_return_preservation,True,mismatch_rows=0/2016
+aggregate_supply_sea_preservation,True,mismatch_rows=0/2016
+aggregate_supply_total_preservation,True,mismatch_rows=0/2016
+aggregate_initial_inventory_preservation,True,[]
+all_values_integer,True,
+no_negative_values,True,
+horizon_168_hours,True,168
+six_hubs,True,6
+both_sizes,True,2
+row_count,True,12096
+six_hubs_distinct_prior,True,6/6
+demand_supply_structural_asymmetry,True,min_max_gap=0.1349 mean=0.1918
+no_carrier_over_concentration,True,max_share=0.2432
+temporal_continuity_block_share,True,"max_adjacent_block_change=0.0903 mean=0.0123 (rho=0.75, sigma=0.1)"
+no_structural_carrier_exclusion,True,[]
+realized_share_tracks_design,True,max_deviation=0.0921
+block_share_mean_reversion,True,max_drift_from_base=0.0328

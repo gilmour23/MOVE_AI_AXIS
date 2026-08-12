@@ -1,0 +1,16 @@
+﻿parameter,value
+random_seed,20260810
+role_tilt,1.1
+block_hours,6
+ar1_rho,0.75
+ar1_sigma,0.1
+source_week_start,2025-05-05 00:00
+target_week_start,2026-08-10 00:00
+horizon_hours,168
+scenario,AXIS_V7_1_2026-08-10
+carriers,CARRIER_A|CARRIER_B|CARRIER_C|CARRIER_D|CARRIER_E|CARRIER_F
+hub_lambda,"{""BUSAN"": 1.0, ""YAKMOK"": 0.85, ""BUGANG"": 0.55, ""UIWANG"": 0.45, ""DONGSAN"": 0.15, ""GWANGYANG"": 0.0}"
+carrier_role,"{""CARRIER_A"": {""supply_base"": ""BUSAN"", ""demand_base"": ""YAKMOK""}, ""CARRIER_B"": {""supply_base"": ""UIWANG"", ""demand_base"": ""BUGANG""}, ""CARRIER_C"": {""supply_base"": ""GWANGYANG"", ""demand_base"": ""DONGSAN""}, ""CARRIER_D"": {""supply_base"": ""BUSAN"", ""demand_base"": ""GWANGYANG""}, ""CARRIER_E"": {""supply_base"": ""UIWANG"", ""demand_base"": ""YAKMOK""}, ""CARRIER_F"": {""supply_base"": null, ""demand_base"": null}}"
+generation_rule,"share = normalize(P_hub * exp(role_tilt * 1{hub==base})); log-share AR(1) mean-reverting path per 6h block (z_b = (1-rho)*log(base) + rho*z_{b-1} + N(0,sigma)); Largest Remainder integer split per (timestamp,hub,size)"
+master_file,AXIS_hourly_empty_demand_supply_v8_6hubs.xlsx
+snapshot_file,public_snapshot_2026-08-09.csv

@@ -1,0 +1,16 @@
+{
+  "inventory_policies": [
+    {
+      "rule_id": "POL-001",
+      "carrier_id": "CARRIER_A",
+      "rule_type": "MIN_INVENTORY_RANGE",
+      "hub_code": "YAKMOK",
+      "container_size": "40FT",
+      "start_time": "2026-08-13 00:00",
+      "end_time": "2026-08-16 23:00",
+      "value": 10,
+      "hard_constraint": true,
+      "note": "\"목요일부터 약목 40FT는 10개 밑으로 떨어지지 않게 해줘\""
+    }
+  ]
+}

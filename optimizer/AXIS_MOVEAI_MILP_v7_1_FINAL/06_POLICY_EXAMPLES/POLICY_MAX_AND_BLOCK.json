@@ -1,0 +1,24 @@
+{
+  "inventory_policies": [
+    {
+      "rule_id": "POL-003",
+      "carrier_id": "CARRIER_C",
+      "rule_type": "MAX_INVENTORY",
+      "hub_code": "DONGSAN",
+      "container_size": "20FT",
+      "value": 40,
+      "hard_constraint": true,
+      "note": "\"동산 20FT는 40개 이상 쌓이지 않게 해줘\" (장치능력 제한)"
+    },
+    {
+      "rule_id": "POL-004",
+      "carrier_id": "CARRIER_A",
+      "rule_type": "ORIGIN_RELEASE_RESTRICTION",
+      "hub_code": "BUSAN",
+      "container_size": "40FT",
+      "value": 20,
+      "hard_constraint": true,
+      "note": "\"이번 주 부산신항에서 40FT는 20개 이상 빼지 마\""
+    }
+  ]
+}
