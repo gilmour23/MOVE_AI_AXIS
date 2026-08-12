@@ -35,8 +35,23 @@
   box-shadow: var(--shadow-card);
 }
 
-@media (max-width: 899px) {
+/* 기본은 전체 라벨, 좁아지면 짧은 라벨, 더 좁아지면 아이콘만 */
+.labelShort {
+  display: none;
+}
+
+@media (max-width: 1399px) {
   .label {
+    display: none;
+  }
+
+  .labelShort {
+    display: inline;
+  }
+}
+
+@media (max-width: 859px) {
+  .labelShort {
     display: none;
   }
 }

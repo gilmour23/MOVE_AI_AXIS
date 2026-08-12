@@ -148,7 +148,9 @@
   }
 }
 
-@media (max-width: 767px) {
+/* 좁은 화면에서는 네비게이션에 폭을 양보한다.
+   badge 정보는 각 페이지 상단에서도 확인할 수 있다. */
+@media (max-width: 1399px) {
   .metaBadges {
     display: none;
   }

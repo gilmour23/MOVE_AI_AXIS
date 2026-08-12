@@ -26,6 +26,7 @@ export function RoleSwitch({ current }: { current: RoleId }) {
           >
             <Icon size={14} />
             <span className={styles.label}>{role.label}</span>
+            <span className={styles.labelShort}>{role.shortLabel}</span>
           </button>
         );
       })}
