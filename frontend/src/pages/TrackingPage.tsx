@@ -9,7 +9,7 @@ import { fetchOptimization } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
 import { useCarrierId } from '@/app/MetaContext';
 import { formatBoxes, formatDateShort, formatTime } from '@/lib/format';
-import styles from './korail/Korail.module.css';
+import styles from './TrackingPage.module.css';
 
 /** 운송 현황 — 계획된 각 재배치안의 출발·도착·사용 가능 시각을 한 줄로 본다.
  *

@@ -1,0 +1,87 @@
+/* 운송 현황(Carrier Tracking) 전용 스타일.
+
+   이전에는 KORAIL 화면의 Korail.module.css 를 그대로 import 했는데,
+   KORAIL 쪽에서 쓰지 않게 된 클래스를 정리하면 이 화면이 함께 깨졌다.
+   역할이 다른 화면이므로 필요한 클래스를 자체적으로 가진다. */
+
+.scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table th {
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-size: var(--text-table-head);
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 13px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table th:first-child {
+  border-top-left-radius: var(--radius-md);
+}
+
+.table th:last-child {
+  border-top-right-radius: var(--radius-md);
+}
+
+.table td {
+  padding: 11px 13px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  vertical-align: top;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.mono {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.kpiSub {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 열차 ID → KORAIL 열차운행 화면으로 이동 */
+.carrierLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.carrierLink:hover {
+  color: var(--brand-dark);
+  text-decoration: underline;
+}
+
+/* 실시간 추적이 아니라는 점을 밝히는 안내 */
+.note {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.65;
+  padding: 11px 13px;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+}
