@@ -18,6 +18,9 @@ export function KorailNetwork({
 }) {
   const byCode = new Map(hubs.map((h) => [h.hubCode, h]));
 
+  // 노선 색은 corridor 정의에서 한 번만 결정하고 선·범례가 같은 값을 쓴다.
+  const corridorColor = (id: string) => (id === 'GYEONGBU' ? 'var(--brand)' : 'var(--accent)');
+
   // 열차를 corridor 에 배치 — work_stops 가 어느 축에 속하는지로 판정
   const trainsByCorridor = CORRIDORS.map((corridor) => ({
     corridor,
@@ -41,7 +44,7 @@ export function KorailNetwork({
                 key={corridor.id}
                 points={points}
                 className={styles.netLine}
-                stroke={corridor.id === 'GYEONGBU' ? 'var(--brand)' : 'var(--accent)'}
+                stroke={corridorColor(corridor.id)}
               />
             );
           })}
@@ -110,15 +113,17 @@ export function KorailNetwork({
         </svg>
       </div>
       <div className={styles.legend}>
-        <span className={styles.legendItem}>
-          <span className={styles.legendSwatch} style={{ background: 'var(--brand)' }} />
-          경부축
-        </span>
-        <span className={styles.legendItem}>
-          <span className={styles.legendSwatch} style={{ background: 'var(--accent)' }} />
-          서남축
-        </span>
+        {CORRIDORS.map((corridor) => (
+          <span key={corridor.id} className={styles.legendItem}>
+            <span
+              className={styles.legendSwatch}
+              style={{ background: corridorColor(corridor.id) }}
+            />
+            {corridor.label}
+          </span>
+        ))}
         <span className={styles.legendItem}>재고는 재배치 후 주말 기준 · 붉은 노드는 부족 잔존</span>
+        <span className={styles.legendItem}>운영 관계를 단순화한 노선도 (지리 축척 아님)</span>
       </div>
     </div>
   );

@@ -181,7 +181,7 @@ export function RailHubMap({ hubs, selectedHub, onSelectHub }: RailHubMapProps) 
             className={styles.legendSwatch}
             style={{ background: 'var(--accent)' }}
           />
-          남서·호남축
+          호남축
         </span>
         <span className={styles.legendItem}>
           <span className={styles.legendDot} />

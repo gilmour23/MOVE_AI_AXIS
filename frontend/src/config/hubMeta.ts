@@ -35,8 +35,9 @@ export const CORRIDORS: { id: string; label: string; path: string[] }[] = [
     path: ['UIWANG', 'BUGANG', 'YAKMOK', 'BUSAN'],
   },
   {
+    // internal id 는 유지하고 사용자에게 보이는 label 만 '호남축'으로 통일한다.
     id: 'SOUTHWEST',
-    label: '남서·호남축',
+    label: '호남축',
     path: ['UIWANG', 'BUGANG', 'DONGSAN', 'GWANGYANG'],
   },
 ];
@@ -47,4 +48,14 @@ export function hubShortName(code: string): string {
 
 export function hubFullName(code: string): string {
   return HUB_BY_CODE[code]?.name ?? code;
+}
+
+/** 'UIWANG > BUGANG > BUSAN' 같은 코드 경로를 사용자 표기로 바꾼다.
+ *  매핑에 없는 코드는 그대로 남긴다 (임의로 이름을 만들지 않는다). */
+export function formatRoute(route: string): string {
+  if (!route) return route;
+  return route
+    .split('>')
+    .map((part) => hubShortName(part.trim()))
+    .join(' → ');
 }

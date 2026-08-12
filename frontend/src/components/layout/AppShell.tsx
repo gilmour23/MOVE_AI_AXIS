@@ -9,21 +9,24 @@ import { ROLES, roleFromPath } from '@/app/roles';
 import styles from './AppShell.module.css';
 
 /** 합성 데이터·프로토타입 시각 배지를 하나로 합친다.
- *  실제 데이터로 교체되면 SUMMARY.json 값에 따라 자동으로 사라진다. */
+ *
+ *  데모 데이터라는 사실은 숨기지 않되, 사용자에게는 내부 필드명 대신
+ *  읽을 수 있는 표현만 보여준다. 실제 데이터로 교체되면 자동으로 사라진다. */
 function buildDataSourceBadge(meta: ReturnType<typeof useMeta>['meta']) {
   if (!meta) return null;
   const parts: string[] = [];
   const details: string[] = [];
   if (meta.isSyntheticCarrierData) {
-    parts.push('Synthetic');
-    details.push(`carrier_data_source = ${meta.carrierDataSource}`);
+    parts.push('합성 데이터');
+    details.push('선사별 수요·재고는 실제 선사 데이터가 아닌 합성 데이터입니다.');
   }
   if (meta.isPrototypeTimetable) {
-    parts.push('Prototype');
-    details.push(`candidate_timetable_source = ${meta.candidateTimetableSource}`);
+    parts.push('프로토타입 운행계획');
+    details.push('운행시각은 KORAIL 확정 시각이 아니라 프로토타입 운행후보입니다.');
   }
   if (parts.length === 0) return null;
-  return { label: `${parts.join(' · ')} data`, title: details.join('\n') };
+  // 헤더 폭이 한정되어 라벨은 짧게 두고 상세는 tooltip 으로 보여준다.
+  return { label: `DEMO · ${parts[0]}`, title: details.join('\n') };
 }
 
 export function AppShell({ children }: { children: ReactNode }) {

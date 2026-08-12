@@ -38,6 +38,29 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 상세 화면으로 이동하는 KPI */
+.kpiLink {
+  color: inherit;
+  text-decoration: none;
+  transition: background 110ms ease;
+}
+
+.kpiLink:hover {
+  background: var(--brand-softer);
+}
+
+.kpiLink:hover .kpiLabel {
+  color: var(--brand-dark);
+}
+
+/* 카드 헤더 우측의 보조 요약 (핵심 KPI 를 밀어내지 않는 정보) */
+.cardMeta {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .grid2 {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
@@ -116,6 +139,11 @@
   color: var(--text-muted);
 }
 
+/* 삭제하지 않되 우선순위를 낮춘 보조 컬럼 */
+.secondaryCol {
+  color: var(--text-faint);
+}
+
 .right {
   text-align: right;
 }
@@ -139,9 +167,8 @@
   background: var(--brand);
 }
 
-.loadFillHigh {
-  background: var(--warning);
-}
+/* 적재율에는 경고색을 쓰지 않는다. 높은 적재율은 효율적인 용량 활용일 수 있으므로
+   '높은 적재율 = 위험' 으로 자동 해석하지 않는다. */
 
 /* ── 네트워크 schematic ─────────────────────────────── */
 
@@ -230,7 +257,9 @@
   top: 0;
   right: 0;
   height: 100%;
-  width: 520px;
+  /* 정차 타임라인·구간 적재·선사 배정을 함께 읽을 수 있는 폭.
+     좁은 화면에서는 max-width 가 계속 보호한다. */
+  width: 620px;
   max-width: calc(100vw - 24px);
   background: var(--bg-shell);
   box-shadow: var(--shadow-drawer);
@@ -379,6 +408,16 @@
   font-weight: 600;
 }
 
+.stopLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.stopLink:hover {
+  color: var(--brand-dark);
+  text-decoration: underline;
+}
+
 .stopTimes {
   font-size: 11.5px;
   color: var(--text-muted);
@@ -418,6 +457,62 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+/* 다중 조건 필터 바 — 표 위에 붙는 조밀한 컨트롤 줄 */
+.filterBar {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+}
+
+.filterField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.filterLabel {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.filterSelect {
+  padding: 6px 9px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12.5px;
+  font-family: inherit;
+  max-width: 190px;
+}
+
+.filterSelect:hover {
+  border-color: var(--border-strong);
+}
+
+.filterSelect:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+
+.filterReset {
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.filterReset:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
 }
 
 .filterChip {

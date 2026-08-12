@@ -5,19 +5,20 @@ import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/common/Sta
 import { fetchKorailInsights } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
 import { formatNumber, formatPercent } from '@/lib/format';
+import { statusTone } from './statusTone';
 import styles from './Korail.module.css';
 
-/** 수급 분석 및 권고.
+/** 수급·적재 분석.
  *
- *  여기 수치는 MILP 결과에서 직접 계산한 값이므로 '운영 분석'으로 표기한다.
- *  생성형 AI 가 만든 설명은 Copilot(우측 하단)에서만 AI 로 표기한다. */
+ *  최적화 결과에서 직접 계산한 사실만 보여준다.
+ *  적재율 수치로 증차·신규 수요 유치 같은 운영 판단을 대신하지 않는다. */
 export function KorailInsightsPage() {
   const { data, loading, error, reload } = useAsync((signal) => fetchKorailInsights(signal), []);
 
   return (
     <PageContainer
-      title="수급 분석 및 권고"
-      description="최적화 결과에서 계산한 거점 수급 영향과 구간 적재 분석입니다."
+      title="수급·적재 분석"
+      description="최적화 결과에서 계산한 거점 수급 영향과 구간 적재 현황입니다."
     >
       {error && <ErrorState error={error} onRetry={reload} />}
       {loading && (
@@ -64,9 +65,14 @@ export function KorailInsightsPage() {
                         <td className={styles.right}>{item.postRailStockout}</td>
                         <td className={styles.right}>{item.reduction}</td>
                         <td>
-                          <StatusBadge tone={item.resolved ? 'normal' : 'shortage'} small>
-                            {item.resolved ? '해소' : '부족 잔존'}
-                          </StatusBadge>
+                          {(() => {
+                            const label = item.resolved ? '해소' : '부족 잔존';
+                            return (
+                              <StatusBadge tone={statusTone(label)} small>
+                                {label}
+                              </StatusBadge>
+                            );
+                          })()}
                         </td>
                       </tr>
                     ))}
@@ -74,17 +80,13 @@ export function KorailInsightsPage() {
                 </table>
               </div>
             )}
-            <div className={styles.note} style={{ marginTop: 12 }}>
-              위 수치는 최적화 결과(INVENTORY_IMPACT_SUMMARY)에서 직접 계산한 값입니다.
-              생성형 AI가 만든 설명이 아니므로 <strong>운영 분석</strong>으로 표기합니다.
-            </div>
           </Card>
 
           <div className={styles.grid2}>
-            <Card title="적재율이 낮은 구간" subtitle="추가 수요 유치 여지가 있는 구간">
+            <Card title="여유 용량이 큰 구간" subtitle="상대적으로 적재율이 낮은 구간">
               <SegmentTable rows={data.lowestLoadSegments} />
             </Card>
-            <Card title="적재율이 높은 구간" subtitle="증차 검토가 필요할 수 있는 구간">
+            <Card title="적재율이 높은 구간" subtitle="상대적으로 열차 용량 활용도가 높은 구간">
               <SegmentTable rows={data.highestLoadSegments} />
             </Card>
           </div>

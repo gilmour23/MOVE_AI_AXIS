@@ -1,3 +1,5 @@
+/* 운영 도구 성격에 맞춰 pill 느낌을 줄이고 탭에 가깝게 둔다.
+   폭·높이·padding 은 그대로 유지해 헤더 레이아웃에 영향을 주지 않는다. */
 .nav {
   display: flex;
   align-items: center;
@@ -5,7 +7,7 @@
   padding: 4px;
   background: var(--surface-sunken);
   border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-md);
   max-width: 100%;
   overflow-x: auto;
   scrollbar-width: none;
@@ -20,7 +22,7 @@
   align-items: center;
   gap: 6px;
   padding: 7px 11px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   font-size: 13px;
   font-weight: 500;
   color: var(--text-muted);

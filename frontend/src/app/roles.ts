@@ -55,9 +55,9 @@ export const ROLES: Record<RoleId, RoleDefinition> = {
     nav: [
       { to: '/korail', label: '대시보드', icon: LayoutDashboard, end: true },
       { to: '/korail/needs', label: '수요·배정', icon: Warehouse },
-      { to: '/korail/trains', label: '노선·열차', icon: Train },
+      { to: '/korail/trains', label: '운행계획', icon: Train },
       { to: '/korail/inventory', label: '거점 재고', icon: Boxes },
-      { to: '/korail/insights', label: '수급 분석', icon: Sparkles },
+      { to: '/korail/insights', label: '수급·적재 분석', icon: Sparkles },
       { to: '/korail/operations', label: '거점 작업', icon: MapPinned },
     ],
   },

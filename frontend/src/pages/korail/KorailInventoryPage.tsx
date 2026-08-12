@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Card } from '@/components/common/Card';
@@ -9,20 +10,39 @@ import { fetchKorailInventory } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
 import { formatNumber, sizeTabLabel } from '@/lib/format';
 import type { ContainerSize, KorailHub } from '@/types/domain';
+import { statusTone } from './statusTone';
 import styles from './Korail.module.css';
 
-const SIZE_OPTIONS = (['20FT', '40FT'] as ContainerSize[]).map((v) => ({
-  value: v,
-  label: sizeTabLabel(v),
-}));
+const SIZES: ContainerSize[] = ['20FT', '40FT'];
+
+const SIZE_OPTIONS = SIZES.map((v) => ({ value: v, label: sizeTabLabel(v) }));
+
+function isContainerSize(value: string | null): value is ContainerSize {
+  return value === '20FT' || value === '40FT';
+}
 
 /** 거점 재고 모니터링.
  *  hub total 은 운영 현황 집계이며 선사 간 소유권을 섞지 않는다.
- *  거점을 클릭하면 선사별 breakdown 을 보여준다. */
+ *  거점을 클릭하면 선사별 breakdown 을 보여준다.
+ *
+ *  ?hub=BUSAN&size=40FT 로 진입하면 해당 거점·규격이 선택된 상태로 열린다
+ *  (수요·배정 / 대시보드에서의 drill-down 진입점). */
 export function KorailInventoryPage() {
-  const [size, setSize] = useState<ContainerSize>('20FT');
+  const [params] = useSearchParams();
+  const requestedHub = params.get('hub');
+  const requestedSize = params.get('size');
+
+  const [size, setSize] = useState<ContainerSize>(
+    isContainerSize(requestedSize) ? requestedSize : '20FT',
+  );
   const [hubCode, setHubCode] = useState<string | null>(null);
   const { data, loading, error, reload } = useAsync((signal) => fetchKorailInventory(signal), []);
+
+  // query 로 지정된 거점이 실제로 존재할 때만 선택한다.
+  useEffect(() => {
+    if (!requestedHub || !data) return;
+    if (data.hubs.some((h) => h.hubCode === requestedHub)) setHubCode(requestedHub);
+  }, [requestedHub, data]);
 
   const hub = data?.hubs.find((h) => h.hubCode === hubCode) ?? null;
 
@@ -54,15 +74,17 @@ export function KorailInventoryPage() {
           <div className={styles.scroll}>
             <table className={styles.table}>
               <thead>
+                {/* 재배치 전 → 철도 유입·반출 → 재배치 후 → 부족 순으로 읽히게 한다.
+                    수요·외부 공급은 보조 정보로 뒤에 둔다. */}
                 <tr>
                   <th>거점</th>
-                  <th className={styles.right}>수요</th>
-                  <th className={styles.right}>외부 공급</th>
+                  <th className={styles.right}>재배치 전 재고</th>
                   <th className={styles.right}>철도 유입</th>
                   <th className={styles.right}>철도 반출</th>
-                  <th className={styles.right}>재배치 전 재고</th>
                   <th className={styles.right}>재배치 후 재고</th>
                   <th className={styles.right}>부족 (전→후)</th>
+                  <th className={[styles.right, styles.secondaryCol].join(' ')}>수요</th>
+                  <th className={[styles.right, styles.secondaryCol].join(' ')}>외부 공급</th>
                   <th>상태</th>
                 </tr>
               </thead>
@@ -81,26 +103,21 @@ export function KorailInventoryPage() {
                       onClick={() => setHubCode(row.hubCode)}
                     >
                       <td>{row.hubName}</td>
-                      <td className={styles.right}>{formatNumber(s.demand)}</td>
-                      <td className={styles.right}>{formatNumber(s.externalSupply)}</td>
+                      <td className={styles.right}>{formatNumber(s.baselineInventory)}</td>
                       <td className={styles.right}>{formatNumber(s.railInbound)}</td>
                       <td className={styles.right}>{formatNumber(s.railOutbound)}</td>
-                      <td className={styles.right}>{formatNumber(s.baselineInventory)}</td>
                       <td className={styles.right}>{formatNumber(s.postRailInventory)}</td>
                       <td className={styles.right}>
                         {s.baselineStockout} → {s.postRailStockout}
                       </td>
+                      <td className={[styles.right, styles.secondaryCol].join(' ')}>
+                        {formatNumber(s.demand)}
+                      </td>
+                      <td className={[styles.right, styles.secondaryCol].join(' ')}>
+                        {formatNumber(s.externalSupply)}
+                      </td>
                       <td>
-                        <StatusBadge
-                          tone={
-                            row.status === '정상'
-                              ? 'normal'
-                              : row.status === '부족 해소'
-                                ? 'info'
-                                : 'shortage'
-                          }
-                          small
-                        >
+                        <StatusBadge tone={statusTone(row.status)} small>
                           {row.status}
                         </StatusBadge>
                       </td>
@@ -179,8 +196,8 @@ function HubDrawer({
             </table>
           </div>
           <div className={styles.note}>
-            선사별 재고는 각 선사가 소유한 물량입니다. 특정 선사의 부족을 다른 선사의
-            컨테이너로 해소하지 않으며, 열차 Capacity 만 공동 이용합니다.
+            재고는 선사별 소유 물량입니다. 다른 선사의 컨테이너로 부족을 대체하지 않으며,
+            공컨 전용 열차의 수송 용량만 공동으로 이용합니다.
           </div>
         </div>
       </aside>

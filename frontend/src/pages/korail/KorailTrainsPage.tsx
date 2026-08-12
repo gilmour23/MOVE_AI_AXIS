@@ -6,10 +6,11 @@ import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/common/Sta
 import { TrainDetailDrawer } from './TrainDetailDrawer';
 import { fetchKorailTrains } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
-import { formatDateShort, formatNumber, formatPercent, formatTime } from '@/lib/format';
+import { formatDateShort, formatPercent, formatTime } from '@/lib/format';
+import { formatRoute } from '@/config/hubMeta';
 import styles from './Korail.module.css';
 
-/** 공컨테이너 노선·열차 현황.
+/** 공컨테이너 운행계획.
  *  ?train=CAND0292 로 진입하면 해당 열차 상세가 바로 열린다
  *  (선사 포털의 Train ID drill-down 진입점). */
 export function KorailTrainsPage() {
@@ -33,8 +34,8 @@ export function KorailTrainsPage() {
 
   return (
     <PageContainer
-      title="공컨테이너 노선·열차 현황"
-      description="이번 계획주기에 선정된 공컨테이너 전용 화물열차입니다."
+      title="공컨테이너 운행계획"
+      description="이번 계획주기에 선정된 공컨 전용 화물열차의 운행 및 배정 계획입니다."
     >
       {error && <ErrorState error={error} onRetry={reload} />}
       {loading && (
@@ -57,16 +58,12 @@ export function KorailTrainsPage() {
                 <tr>
                   <th>열차</th>
                   <th>노선</th>
-                  <th>축</th>
                   <th>출발</th>
                   <th>도착</th>
                   <th className={styles.right}>편성</th>
-                  <th className={styles.right}>Capacity</th>
-                  <th className={styles.right}>배정</th>
+                  <th className={styles.right}>배정 / 용량</th>
                   <th className={styles.right}>적재율</th>
-                  <th className={styles.right}>선사</th>
-                  <th className={styles.right}>20FT</th>
-                  <th className={styles.right}>40FT</th>
+                  <th className={styles.right}>참여 선사</th>
                 </tr>
               </thead>
               <tbody>
@@ -82,8 +79,7 @@ export function KorailTrainsPage() {
                     onClick={() => setTrainId(train.trainId)}
                   >
                     <td className={styles.mono}>{train.trainId}</td>
-                    <td className={styles.muted}>{train.route}</td>
-                    <td className={styles.muted}>{train.serviceFamily ?? '-'}</td>
+                    <td className={styles.muted}>{formatRoute(train.route)}</td>
                     <td>
                       {formatTime(train.departureTime)}
                       <div className={styles.kpiSub}>{formatDateShort(train.departureTime)}</div>
@@ -96,8 +92,9 @@ export function KorailTrainsPage() {
                       {train.formation ?? '-'}
                       <div className={styles.kpiSub}>{train.wagons}량</div>
                     </td>
-                    <td className={styles.right}>{train.capacityTeu} TEU</td>
-                    <td className={styles.right}>{train.assignedTeu} TEU</td>
+                    <td className={styles.right}>
+                      {train.assignedTeu} / {train.capacityTeu} TEU
+                    </td>
                     <td className={styles.right}>
                       {formatPercent(train.loadFactor)}
                       <div className={styles.loadBar}>
@@ -107,9 +104,7 @@ export function KorailTrainsPage() {
                         />
                       </div>
                     </td>
-                    <td className={styles.right}>{train.participatingCarrierCount}</td>
-                    <td className={styles.right}>{formatNumber(train.boxes20ft)}</td>
-                    <td className={styles.right}>{formatNumber(train.boxes40ft)}</td>
+                    <td className={styles.right}>{train.participatingCarrierCount}개</td>
                   </tr>
                 ))}
               </tbody>
