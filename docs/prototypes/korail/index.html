@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KORAIL Control Tower v2.7 (Moveon Theme)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Pretendard', 'sans-serif'] },
+                    colors: {
+                        moveon: { 
+                            bg: '#E4E7EA', surface: '#F2F4F7', card: '#FFFFFF', textMain: '#1A1D20', textMuted: '#94A3B8', 
+                            purple: '#A855F7', blue: '#0052A4', green: '#10B981', amber: '#F59E0B', red: '#EF4444' 
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #E4E7EA; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; padding: 20px; }
+        
+        #app-container {
+            width: 100%; max-width: 1440px; height: 100%; max-height: 900px; 
+            background-color: #F2F4F7; border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); 
+            position: relative; overflow: hidden; display: flex; flex-direction: column;
+        }
+
+        .moveon-card { background-color: #FFFFFF; border-radius: 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); border: 1px solid rgba(226, 232, 240, 0.5); transition: all 0.2s ease; }
+        .moveon-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05); }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { font-size: 11px; font-weight: 700; color: #94A3B8; text-align: left; padding: 12px 14px; border-bottom: 1px solid #F1F5F9; position: sticky; top: 0; background: white; z-index: 10; letter-spacing: 0.05em; }
+        td { font-size: 13px; font-weight: 500; color: #1A1D20; padding: 12px 14px; border-bottom: 1px solid #F8FAFC; }
+        tr:hover { background-color: #F8FAFC; }
+
+        .drawer-overlay { display: none; opacity: 0; transition: opacity 0.3s ease; position: absolute; inset: 0; background-color: rgba(15, 23, 42, 0.3); backdrop-filter: blur(2px); z-index: 40; }
+        .drawer-panel { transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); position: absolute; top: 0; right: 0; height: 100%; background-color: #F2F4F7; box-shadow: -10px 0 30px rgba(0,0,0,0.1); z-index: 50; display: flex; flex-direction: column; }
+    
+        /* Pulse animations for markers */
+        @keyframes pulse-red {
+            0%, 100% { transform: scale(1) translate(-50%, -50%); opacity: 1; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { transform: scale(1.1) translate(-45%, -45%); opacity: 0.8; box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+        }
+        .pulse-marker-red { animation: pulse-red 2s infinite; }
+    </style>
+</head>
+<body class="text-moveon-textMain font-sans">
+
+    <div id="app-container">
+        
+        <!-- Header (요일/시간/슬라이더 제거, 일주일 드롭다운 단독 최적화) -->
+        <header class="flex justify-between items-center px-8 py-3 border-b border-gray-200/50 shrink-0 z-20 bg-white shadow-sm">
+            <div class="flex items-center gap-3">
+                <img src="./korail_logo.png" class="h-8 w-auto object-contain shrink-0" alt="KORAIL Logo">
+                <div class="border-l border-gray-300 pl-3">
+                    <h1 class="text-md font-black tracking-tight text-gray-900 leading-none flex items-center gap-1.5">
+                        KORAIL <span class="text-xs font-bold text-gray-500">철도공사 관제센터</span>
+                    </h1>
+                    <span class="text-[9px] font-bold text-moveon-blue tracking-widest uppercase">MOVE-AI Shuttle Management Suite</span>
+                </div>
+            </div>
+
+            <!-- 탭 메뉴 (6대 관제 체제 최종 확정 개편) -->
+            <nav id="main-nav" class="flex items-center gap-1 bg-gray-50 p-1 rounded-2xl border border-gray-100">
+                <button id="nav-dashboard" onclick="switchTab('dashboard')" class="px-4 py-2 bg-white shadow-sm rounded-xl text-xs font-bold text-gray-900 transition-all">01. 종합 대시보드</button>
+                <button id="nav-bookings" onclick="switchTab('bookings')" class="px-4 py-2 text-gray-500 hover:text-gray-900 text-xs font-bold transition-all rounded-xl">02. 수송 신청 현황</button>
+                <button id="nav-schedule" onclick="switchTab('schedule')" class="px-4 py-2 text-gray-500 hover:text-gray-900 text-xs font-bold transition-all rounded-xl">03. 공컨테이너 노선 현황</button>
+                <button id="nav-inventory" onclick="switchTab('inventory')" class="px-4 py-2 text-gray-500 hover:text-gray-900 text-xs font-bold transition-all rounded-xl">04. 거점 재고 모니터링</button>
+                <button id="nav-recommender" onclick="switchTab('recommender')" class="px-4 py-2 text-gray-500 hover:text-gray-900 text-xs font-bold transition-all rounded-xl">05. AI 수급 분석 & 권고</button>
+                <button id="nav-station" onclick="switchTab('station')" class="px-4 py-2 text-gray-500 hover:text-gray-900 text-xs font-bold transition-all rounded-xl">06. 거점 작업 계획</button>
+            </nav>
+
+            <!-- 일주일 단위 기간 선택 드롭다운 (단독 배치) -->
+            <div class="flex items-center gap-3">
+                <div class="bg-gray-100 p-1.5 rounded-xl border border-gray-200/60 flex items-center gap-2">
+                    <span class="text-[10px] font-black text-gray-400 pl-1">관제 주차 범위:</span>
+                    <select id="week-select" onchange="setGlobalWeek(this.value)" class="bg-white border border-gray-200 rounded-lg px-2.5 py-1 text-[11px] font-black text-gray-800 focus:outline-none">
+                        <!-- JS에서 연간 날짜 범위 로드 -->
+                    </select>
+                </div>
+                
+                <button onclick="openCompare()" class="w-8 h-8 flex items-center justify-center text-emerald-600 hover:bg-emerald-50 rounded-full border border-emerald-100 bg-white transition text-xs font-bold" title="탄소 및 비용 절감율 비교"><i class="fa-solid fa-leaf"></i></button>
+                <div class="h-6 w-[1px] bg-gray-200 mx-0.5"></div>
+                <div class="flex items-center gap-2">
+                    <div class="flex flex-col text-right">
+                        <span class="text-[11px] font-black text-gray-900 leading-none">코레일 운영처</span>
+                        <span class="text-[9px] text-gray-400 font-bold mt-0.5">본부 관제관</span>
+                    </div>
+                    <div class="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center border border-blue-100 text-blue-700 text-xs font-black">K</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 1: 01. 종합 대시보드 (Executive Summary) -->
+        <!-- ========================================================= -->
+        <main id="view-dashboard" class="flex-1 overflow-y-auto custom-scrollbar flex flex-col p-5 gap-4">
+            <!-- Top KPI Bar -->
+            <div class="grid grid-cols-5 gap-4 shrink-0 font-bold">
+                <div onclick="switchTab('inventory')" class="moveon-card bg-red-50/50 border border-red-100 p-4 flex flex-col justify-between cursor-pointer">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[11px] font-black text-red-700">부족 위험 거점</span>
+                        <i class="fa-solid fa-triangle-exclamation text-red-500 text-xs"></i>
+                    </div>
+                    <div class="flex items-baseline gap-1.5">
+                        <span id="kpi-shortage-count" class="text-2xl font-black text-red-600">1</span>
+                        <span class="text-[9px] text-red-500 font-bold" id="kpi-shortage-hub-name">(약목 CY 🔴)</span>
+                    </div>
+                </div>
+                <div onclick="switchTab('schedule')" class="moveon-card p-4 flex flex-col justify-between cursor-pointer">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[11px] font-bold text-gray-500">총 철도 수송량 (주차내)</span>
+                        <i class="fa-solid fa-train-subway text-gray-400 text-xs"></i>
+                    </div>
+                    <div class="flex items-baseline gap-1.5">
+                        <span id="kpi-total-load" class="text-2xl font-black text-gray-900">138</span>
+                        <span class="text-[10px] text-gray-400 font-bold">TEU</span>
+                    </div>
+                </div>
+                <div onclick="switchTab('schedule')" class="moveon-card p-4 flex flex-col justify-between cursor-pointer">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[11px] font-bold text-gray-500">운영중인 전용노선</span>
+                        <i class="fa-solid fa-cubes text-gray-400 text-xs"></i>
+                    </div>
+                    <div class="flex items-baseline gap-1.5">
+                        <span id="kpi-train-count" class="text-2xl font-black text-gray-900">3</span>
+                        <span class="text-[10px] text-gray-400 font-bold">개 축</span>
+                    </div>
+                </div>
+                <div onclick="switchTab('bookings')" class="moveon-card p-4 flex flex-col justify-between cursor-pointer">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[11px] font-bold text-gray-500">지난주 공컨 철도 운송량</span>
+                        <i class="fa-solid fa-clock-rotate-left text-gray-400 text-xs"></i>
+                    </div>
+                    <div class="flex items-baseline gap-1.5">
+                        <span id="kpi-lastweek-load" class="text-2xl font-black text-gray-900">120</span>
+                        <span class="text-[10px] text-gray-400 font-bold">TEU</span>
+                    </div>
+                </div>
+                <div onclick="switchTab('bookings')" class="moveon-card p-4 flex flex-col justify-between cursor-pointer">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[11px] font-bold text-gray-500">금주 예약 공컨테이너량</span>
+                        <i class="fa-solid fa-calendar-check text-gray-400 text-xs"></i>
+                    </div>
+                    <div class="flex items-baseline gap-1.5">
+                        <span id="kpi-thisweek-booked" class="text-2xl font-black text-blue-600">76</span>
+                        <span class="text-[10px] text-blue-500 font-bold">TEU</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hero Section -->
+            <div class="flex gap-4 w-full shrink-0 font-bold">
+                <!-- 6대 거점별 혼잡도 및 취급량 요약 리스트 테이블 (약목역 편중 극복 완료) -->
+                <div onclick="switchTab('station')" class="moveon-card w-[440px] p-5 flex flex-col shrink-0 cursor-pointer bg-gradient-to-br from-white to-gray-50">
+                    <div class="flex justify-between items-center mb-3">
+                        <div>
+                            <span class="bg-blue-100 text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded">HUB OPERATIONS OVERVIEW</span>
+                            <h2 class="text-sm font-black tracking-tight text-gray-800 mt-1">6대 거점 작업부하 & 취급량 요약</h2>
+                        </div>
+                        <span class="text-[9px] text-blue-600 font-bold">실시간 갱신됨</span>
+                    </div>
+                    
+                    <!-- 6대 거점 리스트 테이블화 -->
+                    <div class="flex-1 flex flex-col justify-between text-xs text-gray-600 bg-white p-3 rounded-xl border border-gray-100 shadow-sm" id="dash-ops-timeline-summary">
+                        <!-- JS 동적 바인딩 (6대 거점 정보 요약 리스트) -->
+                    </div>
+                </div>
+
+                <!-- 원래대로 흰색 레이아웃 디자인 카드 (우측) -->
+                <div class="flex-1 moveon-card flex p-5 gap-6 bg-white text-gray-800">
+                    <!-- 좌측: 이전 열차 이미지 크기만큼 KORAIL 로고 배치 -->
+                    <div class="w-[260px] bg-slate-50 border border-gray-200/60 rounded-2xl flex flex-col items-center justify-center p-6 shrink-0 shadow-sm">
+                        <img src="./korail_logo.png" class="w-[180px] h-auto object-contain mb-3" alt="KORAIL">
+                        <div class="text-center font-bold">
+                            <h3 class="text-[13px] font-black text-gray-800">철도공사 경부/호남선 관제</h3>
+                            <p class="text-[9px] text-gray-400 font-bold uppercase mt-1 tracking-wider">Empty Container Bridge Suite</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 우측: 3대 셔틀 열차 운행 스케줄 상세 통합 -->
+                    <div class="flex-1 flex flex-col justify-between py-1 gap-2.5">
+                        <div class="flex justify-between items-center mb-1">
+                            <h3 class="text-xs font-black text-gray-800 tracking-tight"><i class="fa-solid fa-train-subway text-blue-600 mr-1.5"></i>금일 철도 공컨 셔틀 운행계획</h3>
+                            <span class="text-[9px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold">3개 축 전용노선</span>
+                        </div>
+                        
+                        <!-- CAND0054 스케줄 요약 -->
+                        <div onclick="switchTab('schedule'); selectTrain('CAND0054');" class="bg-gray-50 hover:bg-blue-50/50 p-2.5 rounded-xl border border-gray-200/40 transition cursor-pointer flex flex-col gap-1">
+                            <div class="flex justify-between items-center text-[11px]">
+                                <span class="font-black text-gray-900">CAND0054 <span class="text-xs font-bold text-blue-600 ml-1.5">경부 하행</span></span>
+                                <span class="text-[9px] font-bold text-emerald-600">● 운행중</span>
+                            </div>
+                            <div class="text-[10px] text-gray-500 flex items-center justify-between font-mono bg-white px-2 py-1 rounded border border-gray-100">
+                                <span>오봉 <span class="text-gray-900 font-bold">06:00</span></span>
+                                <i class="fa-solid fa-chevron-right text-[8px] text-gray-300"></i>
+                                <span>부강 <span class="text-gray-900 font-bold">08:10</span></span>
+                                <i class="fa-solid fa-chevron-right text-[8px] text-gray-300"></i>
+                                <span>약목 <span class="text-gray-900 font-bold">10:25</span></span>
+                                <i class="fa-solid fa-chevron-right text-[8px] text-gray-300"></i>
+                                <span>부산 <span class="text-gray-900 font-bold">13:10</span></span>
+                            </div>
+                        </div>
+
+                        <!-- CAND0164 스케줄 요약 -->
+                        <div onclick="switchTab('schedule'); selectTrain('CAND0164');" class="bg-gray-50 hover:bg-purple-50/50 p-2.5 rounded-xl border border-gray-200/40 transition cursor-pointer flex flex-col gap-1">
+                            <div class="flex justify-between items-center text-[11px]">
+                                <span class="font-black text-gray-900">CAND0164 <span class="text-xs font-bold text-purple-600 ml-1.5">경부 상행</span></span>
+                                <span class="text-[9px] font-bold text-amber-500">● 대기중</span>
+                            </div>
+                            <div class="text-[10px] text-gray-500 flex items-center justify-between font-mono bg-white px-2 py-1 rounded border border-gray-100">
+                                <span>부산 <span class="text-gray-900 font-bold">12:00</span></span>
+                                <i class="fa-solid fa-chevron-right text-[8px] text-gray-300"></i>
+                                <span>약목 <span class="text-gray-900 font-bold">14:15</span></span>
+                                <i class="fa-solid fa-chevron-right text-[8px] text-gray-300"></i>
+                                <span>부강 <span class="text-gray-900 font-bold">16:40</span></span>
+                                <i class="fa-solid fa-chevron-right text-[8px] text-gray-300"></i>
+                                <span>오봉 <span class="text-gray-900 font-bold">19:30</span></span>
+                            </div>
+                        </div>
+
+                        <!-- CAND0344 스케줄 요약 -->
+                        <div onclick="switchTab('schedule'); selectTrain('CAND0344');" class="bg-gray-50 hover:bg-blue-50/50 p-2.5 rounded-xl border border-gray-200/40 transition cursor-pointer flex flex-col gap-1">
+                            <div class="flex justify-between items-center text-[11px]">
+                                <span class="font-black text-gray-900">CAND0344 <span class="text-xs font-bold text-slate-600 ml-1.5">서남권 하행</span></span>
+                                <span class="text-[9px] font-bold text-emerald-600">● 운행중</span>
+                            </div>
+                            <div class="text-[10px] text-gray-500 flex items-center justify-between font-mono bg-white px-2 py-1 rounded border border-gray-100">
+                                <span>오봉 <span class="text-gray-900 font-bold">08:00</span></span>
+                                <i class="fa-solid fa-chevron-right text-[8px] text-gray-300"></i>
+                                <span>부강 <span class="text-gray-900 font-bold">10:15</span></span>
+                                <i class="fa-solid fa-chevron-right text-[8px] text-gray-300"></i>
+                                <span>동산 <span class="text-gray-900 font-bold">13:20</span></span>
+                                <i class="fa-solid fa-chevron-right text-[8px] text-gray-300"></i>
+                                <span>광양 <span class="text-gray-900 font-bold">16:30</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom: Map & Table -->
+            <div class="flex gap-4 w-full min-h-[350px] flex-1 overflow-hidden font-bold">
+                <!-- 자체 SVG 지형 맵 -->
+                <div class="w-[420px] moveon-card flex flex-col p-5 shrink-0">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xs font-black text-gray-800">KORAIL Hub Network Map</h3>
+                        <span class="text-[9px] font-bold text-blue-600 uppercase">Interactive SVG Grid</span>
+                    </div>
+                    
+                    <div class="flex-1 relative bg-[#1E293B] rounded-2xl overflow-hidden shadow-inner w-full h-full">
+                        <svg class="absolute inset-0 w-full h-full" viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                            <rect width="200" height="240" fill="#0F172A" />
+                            <path d="M50 15 L75 25 L85 10 L105 15 L125 30 L135 60 L140 90 L155 120 L160 150 L145 180 L135 210 L125 215 L105 210 L95 200 L85 205 L65 200 L55 180 L45 160 L50 130 L45 100 L35 70 L40 40 Z" fill="#1E293B" stroke="#334155" stroke-width="1.5" />
+                            <ellipse cx="60" cy="225" rx="12" ry="6" fill="#1E293B" stroke="#334155" />
+                            <!-- 경부축 -->
+                            <path d="M70 50 L95 90 L125 140 L140 180" stroke="#3B82F6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                            <!-- 호남/서남권축 -->
+                            <path d="M70 50 L95 90 L85 140 L65 190" stroke="#8B5CF6" stroke-width="2" stroke-dasharray="3 3" stroke-linecap="round" />
+                        </svg>
+                        
+                        <!-- 6개 거점 마커 절대좌표 매핑 -->
+                        <div id="map-pin-obong" onclick="switchTab('inventory')" class="absolute top-[20.8%] left-[35%] w-3 h-3 bg-emerald-500 rounded-full cursor-pointer shadow-[0_0_8px_rgba(16,185,129,0.8)] border-2 border-white hover:scale-150 transition -translate-x-1/2 -translate-y-1/2 z-20" title="오봉역"></div>
+                        <div id="map-pin-bugang" onclick="switchTab('inventory')" class="absolute top-[37.5%] left-[47.5%] w-3 h-3 bg-emerald-500 rounded-full cursor-pointer shadow-[0_0_8px_rgba(16,185,129,0.8)] border-2 border-white hover:scale-150 transition -translate-x-1/2 -translate-y-1/2 z-20" title="부강화물역"></div>
+                        <div id="map-pin-yangmok" onclick="switchTab('inventory')" class="absolute top-[58.3%] left-[62.5%] w-4 h-4 bg-red-500 rounded-full cursor-pointer shadow-[0_0_12px_rgba(239,68,68,0.9)] border-2 border-white hover:scale-150 transition pulse-marker-red -translate-x-1/2 -translate-y-1/2 z-20" title="약목역"></div>
+                        <div id="map-pin-busan" onclick="switchTab('inventory')" class="absolute top-[75%] left-[70%] w-3 h-3 bg-emerald-500 rounded-full cursor-pointer shadow-[0_0_8px_rgba(16,185,129,0.8)] border-2 border-white hover:scale-150 transition -translate-x-1/2 -translate-y-1/2 z-20" title="부산신항"></div>
+                        <div id="map-pin-dongsan" onclick="switchTab('inventory')" class="absolute top-[58.3%] left-[42.5%] w-3 h-3 bg-emerald-500 rounded-full cursor-pointer shadow-[0_0_8px_rgba(16,185,129,0.8)] border-2 border-white hover:scale-150 transition -translate-x-1/2 -translate-y-1/2 z-20" title="동산역"></div>
+                        <div id="map-pin-gwangyang" onclick="switchTab('inventory')" class="absolute top-[79.2%] left-[32.5%] w-3 h-3 bg-emerald-500 rounded-full cursor-pointer shadow-[0_0_8px_rgba(16,185,129,0.8)] border-2 border-white hover:scale-150 transition -translate-x-1/2 -translate-y-1/2 z-20" title="신광양항"></div>
+
+                        <!-- 열차 아이콘 -->
+                        <div id="sim-train-CAND0054" class="absolute w-5.5 h-5.5 bg-blue-600 rounded-full flex items-center justify-center text-white text-[8px] shadow-lg font-black transition-all duration-300 -translate-x-1/2 -translate-y-1/2 z-30" style="top: 50%; left: 50%;"><i class="fa-solid fa-train"></i></div>
+                        <div id="sim-train-CAND0344" class="absolute w-5.5 h-5.5 bg-purple-600 rounded-full flex items-center justify-center text-white text-[8px] shadow-lg font-black transition-all duration-300 -translate-x-1/2 -translate-y-1/2 z-30" style="top: 48%; left: 44%;"><i class="fa-solid fa-train"></i></div>
+
+                        <div class="absolute top-[5%] left-[5%] text-[9px] text-gray-400 font-bold bg-slate-900/60 p-1.5 rounded border border-gray-700/40">
+                            🔵 경부선 셔틀<br>🟣 서남권 셔틀
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Bookings Table -->
+                <div class="flex-1 moveon-card flex flex-col p-5 overflow-hidden font-bold">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xs font-black text-gray-800">최근 선사 수송 신청 내역</h3>
+                        <span onclick="switchTab('bookings')" class="text-[10px] text-blue-600 font-bold hover:underline cursor-pointer">전체보기 <i class="fa-solid fa-chevron-right ml-0.5"></i></span>
+                    </div>
+                    <div class="flex-1 overflow-auto custom-scrollbar">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>신청 ID</th>
+                                    <th>선사명</th>
+                                    <th>구간</th>
+                                    <th>규격/수량</th>
+                                    <th>탄소 & 비용 절감량</th>
+                                    <th>상태</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dash-recent-bookings-tbody">
+                                <!-- JS 동적 바인딩 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 2: 02. 거점 재고 통합 모니터링 (압도적 완성도의 카드 그리드화) -->
+        <!-- ========================================================= -->
+        <main id="view-inventory" class="flex-1 flex flex-col overflow-hidden p-6 gap-4 hidden">
+            <div class="flex justify-between items-center shrink-0 font-bold">
+                <div>
+                    <h2 class="text-lg font-black text-gray-900">KORAIL 6대 거점 공컨테이너 재고 통합 대시보드</h2>
+                    <p class="text-xs text-gray-500">각 거점역의 안전 임계치 대비 가용재고 충전 게이지를 독립된 6개 카드로 모니터링합니다. (컨테이너 소유: 선사)</p>
+                </div>
+                <div class="text-xs text-gray-500 font-bold flex gap-4">
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 bg-emerald-500 rounded-full"></span> 🟢 안전 확보</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 bg-amber-400 rounded-full"></span> 🟡 경계 단계</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 bg-red-500 rounded-full"></span> 🔴 부족 위기</span>
+                </div>
+            </div>
+
+            <!-- 미려하게 구조화된 6대 거점 프리미엄 카드 그리드 (3열 2행) -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-1 pb-4">
+                <div id="inventory-cards-container" class="grid grid-cols-3 gap-5 font-bold">
+                    <!-- JS에서 6개 거점 카드를 동적 드롭인 렌더링 -->
+                </div>
+            </div>
+        </main>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 3: 03. 수송 신청 현황 -->
+        <!-- ========================================================= -->
+        <main id="view-bookings" class="flex-1 overflow-y-auto custom-scrollbar p-6 flex flex-col gap-5 hidden font-bold">
+            <!-- 1. 선사 수송 신청 현황 테이블 -->
+            <div class="flex flex-col gap-3">
+                <div class="flex justify-between items-center shrink-0">
+                    <div>
+                        <h2 class="text-md font-black text-gray-900">선사별 철도 수송 신청 및 화차 예약 현황</h2>
+                        <p class="text-[11px] text-gray-400 font-bold">선사들이 코레일에 직접 접수 또는 예약 완료하여 수송 진행 중인 내역입니다.</p>
+                    </div>
+                    <button onclick="createNewBooking()" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-black shadow-sm transition"><i class="fa-solid fa-plus mr-1"></i>예약 신규 등록</button>
+                </div>
+
+                <div class="moveon-card overflow-hidden bg-white max-h-[500px] overflow-y-auto custom-scrollbar">
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                <th>신청 ID</th>
+                                <th>선사명</th>
+                                <th>출발 거점</th>
+                                <th>도착 거점</th>
+                                <th>컨테이너 규격</th>
+                                <th>수량 (상자 / TEU)</th>
+                                <th>배정 셔틀열차</th>
+                                <th class="text-right">도로대비 절감액 (비용 / 탄소)</th>
+                                <th>상태</th>
+                                <th>액션</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookings-table-body">
+                            <!-- JS 동적 바인딩 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 4: 04. 열차 운행계획 (Train Plan) -->
+        <!-- ========================================================= -->
+        <main id="view-schedule" class="flex-1 flex overflow-hidden p-6 gap-5 hidden font-bold">
+            <div class="w-[320px] flex flex-col gap-3 shrink-0 h-full">
+                <h3 class="text-xs font-black text-gray-700">추천/확정 신규 공컨열차 목록</h3>
+                <div id="train-list-container" class="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2.5 pr-1">
+                    <div onclick="selectTrain('CAND0054')" id="train-card-CAND0054" class="bg-white border-2 border-blue-500 rounded-xl p-4 cursor-pointer relative shadow-sm">
+                        <span class="text-[9px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded">경부 하행</span>
+                        <h4 class="font-black text-gray-800 text-[14px] mt-1.5 font-bold">CAND0054</h4>
+                        <p class="text-[11px] text-gray-500 font-bold mt-1">오봉 ➔ 부강 ➔ 약목 ➔ 부산신항</p>
+                        <div class="flex justify-between items-center mt-3 text-[10px] text-gray-400 font-bold">
+                            <span>출발: 06:00</span>
+                            <span class="text-gray-800 font-black">Capacity: 80 TEU</span>
+                        </div>
+                    </div>
+                    <div onclick="selectTrain('CAND0164')" id="train-card-CAND0164" class="bg-white border border-gray-200 rounded-xl p-4 cursor-pointer relative opacity-70">
+                        <span class="text-[9px] bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded font-bold">경부 상행</span>
+                        <h4 class="font-black text-gray-800 text-[14px] mt-1.5 font-bold">CAND0164</h4>
+                        <p class="text-[11px] text-gray-500 font-bold mt-1">부산신항 ➔ 약목 ➔ 부강 ➔ 오봉</p>
+                        <div class="flex justify-between items-center mt-3 text-[10px] text-gray-400 font-bold">
+                            <span>출발: 12:00</span>
+                            <span class="text-gray-800 font-black">Capacity: 80 TEU</span>
+                        </div>
+                    </div>
+                    <div onclick="selectTrain('CAND0344')" id="train-card-CAND0344" class="bg-white border border-gray-200 rounded-xl p-4 cursor-pointer relative opacity-70">
+                        <span class="text-[9px] bg-gray-100 text-gray-600 font-bold px-2 py-0.5 rounded">서남권 하행</span>
+                        <h4 class="font-black text-gray-800 text-[14px] mt-1.5 font-bold">CAND0344</h4>
+                        <p class="text-[11px] text-gray-500 font-bold mt-1">오봉 ➔ 부강 ➔ 동산 ➔ 신광양항</p>
+                        <div class="flex justify-between items-center mt-3 text-[10px] text-gray-400 font-bold">
+                            <span>출발: 08:00</span>
+                            <span class="text-gray-800 font-black font-bold">Capacity: 60 TEU</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col gap-4 overflow-hidden">
+                <div class="flex justify-between items-center shrink-0 font-bold">
+                    <div>
+                        <h2 id="train-detail-title" class="text-xl font-black text-gray-900">CAND0054 상세 운행계획</h2>
+                        <p id="train-detail-subtitle" class="text-xs text-gray-500 mt-1">경부선 하행축 공컨테이너 전용 화물열차</p>
+                    </div>
+                    <div class="bg-white border border-gray-200 px-4 py-2 rounded-xl flex items-center gap-4 shadow-sm">
+                        <div class="text-right">
+                            <span class="text-[9px] text-gray-400 font-bold block">편성규모</span>
+                            <span id="train-detail-wagon" class="text-[13px] font-black text-gray-800">40 량</span>
+                        </div>
+                        <div class="h-6 w-[1px] bg-gray-200"></div>
+                        <div class="text-right">
+                            <span class="text-[9px] text-gray-400 font-bold block">Peak 구간 적재율</span>
+                            <span id="train-detail-peak-load" class="text-[13px] font-black text-amber-600">95.2%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4 flex-1 overflow-hidden font-bold">
+                    <div class="moveon-card p-4 bg-white flex flex-col">
+                        <h3 class="text-xs font-black text-gray-800 mb-3 border-b border-gray-100 pb-2"><i class="fa-solid fa-list-check mr-1.5 text-blue-500"></i>역별 상하차 타임라인</h3>
+                        <div id="train-stations-timeline" class="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-4 pl-2 pt-2">
+                            <!-- Dynamic Content -->
+                        </div>
+                    </div>
+
+                    <div class="moveon-card p-4 bg-white flex flex-col col-span-2 overflow-hidden">
+                        <h3 class="text-xs font-black text-gray-800 mb-3 border-b border-gray-100 pb-2"><i class="fa-solid fa-people-carry-box mr-1.5 text-blue-500"></i>선사별 배정 상세계획</h3>
+                        <div class="flex-1 overflow-auto custom-scrollbar">
+                            <table class="w-full text-xs">
+                                <thead>
+                                    <tr>
+                                        <th>선사</th>
+                                        <th>출발</th>
+                                        <th>도착</th>
+                                        <th>규격</th>
+                                        <th class="text-right">수량 (TEU)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="train-carrier-load-rows">
+                                    <!-- Dynamic Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="moveon-card p-4 bg-white shrink-0">
+                    <h3 class="text-xs font-black text-gray-800 mb-2"><i class="fa-solid fa-chart-bar mr-1.5 text-blue-500"></i>구간별 적재율 (Segment Load / Capacity 80 TEU)</h3>
+                    <div class="relative w-full h-[100px]">
+                        <canvas id="segmentLoadChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 5: 04. 거점 재고 모니터링 -->
+        <!-- ========================================================= -->
+        <main id="view-inventory" class="flex-1 flex flex-col gap-4 p-6 hidden font-bold overflow-hidden">
+            <div class="flex justify-between items-center shrink-0">
+                <div>
+                    <h2 class="text-md font-black text-gray-900">전국 6대 거점 공컨테이너 재고 현황</h2>
+                    <p class="text-[11px] text-gray-400 font-bold">안전재고 임계선을 실시간으로 추적하여 부족 상황을 선제 감지합니다.</p>
+                </div>
+            </div>
+            <div id="inventory-cards-container" class="flex-1 overflow-y-auto custom-scrollbar grid grid-cols-3 gap-5 pr-1">
+                <!-- JS 카드 그리드 대시보드 동적 렌더링 -->
+            </div>
+        </main>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 5: 05. AI 수급 분석 & 권고 -->
+        <!-- ========================================================= -->
+        <main id="view-recommender" class="flex-1 overflow-y-auto custom-scrollbar p-6 flex flex-col gap-5 hidden font-bold">
+            <div class="flex justify-between items-center shrink-0">
+                <div>
+                    <h2 class="text-md font-black text-gray-900">금주 전국 공컨테이너 수급 진단 및 영업/편성 권고 리포트</h2>
+                    <p class="text-[11px] text-gray-400 font-bold">선사들의 수급 불균형 현황을 진단하고, 코레일이 지원 가능한 셔틀 영업 전략 및 열차 스케줄 대응 방향을 가이드합니다.</p>
+                </div>
+            </div>
+
+            <!-- Split Layout: 좌측 상황판, 우측 영업/편성 제안서 -->
+            <div class="flex-1 grid grid-cols-2 gap-6 min-h-0">
+                <!-- 1. 좌측: 선사별 공컨테이너 불균형 현황 분석 리포트 -->
+                <div class="moveon-card bg-slate-50 border border-slate-200 p-5 flex flex-col gap-4">
+                    <div class="flex items-center gap-2 pb-3 border-b border-slate-200">
+                        <span class="bg-slate-900 text-white text-[10px] font-black px-2 py-0.5 rounded">Diagnosis</span>
+                        <h3 class="text-[13px] font-black text-slate-800">선사별 빈 컨테이너 누적 및 과부족 진단</h3>
+                    </div>
+                    
+                    <div class="flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-1" id="recommender-left-diagnosis">
+                        <!-- JS로 동적 바인딩 -->
+                    </div>
+                </div>
+
+                <!-- 2. 우측: 코레일 최적 영업(Sales) & 편성(Operations) 제안 가이드 -->
+                <div class="moveon-card bg-white border-2 border-blue-500 p-5 flex flex-col gap-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-150">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded">AI Advice</span>
+                            <h3 class="text-[13px] font-black text-gray-800">코레일의 전략적 실무 권고 포트폴리오</h3>
+                        </div>
+                        <span id="recommender-week-title" class="text-[10px] text-gray-400 font-mono">32주차 기준</span>
+                    </div>
+
+                    <div class="flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-1">
+                        <!-- 영업 유치 제안 영역 -->
+                        <div class="bg-blue-50/40 border border-blue-200/60 rounded-xl p-4 flex flex-col gap-2">
+                            <h4 class="text-xs font-black text-blue-800 flex items-center gap-1.5"><i class="fa-solid fa-handshake"></i> 선사용 셔틀 철도 전환 유치 영업 제안</h4>
+                            <p id="recommender-sales-advice" class="text-xs text-gray-650 font-bold leading-relaxed">
+                                <!-- JS 동적 바인딩 -->
+                            </p>
+                        </div>
+
+                        <!-- 열차 편성 가이드 영역 -->
+                        <div class="bg-purple-50/40 border border-purple-200/60 rounded-xl p-4 flex flex-col gap-2">
+                            <h4 class="text-xs font-black text-purple-800 flex items-center gap-1.5"><i class="fa-solid fa-train-tram"></i> 셔틀열차 편성 및 정차 공급 조정 권고</h4>
+                            <p id="recommender-ops-advice" class="text-xs text-gray-650 font-bold leading-relaxed">
+                                <!-- JS 동적 바인딩 -->
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 6: 06. 거점 작업계획 (Station Operation) -->
+        <!-- ========================================================= -->
+        <main id="view-station" class="flex-1 overflow-y-auto custom-scrollbar p-6 flex flex-col gap-4 hidden">
+            <div class="flex justify-between items-center shrink-0">
+                <div>
+                    <h2 class="text-lg font-black text-gray-900">거점역별 상하차 작업계획</h2>
+                    <p class="text-xs text-gray-500 font-bold">역구내 작업자를 위한 실무 작업 계획 일정표입니다.</p>
+                </div>
+                
+                <div class="bg-white border border-gray-200 p-1.5 rounded-xl flex gap-1 shadow-sm text-xs font-bold">
+                    <button onclick="selectStation('yangmok')" id="station-btn-yangmok" class="px-3 py-1.5 bg-gray-900 text-white shadow rounded-lg transition font-bold">약목역</button>
+                    <button onclick="selectStation('obong')" id="station-btn-obong" class="px-3 py-1.5 text-gray-500 hover:text-gray-800 rounded-lg transition font-bold">오봉역</button>
+                    <button onclick="selectStation('busan')" id="station-btn-busan" class="px-3 py-1.5 text-gray-500 hover:text-gray-800 rounded-lg transition font-bold">부산신항</button>
+                    <button onclick="selectStation('bugang')" id="station-btn-bugang" class="px-3 py-1.5 text-gray-500 hover:text-gray-800 rounded-lg transition font-bold font-bold">부강화물</button>
+                    <button onclick="selectStation('dongsan')" id="station-btn-dongsan" class="px-3 py-1.5 text-gray-500 hover:text-gray-800 rounded-lg transition font-bold">동산역</button>
+                    <button onclick="selectStation('gwangyang')" id="station-btn-gwangyang" class="px-3 py-1.5 text-gray-500 hover:text-gray-800 rounded-lg transition font-bold">신광양항</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-5 flex-1 overflow-hidden">
+                <div class="moveon-card bg-white p-5 flex flex-col col-span-2">
+                    <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-100 font-bold">
+                        <h3 id="station-operation-title" class="text-sm font-black text-gray-800">약목역 CY - 오늘 작업 일정</h3>
+                        <span class="text-[10px] text-gray-400 font-bold">취급량 단위: TEU</span>
+                    </div>
+                    <div class="flex-1 overflow-auto custom-scrollbar">
+                        <table class="w-full text-xs">
+                            <thead>
+                                <tr>
+                                    <th>예정 시간</th>
+                                    <th>열차 ID</th>
+                                    <th>구분</th>
+                                    <th>하차 물량 (선사별)</th>
+                                    <th>상차 물량 (선사별)</th>
+                                    <th>총 취급량</th>
+                                </tr>
+                            </thead>
+                            <tbody id="station-operation-rows">
+                                <!-- JS 동적 바인딩 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="moveon-card bg-white p-5 flex flex-col gap-4 font-bold">
+                    <h3 class="text-xs font-black text-gray-800 border-b border-gray-100 pb-2">작업 캐파 및 정보</h3>
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex flex-col gap-1.5 text-xs font-bold text-gray-600">
+                        <div class="flex justify-between"><span>시간당 최대 하역 Capacity</span><span class="text-gray-800 font-bold">20 TEU</span></div>
+                        <div class="flex justify-between mt-1"><span>일일 상하차 총 예상량</span><span id="station-stat-total" class="text-gray-800 font-bold">28 TEU</span></div>
+                        <div class="flex justify-between"><span>작업 혼잡도 지수</span><span id="station-stat-congestion" class="text-emerald-600 font-black">🟢 여유</span></div>
+                    </div>
+                    
+                    <div class="flex-1 flex flex-col">
+                        <h4 class="text-[11px] font-black text-gray-500 mb-2">시간대별 총 작업 취급량 그래프</h4>
+                        <div class="flex-1 relative w-full h-[150px]">
+                            <canvas id="stationTimeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Drawer: Rail vs Truck Compare -->
+        <div id="compare-overlay" onclick="closeCompare()" class="drawer-overlay"></div>
+        <div id="compare-drawer" class="drawer-panel w-[500px]">
+            <div class="h-[64px] bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 font-bold">
+                <h2 class="text-[14px] font-black text-gray-800">도로 수송 대비 절감 효과 분석</h2>
+                <button onclick="closeCompare()" class="text-gray-400 hover:text-gray-700 transition"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex-1 p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6 font-bold">
+                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-xs font-bold text-emerald-800 leading-relaxed shadow-sm">
+                    <i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i>본 대시보드는 선사들이 신청한 철도 수송량 전체를 취합하여, 도로 트럭 개별 운송 대비 절감된 <b>탄소 배출량</b>과 <b>코레일 철도 운임 할인 효과</b>를 누적 분석해 줍니다.
+                </div>
+                
+                <div class="bg-white border-2 border-emerald-500 rounded-xl p-5 shadow-sm">
+                    <h3 class="font-black text-[13px] text-emerald-700 mb-4 flex items-center gap-2"><i class="fa-solid fa-train"></i> 철도 수송 시 절감 지표 요약</h3>
+                    <div class="flex flex-col gap-3 text-xs">
+                        <div class="flex justify-between border-b border-gray-100 pb-2">
+                            <span class="text-gray-500 font-bold">총 절감 비용</span>
+                            <span id="compare-cost-saving" class="font-black text-emerald-600 text-sm">3,440,000 KRW</span>
+                        </div>
+                        <div class="flex justify-between border-b border-gray-100 pb-2">
+                            <span class="text-gray-500 font-bold">총 탄소 감축량</span>
+                            <span id="compare-co2-saving" class="font-black text-emerald-600 text-sm">1,230 kg CO2e</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500 font-bold">트럭 대비 운송 효율</span>
+                            <span class="font-black text-emerald-700">약 2.1배 향상</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript 로직 -->
+    <script>
+        // 전역 상태 변수 선언
+        let simTimeMinutes = 630; 
+        let selectedStationId = "yangmok";
+        let selectedTrainId = "CAND0054";
+        let isSimPlaying = false;
+        let simInterval = null;
+
+        // Chart 인스턴스 전역 변수
+        let segmentLoadChart = null;
+        let stationTimeChart = null;
+
+        // 글로벌 주차 범위
+        let globalWeek = 32; 
+        let globalDay = 2; // 가상 데이터 시드용 고정 화요일
+
+        // ==========================================
+        // 03. 선사 예약 신청 목록 원천 데이터셋
+        // ==========================================
+        const bookingsData = [
+            { id: "APP-001", carrier: "HMM", origin: "부강화물역", dest: "신광양항", size: "40FT", qty: "4 (8 TEU)", train: "CAND0344", time: "8월 11일", savingCost: 1080000, savingCo2: 375, status: "확정" },
+            { id: "APP-002", carrier: "MSC", origin: "부산신항", dest: "약목역 CY", size: "40FT", qty: "8 (16 TEU)", train: "CAND0164", time: "8월 12일", savingCost: 2170000, savingCo2: 750, status: "접수" },
+            { id: "APP-003", carrier: "CMA CGM", origin: "의왕ICD (오봉)", dest: "부산신항", size: "20FT", qty: "10 (10 TEU)", train: "CAND0054", time: "8월 10일", savingCost: 1360000, savingCo2: 480, status: "확정" }
+        ];
+
+        // 02. 수송 제안 데이터셋 삭제완료
+
+        // ==========================================
+        // 04. 열차 운행 및 구간 정보
+        // ==========================================
+        const trainsData = {
+            CAND0054: {
+                title: "CAND0054 상세 운행계획",
+                subtitle: "경부선 하행축 공컨테이너 전용 화물열차",
+                wagon: "40 량",
+                peak: "95.2%",
+                segmentLoad: [45, 76, 52],
+                stations: [
+                    { name: "의왕ICD (오봉)", action: "출발", detail: "06:00 출발 - 선사 공컨테이너 40 TEU 상차" },
+                    { name: "부강화물역", action: "통과/하역", detail: "08:10 도착 / 08:40 출발 - HMM 공컨 12 TEU 하차, 18 TEU 추가 상차" },
+                    { name: "약목역 CY", action: "통과/하역", detail: "10:25 도착 / 11:00 출발 - MSC 공컨 24 TEU 하차" },
+                    { name: "부산신항", action: "종착", detail: "13:10 도착 - 열차 편성 분해 및 야드 배치 완료" }
+                ],
+                carriers: [
+                    { carrier: "HMM", origin: "오봉", dest: "부강", size: "20FT", qty: "12", teu: 12 },
+                    { carrier: "MSC", origin: "오봉", dest: "약목", size: "40FT", qty: "16", teu: 32 },
+                    { carrier: "ONE", origin: "부강", dest: "부산신항", size: "40FT", qty: "10", teu: 20 }
+                ]
+            },
+            CAND0164: {
+                title: "CAND0164 상세 운행계획",
+                subtitle: "경부선 상행선 공컨테이너 환수 화물열차",
+                wagon: "40 량",
+                peak: "72.5%",
+                segmentLoad: [32, 58, 24],
+                stations: [
+                    { name: "부산신항", action: "출발", detail: "12:00 출발 - 32 TEU 적재 출발" },
+                    { name: "약목역 CY", action: "통과/하역", detail: "14:15 도착 / 14:45 출발 - MSC 공컨 10 TEU 상차" },
+                    { name: "부강화물역", action: "통과/하역", detail: "16:40 도착 / 17:10 출발 - HMM 공컨 6 TEU 하차" },
+                    { name: "의왕ICD (오봉)", action: "종착", detail: "19:30 도착 - 수도권 CY 물량 환수 완료" }
+                ],
+                carriers: [
+                    { carrier: "MSC", origin: "부산신항", dest: "약목", size: "40FT", qty: "10", teu: 20 },
+                    { carrier: "ONE", origin: "부산신항", dest: "오봉", size: "20FT", qty: "12", teu: 12 }
+                ]
+            },
+            CAND0344: {
+                title: "CAND0344 상세 운행계획",
+                subtitle: "서남권(호남축) 공컨테이너 셔틀 화물열차",
+                wagon: "30 량",
+                peak: "83.3%",
+                segmentLoad: [35, 50, 50],
+                stations: [
+                    { name: "의왕ICD (오봉)", action: "출발", detail: "08:00 출발 - 35 TEU 적재출발" },
+                    { name: "부강화물역", action: "통과/하역", detail: "10:15 도착 / 10:45 출발 - HMM 공컨 15 TEU 추가 상차" },
+                    { name: "동산역 CY", action: "통과/하역", detail: "13:20 도착 / 13:50 출발 - 호남권 잉여 컨테이너 순환" },
+                    { name: "신광양항", action: "종착", detail: "16:30 도착 - 서남권 CY 물량 환송완료" }
+                ],
+                carriers: [
+                    { carrier: "HMM", origin: "오봉", dest: "광양", size: "40FT", qty: "15", teu: 30 },
+                    { carrier: "CMA CGM", origin: "부강", dest: "광양", size: "20FT", qty: "20", teu: 20 }
+                ]
+            }
+        };
+
+        // ==========================================
+        // 06. 역구내 거점 상하차 작업 리스트
+        // ==========================================
+        const stationOperations = {
+            yangmok: [
+                { time: "10:25", train: "CAND0054", type: "통과/작업", unload: "20FT × 6, 40FT × 5", load: "20FT × 8, 40FT × 5", total: "28 TEU" },
+                { time: "14:15", train: "CAND0164", type: "긴급도착", unload: "40FT × 14 (MSC)", load: "None", total: "28 TEU" }
+            ],
+            obong: [
+                { time: "06:00", train: "CAND0054", type: "시발작업", unload: "None", load: "20FT × 20, 40FT × 20", total: "60 TEU" },
+                { time: "08:00", train: "CAND0344", type: "시발작업", unload: "None", load: "20FT × 18", total: "18 TEU" }
+            ],
+            busan: [
+                { time: "12:00", train: "CAND0164", type: "시발작업", unload: "None", load: "40FT × 24", total: "48 TEU" },
+                { time: "13:10", train: "CAND0054", type: "종착정리", unload: "40FT × 25", load: "None", total: "50 TEU" }
+            ],
+            bugang: [
+                { time: "08:10", train: "CAND0054", type: "통과/작업", unload: "20FT × 6", load: "20FT × 9", total: "15 TEU" },
+                { time: "10:15", train: "CAND0344", type: "통과/작업", unload: "20FT × 5", load: "20FT × 3", total: "8 TEU" }
+            ],
+            dongsan: [
+                { time: "13:20", train: "CAND0344", type: "통과/작업", unload: "20FT × 5, 40FT × 3", load: "20FT × 2", total: "13 TEU" }
+            ],
+            gwangyang: [
+                { time: "16:30", train: "CAND0344", type: "종착도착", unload: "20FT × 15, 40FT × 10", load: "None", total: "35 TEU" }
+            ]
+        };
+
+        // ==========================================
+        // 365일 연간 가상 데이터 동적 발생 시드(Seed) 수학 공식
+        // ==========================================
+        function getHubInventory(week, day, hubKey) {
+            const seed = (week * 7 + day) * 3.14;
+            const sinVal = Math.sin(seed);
+            const cosVal = Math.cos(seed + 1.2);
+
+            const configs = {
+                obong: { base20: 110, base40: 100, s20: 40, s40: 40, name: "오봉역 (의왕ICD)" },
+                bugang: { base20: 35, base40: 42, s20: 20, s40: 20, name: "부강화물역 CY" },
+                yangmok: { base20: 45, base40: 24, s20: 25, s40: 30, name: "약목역 CY" },
+                busan: { base20: 105, base40: 55, s20: 40, s40: 30, name: "부산신항" },
+                dongsan: { base20: 28, base40: 22, s20: 15, s40: 15, name: "동산역 CY" },
+                gwangyang: { base20: 32, base40: 21, s20: 15, s40: 20, name: "신광양항" }
+            };
+
+            const conf = configs[hubKey];
+            const v20 = Math.round(conf.base20 + sinVal * 12);
+            let v40 = Math.round(conf.base40 + cosVal * 10);
+
+            if (hubKey === 'yangmok' && week === 32) {
+                v40 = 19; // 시연 연출용
+            }
+
+            return {
+                name: conf.name,
+                c20: v20,
+                c40: v40,
+                s20: conf.s20,
+                s40: conf.s40
+            };
+        }
+
+        window.onload = function() {
+            initWeekDropdown();
+            switchTab('dashboard');
+        };
+
+        function onTimeSliderChange(val) {
+            simTimeMinutes = parseInt(val);
+            const clockEl = document.getElementById("sim-clock");
+            if (clockEl) clockEl.innerText = formatMinutesToClock(simTimeMinutes);
+            updateGlobalUIState();
+        }
+
+        function formatMinutesToClock(mins) {
+            const h = Math.floor(mins / 60);
+            const m = mins % 60;
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        }
+
+        function startSimulationTimer() {
+            simInterval = setInterval(() => {
+                if (isSimPlaying) {
+                    simTimeMinutes += 10;
+                    if (simTimeMinutes > 1320) {
+                        simTimeMinutes = 360; 
+                    }
+                    const sliderEl = document.getElementById("time-slider");
+                    const clockEl = document.getElementById("sim-clock");
+                    if (sliderEl) sliderEl.value = simTimeMinutes;
+                    if (clockEl) clockEl.innerText = formatMinutesToClock(simTimeMinutes);
+                    updateGlobalUIState();
+                }
+            }, 1200);
+        }
+
+        function togglePlayPause() {
+            isSimPlaying = !isSimPlaying;
+            const btn = document.getElementById("play-pause-btn");
+            if (btn) {
+                if (isSimPlaying) {
+                    btn.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+                    btn.className = "w-6 h-6 flex items-center justify-center rounded bg-gray-800 text-white text-[10px] hover:bg-black transition";
+                } else {
+                    btn.innerHTML = `<i class="fa-solid fa-play"></i>`;
+                    btn.className = "w-6 h-6 flex items-center justify-center rounded bg-emerald-500 text-slate-900 text-[10px] hover:bg-emerald-400 transition";
+                }
+            }
+        }
+
+        function initWeekDropdown() {
+            const select = document.getElementById("week-select");
+            if (!select) return;
+            let html = "";
+            const baseStartDate = new Date(2026, 0, 6);
+            for (let i = 1; i <= 52; i++) {
+                const start = new Date(baseStartDate.getTime() + (i - 1) * 7 * 24 * 60 * 60 * 1000);
+                const end = new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000);
+                const label = `${start.getMonth() + 1}월 ${start.getDate()}일 ~ ${end.getMonth() + 1}월 ${end.getDate()}일`;
+                html += `<option value="${i}" ${i === 32 ? 'selected' : ''}>${label}</option>`;
+            }
+            select.innerHTML = html;
+        }
+
+        // ==========================================
+        // 글로벌 탐색 상태 갱신
+        // ==========================================
+        function setGlobalWeek(weekVal) {
+            globalWeek = parseInt(weekVal);
+            updateGlobalUIState();
+        }
+
+        // ==========================================
+        // 실시간 UI 동기화 엔진
+        // ==========================================
+        function updateGlobalUIState() {
+            // 1. 6대 거점 상태 계산 및 지도 마커 갱신
+            let shortageHubs = [];
+            const hubs = ["obong", "bugang", "yangmok", "busan", "dongsan", "gwangyang"];
+            
+            hubs.forEach(k => {
+                const h = getHubInventory(globalWeek, globalDay, k);
+                const isShortage = (h.c20 < h.s20) || (h.c40 < h.s40);
+                
+                const pin = document.getElementById(`map-pin-${k}`);
+                if (pin) {
+                    if (isShortage) {
+                        pin.className = "absolute w-4 h-4 bg-red-500 rounded-full cursor-pointer shadow-[0_0_12px_rgba(239,68,68,0.9)] border-2 border-white hover:scale-150 transition pulse-marker-red -translate-x-1/2 -translate-y-1/2 z-20";
+                        shortageHubs.push(h.name);
+                    } else {
+                        pin.className = "absolute w-3 h-3 bg-emerald-500 rounded-full cursor-pointer shadow-[0_0_8px_rgba(16,185,129,0.8)] border-2 border-white hover:scale-150 transition -translate-x-1/2 -translate-y-1/2 z-20";
+                    }
+                }
+            });
+
+            // 2. 대시보드 상단 KPI 연동
+            const shortageCountEl = document.getElementById("kpi-shortage-count");
+            const shortageHubNameEl = document.getElementById("kpi-shortage-hub-name");
+            if (shortageCountEl && shortageHubNameEl) {
+                if (shortageHubs.length > 0) {
+                    shortageCountEl.innerText = shortageHubs.length;
+                    shortageCountEl.className = "text-2xl font-black text-red-600";
+                    shortageHubNameEl.innerText = `(${shortageHubs.join(', ')} 🔴)`;
+                    shortageHubNameEl.className = "text-[9px] text-red-500 font-bold";
+                } else {
+                    shortageCountEl.innerText = "0";
+                    shortageCountEl.className = "text-2xl font-black text-emerald-600";
+                    shortageHubNameEl.innerText = "(안정 상태 🟢)";
+                    shortageHubNameEl.className = "text-[9px] text-emerald-600 font-bold";
+                }
+            }
+
+            // 4, 5번째 신규 KPI 카드 갱신 (지난주 운송량, 금주 예약량)
+            const lastWeekLoad = 110 + ((globalWeek - 2 + 52) % 8) * 4; 
+            
+            let thisWeekBooked = 0;
+            bookingsData.forEach(b => {
+                thisWeekBooked += parseInt(b.qty);
+            });
+
+            const lastweekLoadEl = document.getElementById("kpi-lastweek-load");
+            const thisweekBookedEl = document.getElementById("kpi-thisweek-booked");
+            if (lastweekLoadEl) lastweekLoadEl.innerText = lastWeekLoad;
+            if (thisweekBookedEl) thisweekBookedEl.innerText = thisWeekBooked;
+
+            // 3. 종합 대시보드 왼쪽 - 6대 거점 혼잡도 및 작업계획 현황 요약 갱신
+            updateDashboardOpsSummary();
+
+            // 4. 최근 선사 신청 내역 테이블 동적 렌더링
+            renderDashboardRecentBookings();
+
+            // 5. 02. 거점 재고 통합 모니터링 카드 렌더링 (카드 그리드 대시보드 개편!)
+            renderInventoryCardsGrid();
+
+            // 6. 03. 선사 수송 신청 렌더링
+            renderBookingsTable();
+
+            // 7. 05. AI 수급 권고 리포트 렌더링
+            renderAIRecommendations();
+        }
+
+        // ==========================================
+        // 02. 거점 재고 모니터링 대폭 향상 (프리미엄 카드 대시보드화 완료!)
+        // ==========================================
+        function renderInventoryCardsGrid() {
+            const container = document.getElementById("inventory-cards-container");
+            if (!container) return;
+            
+            const hubs = ["obong", "bugang", "yangmok", "busan", "dongsan", "gwangyang"];
+            let html = "";
+
+            hubs.forEach(k => {
+                const h = getHubInventory(globalWeek, globalDay, k);
+                
+                // 가용량 대비 안전선 충전 백분율 연산
+                const pct20 = Math.min((h.c20 / h.s20) * 100, 100);
+                const pct40 = Math.min((h.c40 / h.s40) * 100, 100);
+
+                const is20Short = h.c20 < h.s20;
+                const is40Short = h.c40 < h.s40;
+                const isCritical = is20Short || is40Short;
+
+                // 상태 구분
+                let statusBadge = `<span class="bg-emerald-50 border border-emerald-200 text-emerald-600 text-[10px] font-black px-2 py-0.5 rounded-md">🟢 안전 확보</span>`;
+                let cardBorderClass = "border-gray-200/50";
+                
+                if (isCritical) {
+                    statusBadge = `<span class="bg-red-50 border border-red-200 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-md animate-pulse">🔴 부족 위기</span>`;
+                    cardBorderClass = "border-red-200 bg-red-50/5 hover:border-red-300";
+                } else if (h.c40 < h.s40 * 1.2) {
+                    statusBadge = `<span class="bg-amber-50 border border-amber-200 text-amber-600 text-[10px] font-black px-2 py-0.5 rounded-md">🟡 한계선 인접</span>`;
+                    cardBorderClass = "border-amber-200 hover:border-amber-300";
+                }
+
+                // 과부족 수량 계산
+                const diff40 = h.c40 - h.s40;
+                const balanceHtml = diff40 < 0 ?
+                    `<span class="text-red-600 font-bold text-xs bg-red-50 px-2 py-1 rounded-lg">부족: ${diff40} TEU</span>` :
+                    `<span class="text-emerald-700 font-bold text-xs bg-emerald-50 px-2 py-1 rounded-lg">여유: +${diff40} TEU</span>`;
+
+                html += `
+                    <div class="moveon-card p-5 flex flex-col gap-4 bg-white border ${cardBorderClass}">
+                        <!-- Top 헤더 -->
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-xs font-black text-gray-400 font-mono tracking-wider uppercase">HUB STATION</h3>
+                                <h4 class="text-md font-black text-gray-900 mt-0.5 flex items-center gap-1.5 hover:text-blue-600 transition" onclick="switchTab('dashboard')">
+                                    <i class="fa-solid fa-map-pin text-[10px] text-blue-600"></i> ${h.name}
+                                </h4>
+                            </div>
+                            ${statusBadge}
+                        </div>
+
+                        <!-- 재고 수량 요약 -->
+                        <div class="grid grid-cols-2 gap-3 py-1.5 border-y border-gray-100">
+                            <div>
+                                <span class="text-[10px] text-gray-400 font-bold block">가용재고 (20FT)</span>
+                                <span class="text-lg font-black text-gray-800 font-mono">${h.c20} <span class="text-[10px] text-gray-400 font-bold">TEU</span></span>
+                            </div>
+                            <div class="border-l border-gray-100 pl-3">
+                                <span class="text-[10px] text-gray-400 font-bold block">가용재고 (40FT)</span>
+                                <span class="text-lg font-black text-gray-900 font-mono">${h.c40} <span class="text-[10px] text-gray-400 font-bold">TEU</span></span>
+                            </div>
+                        </div>
+
+                        <!-- 더블 게이지 바 시각화 (가시성 극대화) -->
+                        <div class="flex flex-col gap-2">
+                            <!-- 20FT 게이지 -->
+                            <div class="flex flex-col gap-1">
+                                <div class="flex justify-between text-[9px] text-gray-400 font-bold">
+                                    <span>20FT 안전충전율</span>
+                                    <span>안전기준: ${h.s20} TEU</span>
+                                </div>
+                                <div class="h-2.5 bg-gray-100 rounded-full relative overflow-hidden border border-gray-100">
+                                    <div class="h-full ${is20Short ? 'bg-red-500' : 'bg-emerald-500'} rounded-full" style="width: ${pct20}%"></div>
+                                    <!-- 안전 임계점선 -->
+                                    <div class="absolute top-0 bottom-0 w-[1.5px] bg-red-400 border-l border-white" style="left: 40%"></div>
+                                </div>
+                            </div>
+                            <!-- 40FT 게이지 -->
+                            <div class="flex flex-col gap-1">
+                                <div class="flex justify-between text-[9px] text-gray-400 font-bold">
+                                    <span>40FT 안전충전율</span>
+                                    <span>안전기준: ${h.s40} TEU</span>
+                                </div>
+                                <div class="h-2.5 bg-gray-100 rounded-full relative overflow-hidden border border-gray-100">
+                                    <div class="h-full ${is40Short ? 'bg-red-500' : 'bg-emerald-500'} rounded-full" style="width: ${pct40}%"></div>
+                                    <!-- 안전 임계점선 -->
+                                    <div class="absolute top-0 bottom-0 w-[1.5px] bg-red-400 border-l border-white" style="left: 60%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 과부족 밸런스 지수 -->
+                        <div class="flex justify-between items-center mt-1">
+                            <span class="text-[10px] text-gray-400 font-bold">안전재고선 대비 편차</span>
+                            ${balanceHtml}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // ==========================================
+        // 03. 선사 수송 신청 & 롤백 단독 렌더링
+        // ==========================================
+        function renderBookingsTable() {
+            const tbodyBookings = document.getElementById("bookings-table-body");
+            if (tbodyBookings) {
+                let html = "";
+                bookingsData.forEach(b => {
+                    html += `
+                        <tr class="h-12 border-b border-gray-100">
+                            <td class="font-bold text-gray-900">${b.id}</td>
+                            <td class="font-bold text-gray-700">${b.carrier}</td>
+                            <td>${b.origin}</td>
+                            <td class="font-bold text-blue-600">${b.dest}</td>
+                            <td class="font-mono text-xs">${b.size}</td>
+                            <td class="font-mono text-xs">${b.qty}</td>
+                            <td class="font-mono text-xs font-bold text-gray-500">${b.train}</td>
+                            <td class="text-right font-bold text-emerald-600 font-mono text-[12px]">
+                                ₩${b.savingCost.toLocaleString()} 절감<br>
+                                <span class="text-[9px] text-emerald-500 font-bold">${b.savingCo2} kg CO2e 감축</span>
+                            </td>
+                            <td>
+                                <span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">${b.status}</span>
+                            </td>
+                            <td><span class="text-[10px] text-gray-400 font-bold">처리완료</span></td>
+                        </tr>
+                    `;
+                });
+                tbodyBookings.innerHTML = html;
+            }
+        }
+        // ==========================================
+        // 01. 종합 대시보드 - 6대 거점 작업 요약
+        // ==========================================
+        function updateDashboardOpsSummary() {
+            const timelineSummaryEl = document.getElementById("dash-ops-timeline-summary");
+            if (!timelineSummaryEl) return;
+            
+            const hubs = ["obong", "bugang", "yangmok", "busan", "dongsan", "gwangyang"];
+            let html = "";
+
+            hubs.forEach(k => {
+                const h = getHubInventory(globalWeek, globalDay, k);
+                const isShortage = (h.c20 < h.s20) || (h.c40 < h.s40);
+                
+                let qtyText = "";
+                let congestionBadge = "";
+                
+                if (k === 'yangmok') { qtyText = "56 TEU"; congestionBadge = `<span class="bg-emerald-100 text-emerald-600 text-[9px] font-bold px-1.5 py-0.5 rounded">🟢 여유</span>`; }
+                else if (k === 'obong') { qtyText = "78 TEU"; congestionBadge = `<span class="bg-amber-100 text-amber-600 text-[9px] font-bold px-1.5 py-0.5 rounded">🟡 보통</span>`; }
+                else if (k === 'busan') { qtyText = "98 TEU"; congestionBadge = `<span class="bg-red-100 text-red-600 text-[9px] font-bold px-1.5 py-0.5 rounded animate-pulse">🔴 혼잡</span>`; }
+                else if (k === 'bugang') { qtyText = "23 TEU"; congestionBadge = `<span class="bg-emerald-100 text-emerald-600 text-[9px] font-bold px-1.5 py-0.5 rounded">🟢 여유</span>`; }
+                else if (k === 'dongsan') { qtyText = "13 TEU"; congestionBadge = `<span class="bg-emerald-100 text-emerald-600 text-[9px] font-bold px-1.5 py-0.5 rounded">🟢 여유</span>`; }
+                else { qtyText = "35 TEU"; congestionBadge = `<span class="bg-emerald-100 text-emerald-600 text-[9px] font-bold px-1.5 py-0.5 rounded">🟢 여유</span>`; }
+
+                const inventoryStatus = isShortage ? 
+                    `<span class="text-red-500 font-bold text-[9px] ml-1">CY 부족🔴</span>` : 
+                    `<span class="text-emerald-600 font-bold text-[9px] ml-1">정상🟢</span>`;
+
+                html += `
+                    <div class="flex justify-between items-center border-b border-gray-50 pb-2 last:border-0 last:pb-0">
+                        <div>
+                            <span class="font-black text-gray-800 text-xs">${h.name}</span>
+                            ${inventoryStatus}
+                        </div>
+                        <div class="text-right flex items-center gap-2">
+                            <span class="text-[10px] text-gray-500 font-mono">${qtyText}</span>
+                            ${congestionBadge}
+                        </div>
+                    </div>
+                `;
+            });
+            timelineSummaryEl.innerHTML = html;
+        }
+
+        function renderDashboardRecentBookings() {
+            const tbody = document.getElementById("dash-recent-bookings-tbody");
+            if (!tbody) return;
+            let html = "";
+            bookingsData.forEach(b => {
+                html += `
+                    <tr onclick="switchTab('bookings')" class="cursor-pointer">
+                        <td class="font-bold text-gray-900">${b.id}</td>
+                        <td>${b.carrier}</td>
+                        <td>${b.origin} ➔ ${b.dest}</td>
+                        <td class="font-mono text-xs">${b.size} × ${b.qty}</td>
+                        <td class="font-mono text-xs font-bold text-emerald-600">₩${(b.savingCost/10000).toLocaleString()}만 | ${b.savingCo2}kg</td>
+                        <td>
+                            <span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[9px] font-bold">${b.status}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+        // ==========================================
+        // 05. AI 수급 분석 & 권고 카드 렌더링
+        // ==========================================
+        function renderAIRecommendations() {
+            const leftDiagnosisEl = document.getElementById("recommender-left-diagnosis");
+            const salesAdviceEl = document.getElementById("recommender-sales-advice");
+            const opsAdviceEl = document.getElementById("recommender-ops-advice");
+            const weekTitleEl = document.getElementById("recommender-week-title");
+            if (!leftDiagnosisEl || !salesAdviceEl || !opsAdviceEl) return;
+
+            // 주간 범위 계산
+            const baseStartDate = new Date(2026, 0, 6);
+            const start = new Date(baseStartDate.getTime() + (globalWeek - 1) * 7 * 24 * 60 * 60 * 1000);
+            const end = new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000);
+            const weekPeriodStr = `${start.getMonth() + 1}월 ${start.getDate()}일 ~ ${end.getMonth() + 1}월 ${end.getDate()}일`;
+            
+            if (weekTitleEl) {
+                weekTitleEl.innerText = `${globalWeek}주차 (${weekPeriodStr}) 기준`;
+            }
+
+            const hubs = ["obong", "bugang", "yangmok", "busan", "dongsan", "gwangyang"];
+            let criticalHubs = [];
+            let excessHubs = [];
+            let normalHubs = [];
+
+            hubs.forEach(k => {
+                const h = getHubInventory(globalWeek, globalDay, k);
+                const isShortage = (h.c20 < h.s20) || (h.c40 < h.s40);
+                const isExcess = (h.c40 > h.s40 * 1.5);
+                
+                if (isShortage) criticalHubs.push(h);
+                else if (isExcess) excessHubs.push(h);
+                else normalHubs.push(h);
+            });
+
+            // 1. 좌측 진단 피드백 조립
+            let leftHtml = "";
+            hubs.forEach(k => {
+                const h = getHubInventory(globalWeek, globalDay, k);
+                const isShortage = (h.c20 < h.s20) || (h.c40 < h.s40);
+                const isExcess = (h.c40 > h.s40 * 1.5);
+
+                let statusBadge = "";
+                let description = "";
+                let indicatorColor = "";
+
+                if (isShortage) {
+                    statusBadge = `<span class="bg-red-50 text-red-700 text-[9px] font-black px-2 py-0.5 rounded border border-red-150">선사 수급난 리스크 🔴</span>`;
+                    description = `선사들이 보유한 빈 컨테이너 반환량이 급감하여 야드 내 가용 물량이 부족합니다. 도로로 불필요하게 높은 운임을 내고 긴급 이송을 의뢰하려는 선사의 움직임이 관측됩니다.`;
+                    indicatorColor = "bg-red-500";
+                } else if (isExcess) {
+                    statusBadge = `<span class="bg-amber-50 text-amber-700 text-[9px] font-black px-2 py-0.5 rounded border border-amber-150">선사 컨테이너 과적 🟡</span>`;
+                    description = `선사들의 빈 컨테이너 체화 현상이 심화되어 야드 면적 점유율이 높아지고 있습니다. 선사들이 장기 적치로 인해 보관료 부담 압박을 겪을 것으로 판단됩니다.`;
+                    indicatorColor = "bg-amber-500";
+                } else {
+                    statusBadge = `<span class="bg-emerald-50 text-emerald-700 text-[9px] font-black px-2 py-0.5 rounded border border-emerald-150">수급 균형 안정 🟢</span>`;
+                    description = `선사들의 공컨테이너 회수 및 반출 주기가 원활하여 거점 내 보관 용량이 적정 궤도 내에서 순환하고 있습니다.`;
+                    indicatorColor = "bg-emerald-500";
+                }
+
+                leftHtml += `
+                    <div class="bg-white border border-slate-200/60 rounded-xl p-4.5 flex gap-3 shadow-sm">
+                        <div class="w-1.5 h-12 rounded-full ${indicatorColor} shrink-0"></div>
+                        <div class="flex-1 flex flex-col gap-1.5">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-black text-slate-800">${h.name}</span>
+                                ${statusBadge}
+                            </div>
+                            <p class="text-[11px] text-slate-500 leading-relaxed font-bold">
+                                ${description}
+                            </p>
+                        </div>
+                    </div>
+                `;
+            });
+            leftDiagnosisEl.innerHTML = leftHtml;
+
+            // 2. 우측 영업 권고 조언 빌드
+            let salesText = "";
+            let opsText = "";
+
+            if (criticalHubs.length > 0) {
+                const shortageNames = criticalHubs.map(h => h.name.replace(" CY", "")).join(', ');
+                
+                salesText = `
+                    현재 <b>${shortageNames}</b> 거점에서 선사들의 공컨테이너 수급난이 매우 두드러집니다. 
+                    <br>코레일은 <b>HMM 및 ONE 선사</b>의 화주 영업 부서를 대상으로, 도로 트럭 대비 왕복 운임을 최대 12% 할인해 주는 <b>"공컨테이너 셔틀 철도전환(Modal Shift) 특별 프로모션"</b> 영업을 긴급 제안할 것을 권장합니다. 
+                    선사들이 철도 화차 배정으로 대량 공컨테이너를 회수하여 물류 비용을 아끼고 친환경 세제 혜택을 누릴 수 있도록 유치 영업을 적극 전개하십시오.
+                `;
+
+                opsText = `
+                    선사들의 철도 전환 수송 신청 인입에 유연하게 대처할 수 있도록, 
+                    <b>경부선 하행축 셔틀열차(CAND0054)</b>의 약목역 취급 화차 편성 슬롯을 추가 확보하여 공급 능력을 한시적으로 늘리는 <b>열차 정차 정비 대응 지침</b>을 하달할 것을 제안합니다. 
+                    이를 통해 선사들의 갑작스러운 화차 예약 폭주에 차질 없이 대처할 수 있습니다.
+                `;
+            } else {
+                salesText = `
+                    전 거점의 선사 공컨테이너 적치 상황이 매우 양호하게 배분되어 있습니다. 
+                    특별히 긴급 혜택 프로모션을 제시할 세일즈 요인은 관측되지 않으므로, 
+                    <b>상시 철도 전환 수송 제안 카드</b>를 기반으로 한 일반 선사 대상 영업(도로 대비 안정적인 배차 보장성 및 환경 ESG 성과 보고서 제공 등)만을 조용히 수행하도록 유지하십시오.
+                `;
+
+                opsText = `
+                    공컨테이너 전용 정기 화물열차 스케줄(CAND0054, CAND0164, CAND0344)에 변동 없이 표준 할당 슬롯(80 TEU / 60 TEU)을 그대로 유지합니다. 
+                    특이 열차 편성 보강이나 추가 임시차 투입은 불필요할 것으로 진단됩니다.
+                `;
+            }
+
+            salesAdviceEl.innerHTML = salesText;
+            opsAdviceEl.innerHTML = opsText;
+        }
+
+        // 05. 실시간 텔레메트리 관제 센서 로그 삭제완료
+
+        // ==========================================
+        // 06. 거점 작업계획 탭 관련 로직
+        // ==========================================
+        function selectStation(stationId) {
+            selectedStationId = stationId;
+
+            const stations = ["yangmok", "obong", "busan", "bugang", "dongsan", "gwangyang"];
+            stations.forEach(st => {
+                const btn = document.getElementById(`station-btn-${st}`);
+                if (btn) {
+                    if (st === stationId) {
+                        btn.className = "px-3 py-1.5 bg-gray-900 text-white shadow rounded-lg transition font-bold";
+                    } else {
+                        btn.className = "px-3 py-1.5 text-gray-500 hover:text-gray-800 rounded-lg transition font-bold";
+                    }
+                }
+            });
+
+            const ops = stationOperations[stationId];
+            let stationName = "";
+            let totalT = "";
+            let congestion = "";
+
+            if (stationId === 'yangmok') { stationName = "약목역 CY"; totalT = "56 TEU"; congestion = '🟢 여유'; }
+            else if (stationId === 'obong') { stationName = "오봉역 (의왕ICD)"; totalT = "78 TEU"; congestion = '🟡 보통'; }
+            else if (stationId === 'busan') { stationName = "부산신항 CY"; totalT = "98 TEU"; congestion = '🔴 혼잡'; }
+            else if (stationId === 'bugang') { stationName = "부강화물역 CY"; totalT = "23 TEU"; congestion = '🟢 여유'; }
+            else if (stationId === 'dongsan') { stationName = "동산역 CY"; totalT = "13 TEU"; congestion = '🟢 여유'; }
+            else { stationName = "신광양항"; totalT = "35 TEU"; congestion = '🟢 여유'; }
+
+            const stationTitleEl = document.getElementById("station-operation-title");
+            const stationStatTotalEl = document.getElementById("station-stat-total");
+            const stationStatCongestionEl = document.getElementById("station-stat-congestion");
+
+            if (stationTitleEl) stationTitleEl.innerText = `${stationName} - 오늘 작업 일정`;
+            if (stationStatTotalEl) stationStatTotalEl.innerText = totalT;
+            if (stationStatCongestionEl) {
+                stationStatCongestionEl.innerText = congestion;
+                stationStatCongestionEl.className = 
+                    congestion.includes('여유') ? "text-emerald-600 font-black" : 
+                    congestion.includes('보통') ? "text-amber-500 font-black" : "text-red-500 font-black";
+            }
+
+            let tbodyHtml = "";
+            ops.forEach(op => {
+                tbodyHtml += `
+                    <tr class="h-12 font-bold">
+                        <td class="font-bold text-gray-600">${op.time}</td>
+                        <td class="font-black text-gray-800 font-mono">${op.train}</td>
+                        <td><span class="bg-gray-100 text-gray-800 px-2 py-0.5 rounded text-[10px] font-bold">${op.type}</span></td>
+                        <td class="text-red-500 font-bold">${op.unload}</td>
+                        <td class="text-blue-600 font-bold">${op.load}</td>
+                        <td class="font-black text-right pr-4 font-mono text-gray-800">${op.total}</td>
+                    </tr>
+                `;
+            });
+            
+            const stationOperationRowsEl = document.getElementById("station-operation-rows");
+            if (stationOperationRowsEl) stationOperationRowsEl.innerHTML = tbodyHtml;
+
+            if (document.getElementById("view-station").classList.contains('hidden') === false) {
+                renderStationTimeChart();
+            }
+        }
+
+        // ==========================================
+        // 04. 열차 계획 상세
+        // ==========================================
+        function selectTrain(trainId) {
+            selectedTrainId = trainId;
+            const train = trainsData[trainId];
+
+            const trains = ["CAND0054", "CAND0164", "CAND0344"];
+            trains.forEach(t => {
+                const card = document.getElementById(`train-card-${t}`);
+                if (card) {
+                    if (t === trainId) {
+                        card.className = "bg-white border-2 border-blue-500 rounded-xl p-4 cursor-pointer relative shadow-sm";
+                        card.style.opacity = "1";
+                    } else {
+                        card.className = "bg-white border border-gray-200 rounded-xl p-4 cursor-pointer relative opacity-70";
+                    }
+                }
+            });
+
+            document.getElementById("train-detail-title").innerText = train.title;
+            document.getElementById("train-detail-subtitle").innerText = train.subtitle;
+            document.getElementById("train-detail-wagon").innerText = train.wagon;
+            document.getElementById("train-detail-peak-load").innerText = train.peak;
+
+            let timelineHtml = "";
+            train.stations.forEach((st, idx) => {
+                const isLast = idx === train.stations.length - 1;
+                timelineHtml += `
+                    <div class="flex gap-3 relative">
+                        ${!isLast ? `<div class="absolute left-2.5 top-6 bottom-[-20px] w-0.5 bg-gray-200"></div>` : ""}
+                        <div class="w-5 h-5 rounded-full ${isLast ? 'bg-blue-600' : 'bg-gray-300'} flex items-center justify-center text-white text-[9px] font-bold z-10">
+                            ${idx + 1}
+                        </div>
+                        <div class="flex-1 pb-4">
+                            <h4 class="font-black text-gray-800 text-xs">${st.name} <span class="text-blue-600 font-bold ml-2 text-[10px]">${st.action}</span></h4>
+                            <p class="text-[10px] text-gray-550 font-bold mt-1 bg-gray-50 p-2 rounded-lg border border-gray-100">${st.detail}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById("train-stations-timeline").innerHTML = timelineHtml;
+
+            let carrierRowsHtml = "";
+            train.carriers.forEach(c => {
+                carrierRowsHtml += `
+                    <tr class="h-10">
+                        <td class="font-bold text-gray-800">${c.carrier}</td>
+                        <td>${c.origin}</td>
+                        <td class="font-bold text-blue-600">${c.dest}</td>
+                        <td class="font-mono">${c.size}</td>
+                        <td class="text-right font-black font-mono text-gray-800">${c.qty} (${c.teu} TEU)</td>
+                    </tr>
+                `;
+            });
+            document.getElementById("train-carrier-load-rows").innerHTML = carrierRowsHtml;
+
+            if (document.getElementById("view-schedule").classList.contains('hidden') === false) {
+                renderSegmentLoadChart();
+            }
+        }
+
+        // ==========================================
+        // 차트 렌더러
+        // ==========================================
+        function renderSegmentLoadChart() {
+            const ctx = document.getElementById('segmentLoadChart').getContext('2d');
+            const train = trainsData[selectedTrainId];
+
+            if (segmentLoadChart) {
+                segmentLoadChart.destroy();
+            }
+
+            let labels = [];
+            if (selectedTrainId === 'CAND0054') {
+                labels = ['오봉 ➔ 부강', '부강 ➔ 약목', '약목 ➔ 부산신항'];
+            } else if (selectedTrainId === 'CAND0164') {
+                labels = ['부산신항 ➔ 약목', '약목 ➔ 부강', '부강 ➔ 오봉'];
+            } else {
+                labels = ['오봉 ➔ 부강', '부강 ➔ 동산', '동산 ➔ 신광양항'];
+            }
+
+            segmentLoadChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '구간 적재량 (TEU)',
+                        data: train.segmentLoad,
+                        backgroundColor: ['#93C5FD', '#3B82F6', '#1E40AF'],
+                        borderRadius: 6,
+                        barThickness: 30
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, max: 80, grid: { color: '#F1F5F9' }, ticks: { font: { size: 9 } } },
+                        y: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } }
+                    }
+                }
+            });
+        }
+
+        function renderStationTimeChart() {
+            const ctx = document.getElementById('stationTimeChart').getContext('2d');
+            if (stationTimeChart) {
+                stationTimeChart.destroy();
+            }
+
+            let chartData = [0, 42, 18, 39]; 
+            if (selectedStationId === 'obong') chartData = [0, 78, 0, 0];
+            else if (selectedStationId === 'busan') chartData = [0, 48, 50, 0];
+            else if (selectedStationId === 'bugang') chartData = [15, 8, 0, 0];
+            else if (selectedStationId === 'dongsan') chartData = [0, 0, 13, 0];
+            else if (selectedStationId === 'gwangyang') chartData = [0, 0, 35, 0];
+
+            stationTimeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['00-06시', '06-12시', '12-18시', '18-24시'],
+                    datasets: [{
+                        label: '시간대별 취급 작업량 (TEU)',
+                        data: chartData,
+                        backgroundColor: '#A855F7',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, max: 90, grid: { color: '#F1F5F9' }, ticks: { font: { size: 9 } } },
+                        x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } }
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // 탭 라우터 스위칭
+        // ==========================================
+        function switchTab(tabId) {
+            const views = ["dashboard", "inventory", "bookings", "schedule", "recommender", "station"];
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if (el) {
+                    el.classList.add('hidden');
+                    el.classList.remove('flex');
+                }
+            });
+
+            const navButtons = document.querySelectorAll("#main-nav button");
+            navButtons.forEach(btn => {
+                btn.className = "px-4 py-2 text-gray-500 hover:text-gray-900 text-xs font-bold transition-all rounded-xl";
+            });
+
+            const activeView = document.getElementById(`view-${tabId}`);
+            if (activeView) {
+                activeView.classList.remove('hidden');
+                if (tabId === 'inventory' || tabId === 'schedule' || tabId === 'recommender' || tabId === 'station') {
+                    activeView.classList.add('flex');
+                }
+            }
+            
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) {
+                activeBtn.className = "px-4 py-2 bg-white shadow-sm rounded-xl text-xs font-bold text-gray-900 transition-all";
+            }
+
+            updateGlobalUIState();
+            if (tabId === 'schedule') {
+                setTimeout(() => { 
+                    selectTrain(selectedTrainId); 
+                    renderSegmentLoadChart(); 
+                }, 50);
+            } else if (tabId === 'station') {
+                setTimeout(() => { selectStation(selectedStationId); }, 50);
+            }
+        }
+
+        function openCompare() {
+            document.getElementById('compare-overlay').style.display = 'block';
+            setTimeout(() => { 
+                document.getElementById('compare-overlay').style.opacity = '1'; 
+                document.getElementById('compare-drawer').style.transform = 'translateX(0)'; 
+            }, 10);
+
+            let totalCostSaved = 0;
+            let totalCo2Saved = 0;
+            bookingsData.forEach(b => {
+                if (b.status === "확정") {
+                    totalCostSaved += b.savingCost;
+                    totalCo2Saved += b.savingCo2;
+                }
+            });
+            document.getElementById("compare-cost-saving").innerText = totalCostSaved.toLocaleString() + " KRW";
+            document.getElementById("compare-co2-saving").innerText = totalCo2Saved.toLocaleString() + " kg CO2e";
+        }
+
+        function closeCompare() {
+            document.getElementById('compare-drawer').style.transform = 'translateX(100%)';
+            document.getElementById('compare-overlay').style.opacity = '0';
+            setTimeout(() => { document.getElementById('compare-overlay').style.display = 'none'; }, 400);
+        }
+    </script>
+</body>
+</html>

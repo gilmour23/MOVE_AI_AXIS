@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOVE-AI · Carrier A Transport</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Pretendard', 'sans-serif'] },
+          colors: {
+            moveon: {
+              bg: '#E4E7EA', surface: '#F2F4F7', card: '#FFFFFF', textMain: '#1A1D20',
+              textMuted: '#94A3B8', purple: '#A855F7', blue: '#93C5FD',
+              green: '#86EFAC', amber: '#FCD34D', red: '#FCA5A5'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background:#E4E7EA; margin:0; min-height:100vh; display:flex; justify-content:center; align-items:center; padding:20px; }
+    #app-container { width:100%; max-width:1440px; height:calc(100vh - 40px); max-height:940px; min-height:740px; background:#F2F4F7; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,.15); position:relative; overflow:hidden; display:flex; flex-direction:column; }
+    .moveon-card { background:#fff; border-radius:20px; box-shadow:0 4px 20px rgba(0,0,0,.03); border:1px solid rgba(226,232,240,.68); }
+    .custom-scrollbar::-webkit-scrollbar { width:6px; height:6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background:transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background:#CBD5E1; border-radius:10px; }
+    table { width:100%; border-collapse:collapse; }
+    th { font-size:13px; font-weight:600; color:#94A3B8; text-align:left; padding:15px 16px; border-bottom:1px solid #F1F5F9; position:sticky; top:0; background:white; z-index:10; white-space:nowrap; }
+    td { font-size:14px; font-weight:500; color:#1A1D20; padding:15px 16px; border-bottom:1px solid #F8FAFC; white-space:nowrap; }
+    tr[data-row]:hover, tr[data-row].selected { background:#FAF5FF; cursor:pointer; }
+    tr[data-row].selected td:first-child { box-shadow:inset 3px 0 0 #A855F7; }
+    .drawer-overlay { display:none; opacity:0; transition:opacity .3s ease; position:absolute; inset:0; background:rgba(15,23,42,.3); backdrop-filter:blur(2px); z-index:40; }
+    .drawer-panel { transform:translateX(100%); transition:transform .4s cubic-bezier(.16,1,.3,1); position:absolute; top:0; right:0; height:100%; background:#F2F4F7; box-shadow:-10px 0 30px rgba(0,0,0,.1); z-index:50; display:flex; flex-direction:column; }
+    .pill-active { background:#1F2937; color:#fff; box-shadow:0 2px 5px rgba(15,23,42,.15); }
+    .priority-button { border:1px solid #E5E7EB; color:#64748B; background:#fff; }
+    .priority-button.active { background:#1F2937; border-color:#1F2937; color:#fff; }
+    /* Increase the compact dashboard type scale for easier reading. */
+    #app-container .text-\[8px\] { font-size:10px !important; }
+    #app-container .text-\[9px\] { font-size:11px !important; }
+    #app-container .text-\[10px\] { font-size:12px !important; }
+    #app-container .text-\[11px\] { font-size:13px !important; }
+    #app-container .text-\[12px\] { font-size:14px !important; }
+    #app-container .text-\[13px\] { font-size:15px !important; }
+    #app-container .text-\[14px\] { font-size:16px !important; }
+    #app-container .text-\[15px\] { font-size:17px !important; }
+    #app-container .text-\[17px\] { font-size:19px !important; }
+    @media (max-width: 900px) {
+      body { padding:0; align-items:stretch; }
+      #app-container { height:100vh; min-height:0; border-radius:0; }
+      .desktop-nav { display:none; }
+      .shipment-overview-grid, .mode-summary-grid, .overall-grid { grid-template-columns:1fr !important; }
+    }
+  </style>
+</head>
+<body class="text-moveon-textMain">
+  <div id="app-container">
+    <header class="flex justify-between items-center px-7 lg:px-10 py-5 border-b border-gray-200/50 shrink-0 z-20 bg-white">
+      <div class="flex items-center gap-2 shrink-0">
+        <div class="w-6 h-6 border-[3px] border-gray-800 rounded-md rotate-45 flex items-center justify-center"></div>
+        <h1 class="text-xl font-black tracking-tight text-gray-900">MOVE-AI</h1>
+      </div>
+      <nav class="desktop-nav flex items-center gap-1 bg-gray-50 p-1 rounded-2xl border border-gray-100">
+        <button onclick="setActiveNav(this)" class="px-4 py-2 text-gray-500 hover:text-gray-900 text-sm font-bold transition-all rounded-xl">Overview</button>
+        <button onclick="setActiveNav(this)" class="px-4 py-2 text-gray-500 hover:text-gray-900 text-sm font-bold transition-all rounded-xl">Inventory</button>
+        <button onclick="setActiveNav(this)" class="px-4 py-2 text-gray-500 hover:text-gray-900 text-sm font-bold transition-all rounded-xl">Plan</button>
+        <button onclick="setActiveNav(this)" class="px-4 py-2 pill-active rounded-xl text-sm font-bold transition-all">Transport</button>
+        <button onclick="setActiveNav(this)" class="px-4 py-2 text-gray-500 hover:text-gray-900 text-sm font-bold transition-all rounded-xl">Tracking</button>
+      </nav>
+      <div class="flex items-center gap-3 shrink-0">
+        <button class="hidden sm:flex w-9 h-9 items-center justify-center text-gray-500 hover:bg-gray-100 rounded-full transition" title="알림"><i class="fa-regular fa-bell"></i></button>
+        <div class="h-6 w-px bg-gray-200 hidden sm:block"></div>
+        <div class="flex items-center gap-3">
+          <div class="flex flex-col text-right">
+            <span class="text-[13px] font-bold text-gray-900">Carrier A</span>
+            <span class="text-[10px] text-gray-400 font-bold">Equipment Control</span>
+          </div>
+          <div class="w-9 h-9 rounded-full bg-purple-100 text-moveon-purple flex items-center justify-center text-sm font-black border border-purple-200">A</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8 flex flex-col gap-5">
+      <section class="flex flex-col xl:flex-row xl:justify-between xl:items-end gap-4">
+        <div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="bg-purple-50 text-moveon-purple border border-purple-100 text-[10px] font-bold px-2.5 py-1 rounded-md">TRANSPORT DECISION</span>
+            <span class="text-[11px] text-gray-400 font-medium">Dataset snapshot · 11 Aug 2026</span>
+          </div>
+          <h2 class="text-2xl font-black tracking-tight text-gray-900">Carrier A 운송수단 비교</h2>
+          <p class="text-[13px] text-gray-500 font-medium mt-1">철도 추천 5건의 비용, 리드타임, 탄소배출을 트럭 운송과 비교합니다.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <label for="recommendation-select" class="text-[11px] font-bold text-gray-400">선택 제안</label>
+          <select id="recommendation-select" onchange="selectRecommendation(+this.value)" class="bg-white border border-gray-200 rounded-xl px-3 py-2 text-[12px] font-bold text-gray-700 outline-none shadow-sm">
+          </select>
+          <button onclick="openCompare()" class="bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-xl text-[12px] font-bold transition"><i class="fa-solid fa-arrow-right-arrow-left mr-1.5"></i> 상세 비교</button>
+        </div>
+      </section>
+
+      <div class="comparison-layout grid grid-cols-1 xl:grid-cols-[minmax(0,1.35fr)_minmax(370px,.85fr)] gap-5 items-start">
+        <div class="flex flex-col gap-5">
+      <!-- 1. 선택 REC의 운송 개요 -->
+      <section class="moveon-card p-6">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-5">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-purple-50 text-moveon-purple flex items-center justify-center text-[10px] font-black">1</span>
+              <h3 id="overview-title" class="text-[14px] font-black text-gray-800">선택 REC 운송 개요</h3>
+            </div>
+            <p id="overview-subtitle" class="text-[10px] text-gray-400 font-medium mt-1">출발지, 도착지와 운송 화물 정보를 먼저 확인합니다.</p>
+          </div>
+          <span id="overview-badge" class="bg-purple-50 text-moveon-purple border border-purple-100 text-[10px] font-bold px-2.5 py-1 rounded-md">Rail Recommended</span>
+        </div>
+        <div class="shipment-overview-grid grid grid-cols-[.9fr_1.4fr_1.4fr_1.15fr_1.1fr] gap-3">
+          <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <span class="block text-[10px] font-bold text-gray-400">RECOMMENDATION</span>
+            <span id="overview-id" class="block text-[17px] font-black text-gray-900 mt-2">REC0002</span>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <span id="overview-origin-label" class="block text-[10px] font-bold text-gray-400">출발지</span>
+            <span id="overview-origin" class="block text-[14px] font-black text-gray-800 mt-2">부산신항</span>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <span id="overview-destination-label" class="block text-[10px] font-bold text-gray-400">도착지</span>
+            <span id="overview-destination" class="block text-[14px] font-black text-moveon-purple mt-2">약목역 CY</span>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <span id="overview-cargo-label" class="block text-[10px] font-bold text-gray-400">운송 화물</span>
+            <span id="overview-cargo" class="block text-[14px] font-black text-gray-800 mt-2">20FT × 16</span>
+            <span id="overview-teu" class="block text-[10px] text-gray-400 font-bold mt-1">16 TEU</span>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <span id="overview-distance-label" class="block text-[10px] font-bold text-gray-400">도로 기준 거리</span>
+            <span id="overview-distance" class="block text-[14px] font-black text-gray-800 mt-2">156 km</span>
+            <span id="overview-schedule" class="block text-[10px] text-gray-400 font-bold mt-1">Available · 12 Aug 06:00</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. 선택 REC Rail / Truck 비교 요약 -->
+      <section>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] font-black">2</span>
+          <div>
+            <h3 id="mode-summary-title" class="text-[14px] font-black text-gray-800">선택 REC 운송수단 요약</h3>
+            <p id="mode-summary-subtitle" class="text-[10px] text-gray-400 font-medium mt-0.5">운임, 리드타임, 탄소배출량을 같은 조건에서 비교합니다.</p>
+          </div>
+        </div>
+        <div class="moveon-card overflow-hidden">
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="min-w-[680px]">
+              <thead>
+                <tr>
+                  <th class="w-[26%]">비교 항목</th>
+                  <th class="w-[24%]"><span class="inline-flex items-center gap-1.5 text-moveon-purple"><i class="fa-solid fa-train-subway"></i> Rail</span></th>
+                  <th class="w-[24%]"><span class="inline-flex items-center gap-1.5 text-gray-500"><i class="fa-solid fa-truck"></i> Truck</span></th>
+                  <th class="w-[26%]">Rail 선택 효과</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span id="cost-row-title" class="font-bold text-gray-700">운임</span><span id="cost-row-subtitle" class="block text-[10px] text-gray-400 mt-0.5">Estimated total cost</span></td>
+                  <td><span id="rail-cost" class="font-black text-moveon-purple">₩0.88M</span></td>
+                  <td><span id="truck-cost" class="font-black text-gray-700">₩8.21M</span></td>
+                  <td><span id="selected-cost-saving" class="font-black text-blue-600">₩7.33M</span><span id="selected-cost-rate" class="ml-1.5 text-[10px] font-bold text-blue-500">89.3% 절감</span></td>
+                </tr>
+                <tr>
+                  <td><span id="time-row-title" class="font-bold text-gray-700">리드타임</span><span id="time-row-subtitle" class="block text-[10px] text-gray-400 mt-0.5">End-to-end lead time</span></td>
+                  <td><span id="rail-hours" class="font-black text-gray-800">9.0 h</span></td>
+                  <td><span id="truck-hours" class="font-black text-gray-700">5.2 h</span></td>
+                  <td><span id="selected-time-gap" class="font-black text-amber-600">+3.8 h</span><span class="ml-1.5 text-[10px] font-bold text-amber-500">Rail이 더 소요</span></td>
+                </tr>
+                <tr>
+                  <td><span id="carbon-row-title" class="font-bold text-gray-700">탄소배출량</span><span id="carbon-row-subtitle" class="block text-[10px] text-gray-400 mt-0.5">Estimated CO₂e</span></td>
+                  <td><span id="rail-carbon" class="font-black text-green-600">459 kg</span></td>
+                  <td><span id="truck-carbon" class="font-black text-red-400">2,147 kg</span></td>
+                  <td><span id="selected-carbon-saving" class="font-black text-green-600">1.69 t</span><span id="selected-carbon-rate" class="ml-1.5 text-[10px] font-bold text-green-500">78.6% 저감</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-[26%_24%_24%_26%] items-center gap-2 text-[10px] font-bold">
+            <span class="text-gray-400">Rail available <span id="rail-available" class="text-gray-700 ml-1.5">12 Aug 06:00</span></span>
+            <span class="text-gray-400">사용 열차 <span id="rail-train" class="text-moveon-purple ml-1.5">CAND0292</span></span>
+            <span class="text-gray-400">트럭 운송차량 <span id="truck-vehicles" class="text-gray-700 ml-1.5">16대</span></span>
+            <button onclick="openCompare()" class="text-moveon-purple hover:underline text-left sm:text-right sm:justify-self-end">상세 비교 보기 <i class="fa-solid fa-arrow-right text-[8px] ml-1"></i></button>
+          </div>
+        </div>
+      </section>
+        </div>
+
+        <aside class="moveon-card p-6 xl:sticky xl:top-0">
+          <div class="flex justify-between items-start gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-gray-900 text-white flex items-center justify-center text-[11px] font-black"><i class="fa-solid fa-chart-column"></i></span>
+                <h3 id="comparison-chart-title" class="text-[14px] font-black text-gray-800">REC0002 Rail vs Truck</h3>
+              </div>
+              <p id="comparison-chart-subtitle" class="text-[10px] text-gray-400 font-medium mt-2">각 항목에서 더 적은 값만 색상으로 강조합니다.</p>
+              <p class="text-[9px] text-gray-400 font-bold mt-1.5">왼쪽 막대 Rail · 오른쪽 막대 Truck</p>
+            </div>
+            <span id="comparison-chart-badge" class="shrink-0 bg-purple-50 text-moveon-purple border border-purple-100 text-[9px] font-bold px-2 py-1 rounded">REC</span>
+          </div>
+
+          <div class="h-[330px] mt-5"><canvas id="comparison-chart"></canvas></div>
+
+          <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-x-4 gap-y-3 text-[10px] font-bold">
+            <span class="flex items-center gap-2 text-gray-500"><i class="w-2.5 h-2.5 rounded-sm bg-blue-500"></i>비용: 더 낮은 운임</span>
+            <span class="flex items-center gap-2 text-gray-500"><i class="w-2.5 h-2.5 rounded-sm bg-amber-400"></i>시간: 더 짧은 리드타임</span>
+            <span class="flex items-center gap-2 text-gray-500"><i class="w-2.5 h-2.5 rounded-sm bg-green-500"></i>탄소: 더 적은 CO₂e</span>
+            <span class="flex items-center gap-2 text-gray-500"><i class="w-2.5 h-2.5 rounded-sm bg-slate-300"></i>회색: 더 큰 값</span>
+          </div>
+          <p id="comparison-chart-footnote" class="mt-4 text-[10px] text-gray-400 font-medium leading-relaxed">막대 길이는 항목별 큰 값을 100으로 표준화했으며, 정확한 값은 표와 툴팁에서 확인할 수 있습니다.</p>
+        </aside>
+      </div>
+
+      <section id="recommendations-section" class="moveon-card flex flex-col overflow-hidden min-h-[305px]">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-5 pb-3">
+          <div>
+            <h3 class="text-[14px] font-bold text-gray-800">Carrier A 철도 추천 목록</h3>
+            <p class="text-[10px] text-gray-400 font-medium mt-1">행을 선택하면 1·2 영역의 운송 정보와 Rail/Truck 요약이 갱신됩니다.</p>
+          </div>
+          <div class="flex items-center gap-2 text-[11px] font-bold">
+            <span class="bg-purple-50 text-moveon-purple px-2.5 py-1.5 rounded-lg">Rail 5</span>
+            <span class="text-gray-400 px-2.5 py-1.5">All calculations in KRW / kgCO₂e</span>
+          </div>
+        </div>
+        <div class="flex-1 overflow-auto custom-scrollbar">
+          <table>
+            <thead>
+              <tr>
+                <th>Recommendation</th>
+                <th>Route</th>
+                <th>Container</th>
+                <th>Distance</th>
+                <th>Rail Cost</th>
+                <th>Truck Cost</th>
+                <th>Cost Saving</th>
+                <th>CO₂ Reduction</th>
+                <th>Time Gap</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="recommendation-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer class="flex flex-col sm:flex-row gap-2 sm:justify-between text-[10px] text-gray-400 font-medium px-1 pb-1">
+        <span>Source: TRUCK_COMPARISON_BY_RECOMMENDATION.csv · Carrier_A only</span>
+        <span>Rail: process start → available time · Truck: loading + road duration + unloading</span>
+      </footer>
+    </main>
+
+    <div id="compare-overlay" onclick="closeCompare()" class="drawer-overlay"></div>
+    <aside id="compare-drawer" class="drawer-panel w-full max-w-[520px]">
+      <div class="h-[64px] bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0">
+        <div>
+          <h2 id="drawer-title" class="text-[14px] font-black text-gray-800">운송수단 비교</h2>
+          <span id="drawer-route" class="text-[10px] font-bold text-gray-400">부산신항 → 약목역 CY</span>
+        </div>
+        <button onclick="closeCompare()" class="text-gray-400 hover:text-gray-700 transition"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="flex-1 p-6 overflow-y-auto custom-scrollbar flex flex-col gap-5">
+        <div class="flex gap-2">
+          <button data-priority="cost" onclick="setPriority('cost')" class="priority-button active px-3 py-1.5 rounded-lg text-[11px] font-bold">비용 우선</button>
+          <button data-priority="time" onclick="setPriority('time')" class="priority-button px-3 py-1.5 rounded-lg text-[11px] font-bold">시간 우선</button>
+          <button data-priority="carbon" onclick="setPriority('carbon')" class="priority-button px-3 py-1.5 rounded-lg text-[11px] font-bold">탄소 우선</button>
+        </div>
+
+        <div id="drawer-recommendation" class="bg-purple-50 border border-purple-100 rounded-xl p-4">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-white text-moveon-purple flex items-center justify-center shadow-sm"><i class="fa-solid fa-train-subway text-xs"></i></span>
+            <div>
+              <p id="recommendation-label" class="text-[12px] font-black text-gray-800">비용 기준: Rail 추천</p>
+              <p id="recommendation-reason" class="text-[10px] font-bold text-moveon-purple mt-0.5">트럭 대비 ₩7.33M을 절감합니다.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="drawer-mode-cards" class="flex flex-col gap-4"></div>
+
+        <div class="moveon-card p-4">
+          <div class="flex justify-between items-center mb-3">
+            <span class="text-[12px] font-bold text-gray-700">결정 기준</span>
+            <span id="drawer-id" class="text-[10px] font-bold text-gray-400">REC0002</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="bg-gray-50 rounded-lg p-2.5">
+              <span class="block text-[9px] text-gray-400 font-bold">차량</span>
+              <span id="drawer-vehicles" class="block text-[12px] text-gray-800 font-black mt-1">16</span>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-2.5">
+              <span class="block text-[9px] text-gray-400 font-bold">도로거리</span>
+              <span id="drawer-distance" class="block text-[12px] text-gray-800 font-black mt-1">156 km</span>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-2.5">
+              <span class="block text-[9px] text-gray-400 font-bold">컨테이너</span>
+              <span id="drawer-equipment" class="block text-[12px] text-gray-800 font-black mt-1">20FT × 16</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="p-5 bg-white border-t border-gray-200 flex gap-2">
+        <button onclick="acceptRecommendation()" class="flex-1 bg-gray-900 hover:bg-black text-white py-2.5 rounded-xl text-[12px] font-bold transition">Rail 제안 수락</button>
+        <button onclick="closeCompare()" class="px-4 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 py-2.5 rounded-xl text-[12px] font-bold transition">닫기</button>
+      </div>
+    </aside>
+
+    <div id="toast" class="absolute bottom-6 left-1/2 -translate-x-1/2 translate-y-20 opacity-0 transition-all duration-300 bg-gray-900 text-white text-[12px] font-bold px-4 py-3 rounded-xl shadow-xl z-[60]">Rail 제안이 준비되었습니다.</div>
+  </div>
+
+  <script>
+    const comparisonData = [
+      { id:'REC0001', train:'CAND0702', origin:'부강화물역 CY', destination:'신광양항', size:'20FT', boxes:8, teu:8, distance:236.377, vehicles:8, railCost:851655.92, truckCost:5413600, saving:4561944.08, savingRate:0.8426821486626275, railHours:13, truckHours:5.495559722222222, timeGap:-7.504440277777778, railCo2:339.62799244285713, truckCo2:1624.15582208, carbonSaving:1284.527829637143, carbonRate:0.7908895268386827, start:'2026-08-11 14:00', available:'2026-08-12 03:00' },
+      { id:'REC0002', train:'CAND0292', origin:'부산신항', destination:'약목역 CY', size:'20FT', boxes:16, teu:16, distance:156.216, vehicles:16, railCost:877926.56, truckCost:8211200, saving:7333273.44, savingRate:0.8930818199532345, railHours:9, truckHours:5.166565, timeGap:-3.8334349999999997, railCo2:459.29312851764706, truckCo2:2146.73276928, carbonSaving:1687.4396407623533, carbonRate:0.7860501618598337, start:'2026-08-11 21:00', available:'2026-08-12 06:00' },
+      { id:'REC0003', train:'CAND0292', origin:'부산신항', destination:'약목역 CY', size:'40FT', boxes:9, teu:18, distance:156.216, vehicles:9, railCost:765633.6, truckCost:5267700, saving:4502066.4, savingRate:0.854655048692978, railHours:9, truckHours:5.166565, timeGap:-3.8334349999999997, railCo2:516.7047695823529, truckCo2:1207.53718272, carbonSaving:690.8324131376472, carbonRate:0.5721003237196673, start:'2026-08-11 21:00', available:'2026-08-12 06:00' },
+      { id:'REC0004', train:'CAND0156', origin:'의왕ICD(오봉역)', destination:'약목역 CY', size:'20FT', boxes:7, teu:7, distance:235.632, vehicles:7, railCost:691206.75, truckCost:4736900, saving:4045693.25, savingRate:0.8540803584622855, railHours:13, truckHours:5.770808333333333, timeGap:-7.229191666666667, railCo2:339.742502172973, truckCo2:1416.65728512, carbonSaving:1076.914782947027, carbonRate:0.7601801750208099, start:'2026-08-10 03:00', available:'2026-08-10 16:00' },
+      { id:'REC0005', train:'CAND0156', origin:'의왕ICD(오봉역)', destination:'약목역 CY', size:'40FT', boxes:3, teu:6, distance:235.632, vehicles:3, railCost:459273.6, truckCost:2330400, saving:1871126.4, savingRate:0.8029207003089598, railHours:13, truckHours:5.770808333333333, timeGap:-7.229191666666667, railCo2:291.2078590054054, truckCo2:607.13883648, carbonSaving:315.9309774745946, carbonRate:0.5203603500416198, start:'2026-08-10 03:00', available:'2026-08-10 16:00' }
+    ];
+
+    let selectedIndex = 1;
+    let priority = 'cost';
+    let comparisonChart;
+
+    const won = (value) => '₩' + Math.round(value).toLocaleString('ko-KR');
+    const wonM = (value) => '₩' + (value / 1000000).toFixed(2) + 'M';
+    const pct = (value) => (value * 100).toFixed(1) + '%';
+    const tonnes = (value) => (value / 1000).toFixed(2) + ' t';
+    const hours = (value) => value.toFixed(1) + ' h';
+    const shortDate = (value) => {
+      if (!value || value === '—') return '—';
+      const split = value.split(' ');
+      const date = split[0].split('-');
+      return date[2] + ' Aug ' + split[1];
+    };
+    const isOverall = () => selectedIndex === -1;
+    const current = () => isOverall() ? getOverallRow() : comparisonData[selectedIndex];
+    const co2Text = (value) => value >= 1000 ? tonnes(value) + 'CO₂e' : Math.round(value).toLocaleString('ko-KR') + ' kgCO₂e';
+
+    function getTotals() {
+      return comparisonData.reduce((acc, row) => ({
+        boxes: acc.boxes + row.boxes,
+        teu: acc.teu + row.teu,
+        railCost: acc.railCost + row.railCost,
+        truckCost: acc.truckCost + row.truckCost,
+        railCo2: acc.railCo2 + row.railCo2,
+        truckCo2: acc.truckCo2 + row.truckCo2,
+        railHours: acc.railHours + row.railHours,
+        truckHours: acc.truckHours + row.truckHours
+      }), { boxes:0, teu:0, railCost:0, truckCost:0, railCo2:0, truckCo2:0, railHours:0, truckHours:0 });
+    }
+
+    function getOverallRow() {
+      const total = getTotals();
+      const count = comparisonData.length;
+      return {
+        isOverall: true,
+        id: '전체',
+        train: 'CAND0702 · CAND0292 · CAND0156',
+        origin: 'Carrier A',
+        destination: '철도 추천 5건',
+        size: '20FT / 40FT',
+        boxes: total.boxes,
+        teu: total.teu,
+        distance: null,
+        vehicles: total.boxes,
+        railCost: total.railCost,
+        truckCost: total.truckCost,
+        saving: total.truckCost - total.railCost,
+        savingRate: (total.truckCost - total.railCost) / total.truckCost,
+        railHours: total.railHours / count,
+        truckHours: total.truckHours / count,
+        timeGap: (total.truckHours / count) - (total.railHours / count),
+        railCo2: total.railCo2,
+        truckCo2: total.truckCo2,
+        carbonSaving: total.truckCo2 - total.railCo2,
+        carbonRate: (total.truckCo2 - total.railCo2) / total.truckCo2,
+        available: '—'
+      };
+    }
+
+    function renderSelect() {
+      const select = document.getElementById('recommendation-select');
+      select.innerHTML = '<option value="-1">전체 · Carrier A 철도 추천 5건</option>' +
+        comparisonData.map((row, index) => '<option value="' + index + '">' + row.id + ' · ' + row.origin + ' → ' + row.destination + ' · ' + row.size + '</option>').join('');
+      select.value = selectedIndex;
+    }
+
+    function renderSelected() {
+      const row = current();
+      const overall = row.isOverall === true;
+      const twentyFtBoxes = comparisonData.filter((item) => item.size === '20FT').reduce((sum, item) => sum + item.boxes, 0);
+      const fortyFtBoxes = comparisonData.filter((item) => item.size === '40FT').reduce((sum, item) => sum + item.boxes, 0);
+      document.getElementById('overview-title').textContent = overall ? '전체 추천 운송 개요' : '선택 REC 운송 개요';
+      document.getElementById('overview-subtitle').textContent = overall
+        ? 'Carrier A의 철도 추천 5건을 하나의 비교 화면으로 집계합니다.'
+        : '출발지, 도착지와 운송 화물 정보를 먼저 확인합니다.';
+      document.getElementById('overview-badge').textContent = overall ? 'All recommendations' : 'Rail Recommended';
+      document.getElementById('mode-summary-title').textContent = overall ? '전체 운송수단 비교' : '선택 REC 운송수단 요약';
+      document.getElementById('mode-summary-subtitle').textContent = overall
+        ? '운임·탄소배출은 5건 합계, 리드타임은 건당 평균으로 비교합니다.'
+        : '운임, 리드타임, 탄소배출량을 같은 조건에서 비교합니다.';
+      document.getElementById('overview-id').textContent = row.id;
+      document.getElementById('overview-origin-label').textContent = overall ? '20FT 컨테이너' : '출발지';
+      document.getElementById('overview-destination-label').textContent = overall ? '40FT 컨테이너' : '도착지';
+      document.getElementById('overview-cargo-label').textContent = overall ? '총 운송 화물' : '운송 화물';
+      document.getElementById('overview-distance-label').textContent = overall ? '총 컨테이너' : '도로 기준 거리';
+      document.getElementById('overview-origin').textContent = overall ? twentyFtBoxes + '개' : row.origin;
+      document.getElementById('overview-destination').textContent = overall ? fortyFtBoxes + '개' : row.destination;
+      document.getElementById('overview-cargo').textContent = overall ? row.teu + ' TEU' : row.size + ' × ' + row.boxes;
+      document.getElementById('overview-teu').textContent = overall ? '20FT ' + twentyFtBoxes + '개 · 40FT ' + fortyFtBoxes + '개' : row.teu + ' TEU';
+      document.getElementById('overview-distance').textContent = overall ? row.boxes + '개' : row.distance.toFixed(0) + ' km';
+      document.getElementById('overview-schedule').textContent = overall ? '5개 REC 통합' : 'Available · ' + shortDate(row.available);
+      document.getElementById('cost-row-title').textContent = overall ? '총 운임' : '운임';
+      document.getElementById('cost-row-subtitle').textContent = overall ? '5건 합계 · Estimated total cost' : 'Estimated total cost';
+      document.getElementById('time-row-title').textContent = overall ? '건당 평균 리드타임' : '리드타임';
+      document.getElementById('time-row-subtitle').textContent = overall ? '5건 평균 · End-to-end lead time' : 'End-to-end lead time';
+      document.getElementById('carbon-row-title').textContent = overall ? '총 탄소배출량' : '탄소배출량';
+      document.getElementById('carbon-row-subtitle').textContent = overall ? '5건 합계 · Estimated CO₂e' : 'Estimated CO₂e';
+      document.getElementById('rail-cost').textContent = wonM(row.railCost);
+      document.getElementById('rail-hours').textContent = hours(row.railHours);
+      document.getElementById('rail-carbon').textContent = co2Text(row.railCo2);
+      document.getElementById('rail-available').textContent = overall ? '개별 REC 확인' : shortDate(row.available);
+      document.getElementById('rail-train').textContent = row.train;
+      document.getElementById('truck-cost').textContent = wonM(row.truckCost);
+      document.getElementById('truck-hours').textContent = hours(row.truckHours);
+      document.getElementById('truck-carbon').textContent = co2Text(row.truckCo2);
+      document.getElementById('truck-vehicles').textContent = row.vehicles + '대';
+      document.getElementById('selected-cost-saving').textContent = wonM(row.saving);
+      document.getElementById('selected-cost-rate').textContent = pct(row.savingRate) + ' 절감';
+      document.getElementById('selected-time-gap').textContent = '+' + hours(Math.abs(row.timeGap));
+      document.getElementById('selected-carbon-saving').textContent = tonnes(row.carbonSaving);
+      document.getElementById('selected-carbon-rate').textContent = pct(row.carbonRate) + ' 저감';
+      document.getElementById('recommendations-section').style.display = overall ? '' : 'none';
+      renderComparisonChart();
+    }
+
+    function renderTable() {
+      const body = document.getElementById('recommendation-table');
+      body.innerHTML = comparisonData.map((row, index) => {
+        const active = index === selectedIndex ? 'selected' : '';
+        return '<tr data-row class="' + active + '" onclick="selectRecommendation(' + index + ')">' +
+          '<td><span class="font-black text-gray-800">' + row.id + '</span><span class="block text-[10px] text-moveon-purple font-bold mt-0.5">Rail recommended</span></td>' +
+          '<td><span class="font-bold">' + row.origin + '</span><span class="block text-[10px] text-gray-400 mt-0.5">→ ' + row.destination + '</span></td>' +
+          '<td class="font-mono text-gray-600">' + row.size + ' × ' + row.boxes + '<span class="block text-[10px] text-gray-400 mt-0.5">' + row.teu + ' TEU</span></td>' +
+          '<td>' + row.distance.toFixed(0) + ' km</td>' +
+          '<td class="font-bold text-moveon-purple">' + wonM(row.railCost) + '</td>' +
+          '<td class="font-bold text-gray-500">' + wonM(row.truckCost) + '</td>' +
+          '<td><span class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-[10px] font-black">' + pct(row.savingRate) + '</span><span class="block text-[10px] text-blue-500 font-bold mt-1">' + wonM(row.saving) + '</span></td>' +
+          '<td><span class="bg-green-50 text-green-600 px-2 py-1 rounded text-[10px] font-black">' + pct(row.carbonRate) + '</span><span class="block text-[10px] text-green-600 font-bold mt-1">' + tonnes(row.carbonSaving) + '</span></td>' +
+          '<td><span class="text-amber-600 font-black">+' + hours(Math.abs(row.timeGap)) + '</span><span class="block text-[10px] text-gray-400 mt-1">Rail slower</span></td>' +
+          '<td><button onclick="event.stopPropagation(); openCompare(' + index + ')" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition">비교</button></td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function renderComparisonChart() {
+      const row = current();
+      const overall = row.isOverall === true;
+      const metrics = [
+        { label:'운임', rail:row.railCost, truck:row.truckCost, color:'#3B82F6', format:wonM },
+        { label:'평균 시간', rail:row.railHours, truck:row.truckHours, color:'#F59E0B', format:hours },
+        { label:'탄소 배출량', rail:row.railCo2, truck:row.truckCo2, color:'#22C55E', format:co2Text }
+      ];
+      const scale = (value, metric) => +(value / Math.max(metric.rail, metric.truck) * 100).toFixed(1);
+      const lowerColor = (value, other, color) => value <= other ? color : '#CBD5E1';
+
+      document.getElementById('comparison-chart-title').textContent = overall ? '전체 5건 Rail vs Truck' : row.id + ' Rail vs Truck';
+      document.getElementById('comparison-chart-subtitle').textContent = overall
+        ? '운임·탄소는 5건 합계, 시간은 건당 평균으로 비교합니다.'
+        : '각 항목에서 더 적은 값만 색상으로 강조합니다.';
+      document.getElementById('comparison-chart-badge').textContent = overall ? '전체' : 'REC';
+      document.getElementById('comparison-chart-footnote').textContent = '막대 길이는 항목별 큰 값을 100으로 표준화했습니다. 정확한 값은 막대에 마우스를 올리거나 왼쪽 표에서 확인할 수 있습니다.';
+
+      if (comparisonChart) comparisonChart.destroy();
+      comparisonChart = new Chart(document.getElementById('comparison-chart'), {
+        type:'bar',
+        data:{
+          labels:metrics.map((metric) => metric.label),
+          datasets:[
+            { label:'Rail', data:metrics.map((metric) => scale(metric.rail, metric)), backgroundColor:metrics.map((metric) => lowerColor(metric.rail, metric.truck, metric.color)), borderRadius:0, borderSkipped:false },
+            { label:'Truck', data:metrics.map((metric) => scale(metric.truck, metric)), backgroundColor:metrics.map((metric) => lowerColor(metric.truck, metric.rail, metric.color)), borderRadius:0, borderSkipped:false }
+          ]
+        },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{
+            legend:{ display:false },
+            tooltip:{ callbacks:{
+              title:(items) => metrics[items[0].dataIndex].label,
+              label:(context) => {
+                const metric = metrics[context.dataIndex];
+                const value = context.dataset.label === 'Rail' ? metric.rail : metric.truck;
+                return ' ' + context.dataset.label + ': ' + metric.format(value);
+              },
+              afterLabel:() => '항목 내 큰 값 = 100%'
+            } }
+          },
+          scales:{
+            x:{ grid:{ display:false }, ticks:{ color:'#475569', font:{ size:12, family:'Pretendard', weight:'700' } } },
+            y:{ beginAtZero:true, max:100, grid:{ color:'#F1F5F9' }, ticks:{ color:'#94A3B8', font:{ size:10, family:'Pretendard' }, callback:(value) => value + '%' } }
+          }
+        }
+      });
+    }
+
+    function renderDrawer() {
+      const row = current();
+      const isRail = priority !== 'time';
+      const priorityName = priority === 'cost' ? '비용' : priority === 'time' ? '시간' : '탄소';
+      const railCardClass = isRail ? 'border-moveon-purple shadow-sm' : 'border-gray-200';
+      const truckCardClass = isRail ? 'border-gray-200' : 'border-amber-300 shadow-sm';
+      document.getElementById('drawer-title').textContent = '운송수단 비교 · ' + row.id;
+      document.getElementById('drawer-route').textContent = row.origin + ' → ' + row.destination;
+      document.getElementById('drawer-id').textContent = row.id;
+      document.getElementById('drawer-vehicles').textContent = row.vehicles + '대';
+      document.getElementById('drawer-distance').textContent = row.isOverall ? '경로별 상이' : row.distance.toFixed(0) + ' km';
+      document.getElementById('drawer-equipment').textContent = row.isOverall ? row.size + ' · ' + row.boxes + ' boxes' : row.size + ' × ' + row.boxes;
+      document.getElementById('recommendation-label').textContent = priorityName + ' 기준: ' + (isRail ? 'Rail 추천' : 'Truck 추천');
+      document.getElementById('recommendation-reason').textContent = isRail
+        ? priority === 'cost' ? '트럭 대비 ' + wonM(row.saving) + '을 절감합니다.' : '트럭 대비 ' + tonnes(row.carbonSaving) + 'CO₂e를 저감합니다.'
+        : '트럭이 Rail보다 ' + hours(Math.abs(row.timeGap)) + ' 빠릅니다.';
+      document.getElementById('drawer-recommendation').className = (isRail ? 'bg-purple-50 border-purple-100' : 'bg-amber-50 border-amber-100') + ' border rounded-xl p-4';
+      document.getElementById('drawer-mode-cards').innerHTML =
+        '<div class="bg-white border ' + railCardClass + ' rounded-xl p-5">' +
+          '<div class="flex items-center justify-between mb-4"><h3 class="font-black text-[13px] text-gray-800 flex items-center gap-2"><i class="fa-solid fa-train-subway text-moveon-purple"></i> Rail Option</h3>' + (isRail ? '<span class="bg-purple-50 text-moveon-purple text-[9px] px-2 py-1 rounded font-black">RECOMMENDED</span>' : '') + '</div>' +
+          '<div class="flex flex-col gap-3">' +
+            metricRow('Estimated Total Cost', won(row.railCost), 'text-gray-900') +
+            metricRow('Expected Arrival / Lead Time', (row.isOverall ? '건당 평균 · ' : shortDate(row.available) + ' · ') + hours(row.railHours), 'text-gray-900') +
+            metricRow('Estimated CO₂e', co2Text(row.railCo2), 'text-green-600') +
+          '</div>' +
+        '</div>' +
+        '<div class="bg-white border ' + truckCardClass + ' rounded-xl p-5">' +
+          '<div class="flex items-center justify-between mb-4"><h3 class="font-black text-[13px] text-gray-700 flex items-center gap-2"><i class="fa-solid fa-truck text-gray-400"></i> Truck Option</h3>' + (!isRail ? '<span class="bg-amber-50 text-amber-700 text-[9px] px-2 py-1 rounded font-black">FASTEST</span>' : '') + '</div>' +
+          '<div class="flex flex-col gap-3">' +
+            metricRow('Estimated Total Cost', won(row.truckCost), 'text-gray-700') +
+            metricRow('Expected Lead Time', hours(row.truckHours), 'text-gray-700') +
+            metricRow('Estimated CO₂e', co2Text(row.truckCo2), 'text-red-400') +
+          '</div>' +
+        '</div>';
+      document.querySelectorAll('[data-priority]').forEach((button) => button.classList.toggle('active', button.dataset.priority === priority));
+    }
+
+    function metricRow(label, value, className) {
+      return '<div class="flex justify-between border-b border-gray-100 pb-2 last:border-0 last:pb-0"><span class="text-[11px] text-gray-500">' + label + '</span><span class="text-[12px] font-bold ' + className + '">' + value + '</span></div>';
+    }
+
+    function selectRecommendation(index) {
+      selectedIndex = index;
+      document.getElementById('recommendation-select').value = index;
+      renderSelected();
+      renderTable();
+      renderDrawer();
+    }
+
+    function openCompare(index) {
+      if (typeof index === 'number') selectRecommendation(index);
+      renderDrawer();
+      document.getElementById('compare-overlay').style.display = 'block';
+      setTimeout(() => {
+        document.getElementById('compare-overlay').style.opacity = '1';
+        document.getElementById('compare-drawer').style.transform = 'translateX(0)';
+      }, 10);
+    }
+
+    function closeCompare() {
+      document.getElementById('compare-drawer').style.transform = 'translateX(100%)';
+      document.getElementById('compare-overlay').style.opacity = '0';
+      setTimeout(() => { document.getElementById('compare-overlay').style.display = 'none'; }, 400);
+    }
+
+    function setPriority(nextPriority) {
+      priority = nextPriority;
+      renderDrawer();
+    }
+
+    function setActiveNav(button) {
+      document.querySelectorAll('.desktop-nav button').forEach((navButton) => {
+        navButton.className = 'px-4 py-2 text-gray-500 hover:text-gray-900 text-sm font-bold transition-all rounded-xl';
+      });
+      button.className = 'px-4 py-2 pill-active rounded-xl text-sm font-bold transition-all';
+      if (button.textContent.trim() !== 'Transport') showToast('이 프로토타입은 Transport 화면에 연결되어 있습니다.');
+    }
+
+    function acceptRecommendation() {
+      closeCompare();
+      showToast(current().id + ' Rail 제안을 검토 목록에 담았습니다.');
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 2600);
+    }
+
+    renderSelect();
+    renderSelected();
+    renderTable();
+    renderDrawer();
+  </script>
+</body>
+</html>
