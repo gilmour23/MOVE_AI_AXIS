@@ -79,6 +79,47 @@ def trains(store: ResultStore) -> list[dict]:
     return rows
 
 
+EMPTY_BOX_COUNTS = {
+    "loadBoxes20ft": 0,
+    "loadBoxes40ft": 0,
+    "loadBoxesTotal": 0,
+    "unloadBoxes20ft": 0,
+    "unloadBoxes40ft": 0,
+    "unloadBoxesTotal": 0,
+}
+
+
+def stop_box_counts(store: ResultStore) -> dict[tuple[str, str], dict]:
+    """(train_id, hub) 별 규격 상·하차 박스 수.
+
+    CARRIER_ALLOCATION 의 origin/destination 을 그대로 집계한다.
+    - 상차: origin == hub
+    - 하차: destination == hub
+
+    TEU 에서 규격별 개수를 역산하거나 임의 비율로 나누지 않는다.
+    40FT 1개 = 2TEU 이므로 20ft + 2*40ft 는 STOP_WORK_PLAN 의 TEU 와 일치해야 한다.
+    """
+    counts: dict[tuple[str, str], dict] = {}
+
+    def entry(train_id: str, hub: str) -> dict:
+        return counts.setdefault((train_id, hub), dict(EMPTY_BOX_COUNTS))
+
+    for _, a in store.carrier_allocation.iterrows():
+        train_id = a["train_id"]
+        boxes = int(_num(a["boxes"]))
+        is_20ft = a["container_size"] == "20FT"
+
+        loaded = entry(train_id, a["origin"])
+        loaded["loadBoxes20ft" if is_20ft else "loadBoxes40ft"] += boxes
+        loaded["loadBoxesTotal"] += boxes
+
+        unloaded = entry(train_id, a["destination"])
+        unloaded["unloadBoxes20ft" if is_20ft else "unloadBoxes40ft"] += boxes
+        unloaded["unloadBoxesTotal"] += boxes
+
+    return counts
+
+
 def _stop_timeline(store: ResultStore, train_id: str) -> list[dict]:
     """역별 작업 타임라인 (STOP_WORK_PLAN).
 
@@ -86,6 +127,7 @@ def _stop_timeline(store: ResultStore, train_id: str) -> list[dict]:
     """
     df = store.stop_work_plan
     df = df[df["train_id"] == train_id].sort_values("stop_sequence")
+    boxes = stop_box_counts(store)
 
     stops = []
     for _, s in df.iterrows():
@@ -101,6 +143,7 @@ def _stop_timeline(store: ResultStore, train_id: str) -> list[dict]:
                 "availableTime": _text(s.get("actual_available_time")),
                 "loadTeu": int(_num(s.get("load_teu"))),
                 "unloadTeu": int(_num(s.get("unload_teu"))),
+                **boxes.get((train_id, s["hub"]), dict(EMPTY_BOX_COUNTS)),
             }
         )
     return stops
@@ -361,6 +404,7 @@ def hub_inventory(store: ResultStore) -> dict:
 def station_operations(store: ResultStore) -> dict:
     """거점별 작업 계획 (STOP_WORK_PLAN 전체)."""
     df = store.stop_work_plan.copy()
+    boxes = stop_box_counts(store)
 
     rows = []
     for _, s in df.iterrows():
@@ -377,43 +421,53 @@ def station_operations(store: ResultStore) -> dict:
                 "availableTime": _text(s.get("actual_available_time")),
                 "loadTeu": int(_num(s.get("load_teu"))),
                 "unloadTeu": int(_num(s.get("unload_teu"))),
+                **boxes.get((s["train_id"], s["hub"]), dict(EMPTY_BOX_COUNTS)),
             }
         )
+
+    def empty_hub(code: str, name: str) -> dict:
+        return {
+            "hubCode": code,
+            "hubName": name,
+            "operations": [],
+            "totalLoadTeu": 0,
+            "totalUnloadTeu": 0,
+            "totalLoadBoxes": 0,
+            "totalUnloadBoxes": 0,
+        }
 
     by_hub: dict[str, dict] = {}
     for row in rows:
         entry = by_hub.setdefault(
-            row["hubCode"],
-            {
-                "hubCode": row["hubCode"],
-                "hubName": row["hubName"],
-                "operations": [],
-                "totalLoadTeu": 0,
-                "totalUnloadTeu": 0,
-            },
+            row["hubCode"], empty_hub(row["hubCode"], row["hubName"])
         )
         entry["operations"].append(row)
         entry["totalLoadTeu"] += row["loadTeu"]
         entry["totalUnloadTeu"] += row["unloadTeu"]
+        entry["totalLoadBoxes"] += row["loadBoxesTotal"]
+        entry["totalUnloadBoxes"] += row["unloadBoxesTotal"]
 
     hubs = []
     for meta in HUBS:
-        entry = by_hub.get(
-            meta["code"],
-            {
-                "hubCode": meta["code"],
-                "hubName": meta["name"],
-                "operations": [],
-                "totalLoadTeu": 0,
-                "totalUnloadTeu": 0,
-            },
-        )
+        entry = by_hub.get(meta["code"], empty_hub(meta["code"], meta["name"]))
         entry["shortName"] = meta["shortName"]
-        entry["operations"].sort(key=lambda x: x["arrivalTime"] or "")
+        # 작업 준비 시점 기준 정렬. loadStartTime 이 없으면 도착, 그것도 없으면 출발.
+        # 정렬을 위해 임의 시각을 만들지 않는다.
+        entry["operations"].sort(key=_operation_sort_key)
         entry["operationCount"] = len(entry["operations"])
+        entry["totalHandlingTeu"] = entry["totalLoadTeu"] + entry["totalUnloadTeu"]
         hubs.append(entry)
 
     return {"hubs": hubs, "rows": rows}
+
+
+def _operation_sort_key(row: dict) -> str:
+    """작업 row 정렬 키 — loadStartTime → arrivalTime → departureTime.
+
+    STOP_WORK_PLAN 에는 loadStartTime < arrivalTime 인 stop 이 존재하므로
+    도착시각만으로 정렬하면 작업 준비 순서와 어긋난다.
+    """
+    return row["loadStartTime"] or row["arrivalTime"] or row["departureTime"] or ""
 
 
 # --------------------------------------------------------------------- 개요

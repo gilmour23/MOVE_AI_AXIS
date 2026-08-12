@@ -81,6 +81,20 @@
   gap: 6px;
 }
 
+/* KORAIL 계획주기. 좁은 폭에서는 네비게이션·역할 전환에 자리를 양보한다. */
+.horizon {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 1279px) {
+  .horizon {
+    display: none;
+  }
+}
+
 .carrier {
   display: flex;
   align-items: center;

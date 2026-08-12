@@ -46,13 +46,20 @@ export function weekdayOf(value: string): string {
   return date ? WEEKDAYS[date.getDay()] : '';
 }
 
-/** '08.10 (월)' */
-export function formatDateShort(value: string): string {
+/** '08.10' */
+export function formatMonthDay(value: string): string {
   const date = parse(value);
   if (!date) return value;
   const mm = String(date.getMonth() + 1).padStart(2, '0');
   const dd = String(date.getDate()).padStart(2, '0');
-  return `${mm}.${dd} (${WEEKDAYS[date.getDay()]})`;
+  return `${mm}.${dd}`;
+}
+
+/** '08.10 (월)' */
+export function formatDateShort(value: string): string {
+  const date = parse(value);
+  if (!date) return value;
+  return `${formatMonthDay(value)} (${WEEKDAYS[date.getDay()]})`;
 }
 
 /** '06:00' */
@@ -69,6 +76,15 @@ export function formatTime(value: string | null): string {
 export function formatDateTime(value: string | null): string {
   if (!value) return '-';
   return `${formatDateShort(value)} ${formatTime(value)}`;
+}
+
+/** '08.10 06:00' — 작업시각처럼 자정을 넘길 수 있는 값은 항상 날짜를 함께 보여준다.
+ *  시간만 보여주면 21:00 → 00:00 을 같은 날로 오해할 수 있다. */
+export function formatDateTimeCompact(value: string | null): string {
+  if (!value) return '-';
+  const date = parse(value);
+  if (!date) return value;
+  return `${formatMonthDay(value)} ${formatTime(value)}`;
 }
 
 /** 규격 표시 라벨 */

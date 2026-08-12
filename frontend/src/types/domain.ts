@@ -286,6 +286,13 @@ export interface KorailStop {
   availableTime: string | null;
   loadTeu: number;
   unloadTeu: number;
+  /** CARRIER_ALLOCATION 에서 직접 집계한 규격별 박스 수 (TEU 역산 아님). */
+  loadBoxes20ft: number;
+  loadBoxes40ft: number;
+  loadBoxesTotal: number;
+  unloadBoxes20ft: number;
+  unloadBoxes40ft: number;
+  unloadBoxesTotal: number;
 }
 
 export interface KorailSegment {
@@ -421,6 +428,9 @@ export interface KorailStationHub {
   operations: KorailStationOperation[];
   totalLoadTeu: number;
   totalUnloadTeu: number;
+  totalLoadBoxes: number;
+  totalUnloadBoxes: number;
+  totalHandlingTeu: number;
   operationCount: number;
 }
 

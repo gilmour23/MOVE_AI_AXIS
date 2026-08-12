@@ -6,6 +6,7 @@ import { RoleSwitch } from './RoleSwitch';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { useMeta } from '@/app/MetaContext';
 import { ROLES, roleFromPath } from '@/app/roles';
+import { formatMonthDay } from '@/lib/format';
 import styles from './AppShell.module.css';
 
 /** 합성 데이터·프로토타입 시각 배지를 하나로 합친다.
@@ -59,6 +60,18 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className={styles.navSlot}>{role && <TopNav items={role.nav} />}</div>
 
           <div className={styles.headerRight}>
+            {/* 계획주기 — 지금 보고 있는 결과가 어느 주기인지 KORAIL 화면에서만 표시한다.
+                각 페이지 본문에 같은 기간을 반복하지 않는다. */}
+            {isKorail && meta?.horizonStart && meta?.horizonEnd && (
+              <span
+                className={styles.horizon}
+                title="현재 화면에 표시된 최적화 결과의 계획주기입니다."
+              >
+                계획주기 · {formatMonthDay(meta.horizonStart)} ~{' '}
+                {formatMonthDay(meta.horizonEnd)}
+              </span>
+            )}
+
             {/* 데이터 출처 배지. 헤더 폭이 한정되어 두 개를 하나로 합치고,
                 상세는 tooltip 으로 보여준다. 실제 데이터로 교체되면 사라진다. */}
             <div className={styles.metaBadges}>

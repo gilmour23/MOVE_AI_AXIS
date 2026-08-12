@@ -61,6 +61,71 @@
   white-space: nowrap;
 }
 
+/* KPI 논리 그룹 — 배정 / 운행 / 수급.
+   그룹마다 다른 컬러 카드를 만들지 않고 label 과 간격으로만 구분한다. */
+.kpiGroups {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: end;
+}
+
+.kpiGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.kpiGroupLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-faint);
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 1099px) {
+  .kpiGroups {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+}
+
+/* 최대 구간 적재율 — 카드가 아니라 한 줄 요약으로 둔다. */
+.peakStrip {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  padding: 11px 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-size: 12.5px;
+}
+
+.peakLabel {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.peakValue {
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.peakDetail {
+  color: var(--text-muted);
+}
+
+.peakRemain {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .grid2 {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
@@ -327,6 +392,23 @@
   letter-spacing: 0.02em;
 }
 
+/* Drawer 정보 계층 — 운행계획 / 작업계획 / 배정.
+   새 탭을 만들지 않고 divider 와 label 로만 구분한다. */
+.groupLabel {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-faint);
+  letter-spacing: 0.06em;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.drawerBody > .groupLabel:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -418,26 +500,40 @@
   text-decoration: underline;
 }
 
+/* 각 시각은 독립된 계획값이다. 나열 순서가 인과관계를 뜻하지 않는다. */
 .stopTimes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
   font-size: 11.5px;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .stopWork {
   display: flex;
   gap: 8px;
-  margin-top: 5px;
+  margin-top: 6px;
   flex-wrap: wrap;
 }
 
 .workChip {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
   font-size: 11.5px;
-  font-weight: 600;
-  padding: 2px 8px;
+  padding: 4px 9px;
   border-radius: var(--radius-sm);
   font-variant-numeric: tabular-nums;
+}
+
+.workChip strong {
+  font-weight: 700;
+}
+
+.workChip span {
+  opacity: 0.82;
 }
 
 .workLoad {
@@ -535,6 +631,220 @@
   background: var(--brand-soft);
   color: var(--brand-dark);
   font-weight: 600;
+}
+
+/* ── 주간 계획 타임라인 ─────────────────────────────── */
+
+.timelineWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timelineHead,
+.timelineRow {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.timelineName {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.timelineDays {
+  display: grid;
+}
+
+.timelineDay {
+  font-size: 10.5px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  padding-left: 3px;
+}
+
+.timelineTrack {
+  position: relative;
+  display: block;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-sunken);
+  /* 하루 경계선 — background-size 로 열 수를 맞춘다 */
+  background-image: linear-gradient(to right, var(--border) 0 1px, transparent 1px);
+  background-repeat: repeat-x;
+}
+
+.timelineBar {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--brand);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  min-width: 4px;
+}
+
+.timelineBarText {
+  font-size: 10.5px;
+  color: var(--text-invert);
+  padding: 0 6px;
+  white-space: nowrap;
+}
+
+/* ── 미배정 집중 현황 ─────────────────────────────── */
+
+.hotspotStrip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  padding: 11px 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.hotspotLabel {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-right: 2px;
+}
+
+.hotspotEmpty {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.hotspot {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 11px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--danger-border);
+  background: var(--danger-soft);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hotspot:hover {
+  border-color: var(--danger);
+}
+
+.hotspotName {
+  color: var(--text);
+}
+
+.hotspotValue {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+/* ── 거점별 계획 취급량 ─────────────────────────────── */
+
+.handlingChart {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.handlingRow {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) 82px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  text-align: left;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  transition: background 110ms ease;
+}
+
+.handlingRow:hover {
+  background: var(--brand-softer);
+}
+
+.handlingRowActive {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+  color: var(--brand-dark);
+  font-weight: 600;
+}
+
+.handlingName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.handlingTrack {
+  height: 10px;
+  border-radius: 3px;
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.handlingFill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--brand);
+  min-width: 2px;
+}
+
+.handlingValue {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+/* ── 선택한 작업 상세 ─────────────────────────────── */
+
+.opDetail {
+  margin-top: 14px;
+  padding: 13px 15px;
+  border: 1px solid var(--brand);
+  border-radius: var(--radius-md);
+  background: var(--brand-softer);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.opDetailHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.opDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px 14px;
+}
+
+.opDetailWork {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px 14px;
+  padding-top: 11px;
+  border-top: 1px solid var(--border);
+}
+
+.workBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .note {

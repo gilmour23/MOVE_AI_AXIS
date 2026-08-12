@@ -1,17 +1,26 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { ErrorState, LoadingSkeleton } from '@/components/common/States';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { fetchKorailTrainDetail } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
 import { useMeta } from '@/app/MetaContext';
-import { formatDateShort, formatNumber, formatPercent, formatTime } from '@/lib/format';
+import {
+  formatDateShort,
+  formatDateTimeCompact,
+  formatNumber,
+  formatPercent,
+  formatTime,
+} from '@/lib/format';
 import { formatRoute } from '@/config/hubMeta';
 import type { KorailStop } from '@/types/domain';
 import styles from './Korail.module.css';
 
 /** 열차 상세 = Train Summary + Stop Timeline + Segment Load + Carrier Allocation.
- *  KORAIL 운영자 화면이므로 전 선사 배정을 노출한다. */
+ *  KORAIL 운영자 화면이므로 전 선사 배정을 노출한다.
+ *
+ *  선사명은 일반 텍스트로만 표시한다 — KORAIL 화면에서 선사 Portal 로 넘어가면
+ *  사용자 역할과 정보 권한의 경계가 흐려진다. */
 export function TrainDetailDrawer({
   trainId,
   onClose,
@@ -47,6 +56,7 @@ export function TrainDetailDrawer({
 
           {data && (
             <>
+              <span className={styles.groupLabel}>운행계획 정보</span>
               <section className={styles.section}>
                 <span className={styles.sectionTitle}>운행 요약</span>
                 <div className={styles.card}>
@@ -88,6 +98,7 @@ export function TrainDetailDrawer({
                 </div>
               </section>
 
+              <span className={styles.groupLabel}>작업계획 정보</span>
               <section className={styles.section}>
                 <span className={styles.sectionTitle}>정차역 작업 타임라인</span>
                 <div className={styles.card}>
@@ -103,6 +114,7 @@ export function TrainDetailDrawer({
                 </div>
               </section>
 
+              <span className={styles.groupLabel}>배정 정보</span>
               <section className={styles.section}>
                 <span className={styles.sectionTitle}>구간별 적재</span>
                 <div className={styles.scroll}>
@@ -157,15 +169,8 @@ export function TrainDetailDrawer({
                     <tbody>
                       {data.allocation.map((row, index) => (
                         <tr key={`${row.carrierId}-${row.originHub}-${row.destinationHub}-${row.size}-${index}`}>
-                          <td>
-                            {row.carrierId === meta?.currentCarrierId ? (
-                              <Link className={styles.carrierLink} to="/carrier/plan">
-                                {row.carrierLabel} <ArrowRight size={12} />
-                              </Link>
-                            ) : (
-                              row.carrierLabel
-                            )}
-                          </td>
+                          {/* KORAIL 화면에서는 선사명을 일반 텍스트로만 표시한다. */}
+                          <td>{row.carrierLabel}</td>
                           <td className={styles.muted}>
                             {row.originName} → {row.destinationName}
                           </td>
@@ -195,6 +200,9 @@ export function TrainDetailDrawer({
   );
 }
 
+/** 정차역 한 곳의 계획시각과 작업량.
+ *  시각은 각각 독립된 계획값이며 서로의 선후관계를 UI 가 새로 정의하지 않는다.
+ *  자정을 넘기는 일정이 있으므로 모든 시각에 날짜를 함께 표시한다. */
 function StopRow({ stop, isLast }: { stop: KorailStop; isLast: boolean }) {
   const hasWork = stop.loadTeu > 0 || stop.unloadTeu > 0;
   return (
@@ -211,20 +219,32 @@ function StopRow({ stop, isLast }: { stop: KorailStop; isLast: boolean }) {
           </Link>
         </div>
         <div className={styles.stopTimes}>
-          {stop.loadStartTime && `상차 시작 ${formatTime(stop.loadStartTime)} · `}
-          도착 {formatTime(stop.arrivalTime)} · 출발 {formatTime(stop.departureTime)}
-          {stop.availableTime && ` · 사용 가능 ${formatTime(stop.availableTime)}`}
+          {stop.loadStartTime && (
+            <span>작업 개시 {formatDateTimeCompact(stop.loadStartTime)}</span>
+          )}
+          <span>열차 도착 {formatDateTimeCompact(stop.arrivalTime)}</span>
+          <span>열차 출발 {formatDateTimeCompact(stop.departureTime)}</span>
+          {stop.availableTime && (
+            <span>사용 가능 {formatDateTimeCompact(stop.availableTime)}</span>
+          )}
         </div>
         {hasWork && (
           <div className={styles.stopWork}>
             {stop.loadTeu > 0 && (
               <span className={[styles.workChip, styles.workLoad].join(' ')}>
-                상차 {stop.loadTeu} TEU
+                <strong>상차 {stop.loadBoxesTotal}개</strong>
+                <span>
+                  20FT {stop.loadBoxes20ft} · 40FT {stop.loadBoxes40ft} · {stop.loadTeu} TEU
+                </span>
               </span>
             )}
             {stop.unloadTeu > 0 && (
               <span className={[styles.workChip, styles.workUnload].join(' ')}>
-                하차 {stop.unloadTeu} TEU
+                <strong>하차 {stop.unloadBoxesTotal}개</strong>
+                <span>
+                  20FT {stop.unloadBoxes20ft} · 40FT {stop.unloadBoxes40ft} ·{' '}
+                  {stop.unloadTeu} TEU
+                </span>
               </span>
             )}
           </div>

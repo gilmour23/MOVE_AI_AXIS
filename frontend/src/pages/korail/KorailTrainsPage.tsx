@@ -4,8 +4,10 @@ import { PageContainer } from '@/components/layout/PageContainer';
 import { Card } from '@/components/common/Card';
 import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/common/States';
 import { TrainDetailDrawer } from './TrainDetailDrawer';
+import { WeeklyTimeline } from './WeeklyTimeline';
 import { fetchKorailTrains } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
+import { useMeta } from '@/app/MetaContext';
 import { formatDateShort, formatPercent, formatTime } from '@/lib/format';
 import { formatRoute } from '@/config/hubMeta';
 import styles from './Korail.module.css';
@@ -16,6 +18,7 @@ import styles from './Korail.module.css';
 export function KorailTrainsPage() {
   const [params, setParams] = useSearchParams();
   const trainId = params.get('train');
+  const { meta } = useMeta();
 
   const { data, loading, error, reload } = useAsync(
     (signal) => fetchKorailTrains(signal),
@@ -47,6 +50,19 @@ export function KorailTrainsPage() {
       {data && data.trains.length === 0 && (
         <Card>
           <EmptyState title="선정된 열차가 없습니다." />
+        </Card>
+      )}
+
+      {data && data.trains.length > 0 && meta?.horizonStart && meta?.horizonEnd && (
+        <Card
+          title="주간 계획 타임라인"
+          subtitle="계획주기 위의 출발~도착 구간입니다 · 중간 정차는 열차 상세에서 확인합니다"
+        >
+          <WeeklyTimeline
+            trains={data.trains}
+            horizonStart={meta.horizonStart}
+            horizonEnd={meta.horizonEnd}
+          />
         </Card>
       )}
 

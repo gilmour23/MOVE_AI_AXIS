@@ -10,6 +10,7 @@ import pytest
 
 from moveai.result_store import store
 from moveai.selectors import inventory as inv
+from moveai.selectors import korail as kr
 from moveai.selectors import optimization as opt
 from moveai.selectors import overview as ov
 
@@ -243,3 +244,56 @@ def test_service_needs_grouped_by_hub_size_day():
     assert sum(n["railUnservedBoxes"] for n in needs) == int(
         raw["rail_unserved_boxes"].sum()
     )
+
+
+# ------------------------------------------------- KORAIL 거점 작업 규격별 박스
+
+def test_stop_box_counts_match_stop_teu():
+    """규격별 박스 수는 STOP_WORK_PLAN 의 TEU 와 정확히 맞아야 한다.
+
+    40FT 1개 = 2TEU. TEU 에서 개수를 역산하지 않고 CARRIER_ALLOCATION 에서
+    직접 집계하므로, 이 등식이 깨지면 집계 기준이 틀어진 것이다.
+    """
+    ops = kr.station_operations(store)
+    checked = 0
+    for row in ops["rows"]:
+        assert row["loadBoxes20ft"] + 2 * row["loadBoxes40ft"] == row["loadTeu"], row
+        assert row["unloadBoxes20ft"] + 2 * row["unloadBoxes40ft"] == row["unloadTeu"], row
+        assert row["loadBoxes20ft"] + row["loadBoxes40ft"] == row["loadBoxesTotal"]
+        assert row["unloadBoxes20ft"] + row["unloadBoxes40ft"] == row["unloadBoxesTotal"]
+        checked += 1
+    assert checked > 0
+
+
+def test_hub_totals_match_operation_sum():
+    """거점 total 은 해당 거점 작업 row 합계와 같아야 한다."""
+    ops = kr.station_operations(store)
+    for hub in ops["hubs"]:
+        assert hub["totalLoadTeu"] == sum(o["loadTeu"] for o in hub["operations"])
+        assert hub["totalUnloadTeu"] == sum(o["unloadTeu"] for o in hub["operations"])
+        assert hub["totalLoadBoxes"] == sum(o["loadBoxesTotal"] for o in hub["operations"])
+        assert hub["totalUnloadBoxes"] == sum(
+            o["unloadBoxesTotal"] for o in hub["operations"]
+        )
+        assert hub["totalHandlingTeu"] == hub["totalLoadTeu"] + hub["totalUnloadTeu"]
+
+
+def test_operations_sorted_by_work_start():
+    """작업 row 는 loadStartTime → arrivalTime → departureTime 순으로 정렬된다."""
+    ops = kr.station_operations(store)
+    for hub in ops["hubs"]:
+        keys = [
+            o["loadStartTime"] or o["arrivalTime"] or o["departureTime"] or ""
+            for o in hub["operations"]
+        ]
+        assert keys == sorted(keys), hub["hubCode"]
+
+
+def test_train_detail_stops_carry_box_counts():
+    """Train Detail 의 stop 도 같은 규격별 박스 수를 갖는다."""
+    train_id = kr.trains(store)[0]["trainId"]
+    detail = kr.train_detail(store, train_id)
+    assert detail
+    for stop in detail["stops"]:
+        assert stop["loadBoxes20ft"] + 2 * stop["loadBoxes40ft"] == stop["loadTeu"]
+        assert stop["unloadBoxes20ft"] + 2 * stop["unloadBoxes40ft"] == stop["unloadTeu"]

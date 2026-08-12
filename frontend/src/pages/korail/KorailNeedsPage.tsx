@@ -101,6 +101,26 @@ export function KorailNeedsPage() {
 
   const isFiltered = Object.values(filters).some((value) => value !== ALL);
 
+  /** 미배정이 어디에 집중되는지 — 거점 × 규격으로 합산한다.
+   *  기존 rows 만 사용하며 새 API 를 만들지 않는다. */
+  const unservedHotspots = useMemo(() => {
+    if (!data) return [];
+    const totals = new Map<string, { hubCode: string; hubName: string; size: string; boxes: number }>();
+    for (const row of data.rows) {
+      if (row.railUnservedBoxes <= 0) continue;
+      const key = `${row.hubCode}-${row.size}`;
+      const entry = totals.get(key) ?? {
+        hubCode: row.hubCode,
+        hubName: row.hubName,
+        size: row.size,
+        boxes: 0,
+      };
+      entry.boxes += row.railUnservedBoxes;
+      totals.set(key, entry);
+    }
+    return [...totals.values()].sort((a, b) => b.boxes - a.boxes).slice(0, 5);
+  }, [data]);
+
   return (
     <PageContainer
       title="수송 수요·배정 현황"
@@ -124,6 +144,36 @@ export function KorailNeedsPage() {
             <Kpi label="철도 배정량" value={`${formatNumber(data.totals.railServedBoxes)}개`} />
             <Kpi label="미배정량" value={`${formatNumber(data.totals.railUnservedBoxes)}개`} />
             <Kpi label="수송 필요 건수" value={`${formatNumber(data.totals.needCount)}건`} />
+          </div>
+
+          {/* 미배정 집중 현황 — 클릭하면 해당 거점·규격의 미배정 건만 남긴다. */}
+          <div className={styles.hotspotStrip}>
+            <span className={styles.hotspotLabel}>미배정 집중</span>
+            {unservedHotspots.length === 0 ? (
+              <span className={styles.hotspotEmpty}>미배정 물량 없음</span>
+            ) : (
+              unservedHotspots.map((spot) => (
+                <button
+                  key={`${spot.hubCode}-${spot.size}`}
+                  type="button"
+                  className={styles.hotspot}
+                  onClick={() =>
+                    setFilters({
+                      carrier: ALL,
+                      date: ALL,
+                      hub: spot.hubCode,
+                      size: spot.size,
+                      status: '미배정',
+                    })
+                  }
+                >
+                  <span className={styles.hotspotName}>
+                    {spot.hubName} · {spot.size}
+                  </span>
+                  <span className={styles.hotspotValue}>미배정 {spot.boxes}개</span>
+                </button>
+              ))
+            )}
           </div>
 
           <Card

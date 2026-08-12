@@ -212,6 +212,38 @@ def verify_transport_join() -> None:
         print(f"    {carrier_id} transport join {len(row_ids)}건 · rail 값 canonical 일치  OK")
 
 
+def verify_stop_box_counts() -> None:
+    """거점 작업의 규격별 박스 수가 canonical TEU 와 맞는지 검증.
+
+    40FT 1개 = 2TEU. CARRIER_ALLOCATION 에서 직접 집계한 값이므로
+    이 등식이 깨지면 집계 기준이 틀어진 것이다 (TEU 역산 금지).
+    """
+    ops = kr.station_operations(store)
+
+    for row in ops["rows"]:
+        load = row["loadBoxes20ft"] + 2 * row["loadBoxes40ft"]
+        unload = row["unloadBoxes20ft"] + 2 * row["unloadBoxes40ft"]
+        if load != row["loadTeu"] or unload != row["unloadTeu"]:
+            raise SystemExit(
+                f"{row['trainId']} @ {row['hubCode']} 규격별 박스 합이 TEU 와 불일치: "
+                f"상차 {load} vs {row['loadTeu']} · 하차 {unload} vs {row['unloadTeu']}"
+            )
+
+    for hub in ops["hubs"]:
+        if hub["totalLoadBoxes"] != sum(o["loadBoxesTotal"] for o in hub["operations"]):
+            raise SystemExit(f"{hub['hubCode']} 상차 박스 total 불일치")
+        if hub["totalUnloadBoxes"] != sum(
+            o["unloadBoxesTotal"] for o in hub["operations"]
+        ):
+            raise SystemExit(f"{hub['hubCode']} 하차 박스 total 불일치")
+
+    total_boxes = sum(h["totalLoadBoxes"] for h in ops["hubs"])
+    print(
+        f"  [거점작업] {len(ops['rows'])}개 stop 규격별 박스 합 = TEU 일치 · "
+        f"총 상차 {total_boxes}개  OK"
+    )
+
+
 def verify_no_other_carriers() -> None:
     """내보낸 파일에 다른 선사 식별자가 없는지 검증한다."""
     allowed = set(CARRIERS)
@@ -252,6 +284,7 @@ def main() -> None:
     export_korail()
 
     verify_consistency()
+    verify_stop_box_counts()
     print("\n  [Transport]")
     verify_transport_join()
     verify_no_other_carriers()
