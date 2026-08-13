@@ -1,0 +1,7 @@
+﻿carrier_id,service_need_teu,rail_served_teu,rail_unserved_teu,rail_coverage,recommendation_count,assigned_train_count,estimated_tariff_based_rail_charge_krw
+CARRIER_A,30,22,8,0.7333,5,3,2161061.62
+CARRIER_B,72,68,4,0.9444,10,3,6116955.99
+CARRIER_C,19,14,5,0.7368,6,3,1293643.74
+CARRIER_D,25,14,11,0.56,3,3,1319686.4
+CARRIER_E,16,13,3,0.8125,6,2,1577530.21
+CARRIER_F,32,17,15,0.5312,6,3,1950090.3

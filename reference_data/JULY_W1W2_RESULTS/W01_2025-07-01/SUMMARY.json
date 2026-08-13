@@ -1,0 +1,60 @@
+{
+  "unserved_teu": 46.0,
+  "train_count": 3,
+  "train_km": 1206.8,
+  "wagon_km": 39824.4,
+  "earliness_teu_hours": 5721.0,
+  "rail_charge_krw": 14418968.38,
+  "tiebreak_index": 339969.209,
+  "all_stages_proven_optimal": true,
+  "solver_stage_count": 7,
+  "strict_lexicographic": true,
+  "solver_exactness": "EXACT_ALL_STAGES",
+  "origin_loading_h": 3.0,
+  "intermediate_handling_h": 3.0,
+  "destination_unloading_h": 3.0,
+  "scenario": "Q3_WEEK1",
+  "service_need_teu": 194,
+  "service_need_count": 129,
+  "rail_served_teu": 148,
+  "rail_unserved_teu": 46,
+  "rail_coverage": 0.7629,
+  "selected_train_count": 3,
+  "recommendation_count": 36,
+  "teu_km": 40495.9,
+  "avg_distance_weighted_load_factor": 0.5083,
+  "avg_carriers_per_train": 5.667,
+  "estimated_rail_charge_krw": 14418968.26,
+  "20ft_boxes": 104,
+  "40ft_boxes": 22,
+  "total_container_boxes": 126,
+  "carrier_recommendation_teu": 148,
+  "korail_allocation_teu": 148,
+  "carrier_korail_view_consistent": true,
+  "operational_constraints_active": false,
+  "active_policy_count": 0,
+  "carrier_subset": null,
+  "default_max_earliness_hours": 72.0,
+  "min_load_factor": 0.5,
+  "return_wagon_movement_included": false,
+  "candidate_input_sources": [
+    "PROTOTYPE_SYNTHETIC"
+  ],
+  "selected_train_sources": [
+    "PROTOTYPE_SYNTHETIC"
+  ],
+  "candidate_timetable_source": "PROTOTYPE_SYNTHETIC",
+  "carrier_data_source": "SYNTHETIC_CARRIER_LEVEL_DATA",
+  "revenue_definition": "TARIFF_BASED_ESTIMATED_RAIL_CHARGE_NOT_PROFIT",
+  "deprecated_aliases": {
+    "expected_korail_revenue_krw": "estimated_rail_charge_krw",
+    "estimated_tariff_based_rail_revenue_krw": "estimated_rail_charge_krw"
+  },
+  "carrier_coverage_fairness": {
+    "max_carrier_coverage": 0.9444,
+    "min_carrier_coverage": 0.5312,
+    "coverage_stdev": 0.1418
+  },
+  "post_rail_inventory_timeline_rows": 12096,
+  "post_rail_inventory_min": 0
+}

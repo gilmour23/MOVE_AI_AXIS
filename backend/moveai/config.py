@@ -11,25 +11,21 @@ PACKAGE_DIR = Path(__file__).resolve().parent
 BACKEND_DIR = PACKAGE_DIR.parent
 PROJECT_ROOT = BACKEND_DIR.parent
 
-_DEFAULT_PACKAGE = PROJECT_ROOT / "optimizer" / "AXIS_MOVEAI_MILP_v7_1_FINAL"
+# UI 가 읽는 결과 정본. 이 아래에 주차별 폴더(W01_2025-07-01, W02_2025-07-08)가 있다.
+#
+# optimizer/AXIS_MOVEAI_MILP_v7_1_FINAL 은 MILP 패키지로 그대로 보존하지만
+# 그 안의 05_RESULTS/AXIS_INTEGRATED (2026-08 합성 스냅샷)는 더 이상 UI 정본이 아니다.
+_DEFAULT_RESULT_ROOT = PROJECT_ROOT / "reference_data" / "JULY_W1W2_RESULTS"
 
+RESULT_ROOT = Path(
+    os.environ.get("AXIS_RESULT_ROOT", str(_DEFAULT_RESULT_ROOT))
+).resolve()
+
+# MILP 패키지 경로 — 결과를 읽지 않고 코드/문서 참조용으로만 남긴다.
 OPTIMIZER_PACKAGE_DIR = Path(
-    os.environ.get("AXIS_PACKAGE_DIR", str(_DEFAULT_PACKAGE))
-).resolve()
-
-SCENARIO = os.environ.get("AXIS_SCENARIO", "AXIS_INTEGRATED")
-
-RESULT_DIR = Path(
     os.environ.get(
-        "AXIS_RESULT_DIR",
-        str(OPTIMIZER_PACKAGE_DIR / "05_RESULTS" / SCENARIO),
-    )
-).resolve()
-
-INPUT_DIR = Path(
-    os.environ.get(
-        "AXIS_INPUT_DIR",
-        str(OPTIMIZER_PACKAGE_DIR / "03_INPUT_DATA"),
+        "AXIS_PACKAGE_DIR",
+        str(PROJECT_ROOT / "optimizer" / "AXIS_MOVEAI_MILP_v7_1_FINAL"),
     )
 ).resolve()
 

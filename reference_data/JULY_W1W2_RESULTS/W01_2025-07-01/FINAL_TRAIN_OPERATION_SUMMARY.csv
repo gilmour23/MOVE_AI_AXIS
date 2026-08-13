@@ -1,0 +1,4 @@
+﻿train_id,candidate_source,route,actual_origin_departure,actual_final_arrival,formation,wagons,capacity_teu,assigned_teu,load_factor,participating_carrier_count,20ft_boxes,40ft_boxes,total_container_boxes
+CAND0158,PROTOTYPE_SYNTHETIC,UIWANG > BUGANG > YAKMOK > BUSAN,2025-07-01 18:00,2025-07-02 06:00,F33,33,66,57,0.5233,6,47,5,52
+CAND0170,PROTOTYPE_SYNTHETIC,UIWANG > BUGANG > YAKMOK > BUSAN,2025-07-04 18:00,2025-07-05 06:00,F33,33,66,44,0.5008,5,36,4,40
+CAND0707,PROTOTYPE_SYNTHETIC,UIWANG > BUGANG > DONGSAN > GWANGYANG,2025-07-03 18:00,2025-07-04 06:00,F33,33,66,47,0.5009,6,21,13,34

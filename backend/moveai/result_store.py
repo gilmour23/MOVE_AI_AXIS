@@ -41,9 +41,9 @@ def _read_csv(path: Path) -> pd.DataFrame:
 class ResultStore:
     """결과 디렉터리 하나에 대한 read-only 캐시."""
 
-    def __init__(self, result_dir: Path, input_dir: Path):
+    def __init__(self, result_dir: Path, week_id: str):
         self.result_dir = result_dir
-        self.input_dir = input_dir
+        self.week_id = week_id
         # 파생 캐시(timeline)가 원본 캐시(_result_csv)를 다시 읽으므로 재진입 가능해야 한다.
         self._lock = threading.RLock()
         self._cache: dict[str, object] = {}
@@ -66,10 +66,6 @@ class ResultStore:
             f"result:{filename}", lambda: _read_csv(self.result_dir / filename)
         )
 
-    def _input_csv(self, filename: str) -> pd.DataFrame:
-        return self._cached(
-            f"input:{filename}", lambda: _read_csv(self.input_dir / filename)
-        )
 
     # ------------------------------------------------------------------ 상태
 
@@ -84,11 +80,9 @@ class ResultStore:
             "STOP_WORK_PLAN.csv",
         ]
         missing = [f for f in required if not (self.result_dir / f).exists()]
-        if not (self.input_dir / "carrier_initial_inventory.csv").exists():
-            missing.append("carrier_initial_inventory.csv")
         return {
+            "weekId": self.week_id,
             "resultDir": str(self.result_dir),
-            "inputDir": str(self.input_dir),
             "ok": not missing,
             "missing": missing,
         }
@@ -183,7 +177,31 @@ class ResultStore:
 
     @property
     def initial_inventory(self) -> pd.DataFrame:
-        return self._input_csv("carrier_initial_inventory.csv")
+        """계획기간 시작 시점의 (선사 × 거점 × 규격) 재고.
+
+        예전에는 optimizer 패키지의 `03_INPUT_DATA/carrier_initial_inventory.csv`
+        를 읽었지만, 결과 정본이 주차별 결과 폴더 하나로 바뀌면서 그 입력 파일은
+        주차와 무관한 별도 계보가 됐다. 다른 주차의 결과에 엉뚱한 초기재고를
+        붙이는 것보다, 그 주차 timeline 의 첫 시점 값을 쓰는 것이 정확하다.
+
+        구 August 결과에서 두 방식이 72개 조합 전부 일치하는 것을 확인했다.
+        """
+
+        def load() -> pd.DataFrame:
+            df = self.inventory_timeline
+            if not len(df):
+                return pd.DataFrame(
+                    columns=["carrier_id", "hub_code", "container_size", "initial_inventory"]
+                )
+            keys = ["carrier_id", "hub_code", "container_size"]
+            first = (
+                df.sort_values("timestamp")
+                .groupby(keys, as_index=False)
+                .first()[keys + ["baseline_inventory"]]
+            )
+            return first.rename(columns={"baseline_inventory": "initial_inventory"})
+
+        return self._cached("initial_inventory", load)
 
     def recommendations(self, carrier_id: str) -> pd.DataFrame:
         """선사별 추천 파일. 파일이 없으면 빈 DataFrame 을 돌려준다.
@@ -229,4 +247,9 @@ class ResultStore:
         return sorted(self.inventory_timeline["carrier_id"].unique().tolist())
 
 
-store = ResultStore(config.RESULT_DIR, config.INPUT_DIR)
+"""주차 레지스트리는 순환 import 를 피하려고 moveai.weeks 에 둔다.
+
+`from moveai.result_store import store` 로 쓰던 단일 store 는 없어졌다.
+주차를 명시하지 않으면 어느 주차인지 알 수 없기 때문이다.
+호출부는 `from moveai.weeks import registry` 후 `registry.store(week_id)` 를 쓴다.
+"""

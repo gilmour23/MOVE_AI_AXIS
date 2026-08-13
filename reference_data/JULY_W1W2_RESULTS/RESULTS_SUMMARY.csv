@@ -1,0 +1,3 @@
+﻿week,start,need_teu,served_teu,coverage,trains,load_factor,carriers_per_train,train_km,wagon_km,rail_charge_krw
+W01,2025-07-01,194,148,0.7629,3,0.5083,5.667,1206.8,39824.4,14418968.26
+W02,2025-07-08,141,107,0.7589,2,0.5706,5.0,816.2,26934.6,10916785.9

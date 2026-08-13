@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from moveai import config
 from moveai.chat import provider as chat_provider
-from moveai.result_store import store
+from moveai.weeks import registry
 from moveai.selectors import optimization as opt
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
@@ -34,6 +34,7 @@ _MUTATION_KEYWORDS = (
 
 class ChatMessageRequest(BaseModel):
     carrierId: str | None = None
+    weekId: str | None = None
     message: str = Field(min_length=1)
     conversationId: str | None = None
 
@@ -45,10 +46,12 @@ class ChatMessageResponse(BaseModel):
     readOnly: bool = True
 
 
-def _build_context(carrier_id: str) -> dict:
-    """current carrier 로 한정된 근거 데이터만 구성한다."""
+def _build_context(carrier_id: str, week_id: str | None = None) -> dict:
+    """current carrier + 선택 주차로 한정된 근거 데이터만 구성한다."""
+    store = registry.store(week_id)
     explanation = store.explanation_context(carrier_id)
     return {
+        "weekId": store.week_id,
         "recommendations": opt.recommendations(store, carrier_id),
         "impacts": opt.inventory_impacts(store, carrier_id),
         "serviceSummary": opt.carrier_service_summary(store, carrier_id),
@@ -85,7 +88,7 @@ def send_message(body: ChatMessageRequest) -> ChatMessageResponse:
                 carrier_id=carrier_id,
                 message=body.message,
                 conversation_id=body.conversationId,
-                context=_build_context(carrier_id),
+                context=_build_context(carrier_id, body.weekId),
             )
         )
     except chat_provider.ChatNotConfiguredError:

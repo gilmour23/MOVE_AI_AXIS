@@ -13,7 +13,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from moveai import config
 from moveai.chat.router import router as chat_router
 from moveai.domain import CONTAINER_SIZES, HUBS
-from moveai.result_store import ResultFilesMissingError, store
+from moveai.result_store import ResultFilesMissingError
+from moveai.weeks import registry
 from moveai.selectors import inventory as inv
 from moveai.selectors import optimization as opt
 from moveai.selectors import overview as ov
@@ -37,6 +38,16 @@ app.include_router(chat_router)
 
 # --------------------------------------------------------------------- 공통
 
+def _store(week: str | None):
+    """주차별 결과 store. week 미지정이면 첫 주차로 떨어진다.
+
+    W01/W02 는 독립된 결과이므로 주차 없이 전역 조회하지 않는다.
+    """
+    if week and not registry.exists(week):
+        raise HTTPException(404, f"알 수 없는 주차입니다: {week}")
+    return registry.store(week)
+
+
 def _validate_size(size: str) -> str:
     if size not in CONTAINER_SIZES:
         raise HTTPException(400, f"알 수 없는 규격입니다: {size}")
@@ -49,10 +60,10 @@ def _validate_mode(mode: str) -> str:
     return mode
 
 
-def _validate_carrier(carrier_id: str) -> str:
-    """요청된 carrier 가 결과에 존재하는지 확인한다."""
+def _validate_carrier(carrier_id: str, week: str | None = None) -> str:
+    """요청된 carrier 가 해당 주차 결과에 존재하는지 확인한다."""
     try:
-        known = store.known_carriers()
+        known = _store(week).known_carriers()
     except ResultFilesMissingError as exc:
         raise HTTPException(
             503,
@@ -86,19 +97,29 @@ def _missing_files_handler(_request, exc: ResultFilesMissingError):
 # ----------------------------------------------------------------- meta/health
 
 @app.get("/api/health")
-def health() -> dict:
-    return store.health()
+def health(week: str | None = Query(None)) -> dict:
+    return _store(week).health()
 
 
 @app.post("/api/admin/reload")
 def reload_results() -> dict:
     """MILP 재실행 후 결과를 다시 읽는다. 사용자 화면에는 노출하지 않는다."""
-    store.reload()
+    registry.reload()
     return {"reloaded": True}
 
 
+@app.get("/api/weeks")
+def weeks() -> dict:
+    """주차 manifest. 화면의 week selector 가 이것만 보고 그린다."""
+    return {
+        "weeks": [m.to_dict() for m in registry.all_meta()],
+        "defaultWeekId": registry.default_week_id(),
+    }
+
+
 @app.get("/api/meta")
-def meta() -> dict:
+def meta(week: str | None = Query(None)) -> dict:
+    store = _store(week)
     summary = store.summary
     dates = inv.horizon_dates(store)
     timeline = store.inventory_timeline
@@ -107,6 +128,8 @@ def meta() -> dict:
     carrier_source = summary.get("carrier_data_source")
 
     return {
+        "weekId": store.week_id,
+        "weeks": [m.to_dict() for m in registry.all_meta()],
         "scenario": summary.get("scenario"),
         "horizonStart": timeline["timestamp"].min().isoformat(),
         "horizonEnd": timeline["timestamp"].max().isoformat(),
@@ -133,9 +156,9 @@ def meta() -> dict:
 # --------------------------------------------------------------------- carrier
 
 @app.get("/api/carrier/{carrier_id}/overview")
-def carrier_overview(carrier_id: str) -> dict:
-    _validate_carrier(carrier_id)
-    return ov.overview(store, carrier_id)
+def carrier_overview(carrier_id: str, week: str | None = Query(None)) -> dict:
+    _validate_carrier(carrier_id, week)
+    return ov.overview(_store(week), carrier_id)
 
 
 @app.get("/api/carrier/{carrier_id}/inventory")
@@ -143,11 +166,12 @@ def carrier_inventory(
     carrier_id: str,
     size: str = Query("20FT"),
     mode: str = Query("baseline"),
+    week: str | None = Query(None),
 ) -> dict:
-    _validate_carrier(carrier_id)
+    _validate_carrier(carrier_id, week)
     _validate_size(size)
     _validate_mode(mode)
-    return inv.weekly_matrix(store, carrier_id, size, mode)
+    return inv.weekly_matrix(_store(week), carrier_id, size, mode)
 
 
 @app.get("/api/carrier/{carrier_id}/inventory/{hub_code}/{size}/summary")
@@ -156,17 +180,20 @@ def carrier_inventory_summary(
     hub_code: str,
     size: str,
     mode: str = Query("baseline"),
+    week: str | None = Query(None),
 ) -> dict:
-    _validate_carrier(carrier_id)
+    _validate_carrier(carrier_id, week)
     _validate_size(size)
     _validate_mode(mode)
-    return inv.hub_summary(store, carrier_id, hub_code, size, mode)
+    return inv.hub_summary(_store(week), carrier_id, hub_code, size, mode)
 
 
 @app.get("/api/carrier/{carrier_id}/optimization")
-def carrier_optimization(carrier_id: str) -> dict:
-    _validate_carrier(carrier_id)
+def carrier_optimization(carrier_id: str, week: str | None = Query(None)) -> dict:
+    _validate_carrier(carrier_id, week)
+    store = _store(week)
     return {
+        "weekId": store.week_id,
         "carrierId": carrier_id,
         "needs": opt.service_needs(store, carrier_id),
         "recommendations": opt.recommendations(store, carrier_id),
@@ -176,9 +203,11 @@ def carrier_optimization(carrier_id: str) -> dict:
 
 
 @app.get("/api/carrier/{carrier_id}/optimization/recommendations/{recommendation_id}")
-def carrier_recommendation_detail(carrier_id: str, recommendation_id: str) -> dict:
-    _validate_carrier(carrier_id)
-    detail = opt.recommendation_detail(store, carrier_id, recommendation_id)
+def carrier_recommendation_detail(
+    carrier_id: str, recommendation_id: str, week: str | None = Query(None)
+) -> dict:
+    _validate_carrier(carrier_id, week)
+    detail = opt.recommendation_detail(_store(week), carrier_id, recommendation_id)
     if detail is None:
         raise HTTPException(404, f"추천을 찾을 수 없습니다: {recommendation_id}")
     return detail
