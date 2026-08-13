@@ -1,0 +1,10 @@
+﻿origin_hub,destination_hub,road_distance_km,road_duration_minutes,distance_source
+BUGANG,BUSAN,278.599,195.37800000000001,NAVER Maps Directions 5 / traoptimal
+BUGANG,YAKMOK,135.099,99.51113333333333,NAVER Maps Directions 5 / traoptimal
+DONGSAN,GWANGYANG,149.167,98.62433333333334,NAVER Maps Directions 5 / traoptimal
+UIWANG,BUGANG,113.744,96.83446666666667,NAVER Maps Directions 5 / traoptimal
+UIWANG,BUSAN,375.823,288.35766666666666,NAVER Maps Directions 5 / traoptimal
+UIWANG,DONGSAN,184.76,124.83871666666667,NAVER Maps Directions 5 / traoptimal
+UIWANG,GWANGYANG,315.292,200.52891666666667,NAVER Maps Directions 5 / traoptimal
+UIWANG,YAKMOK,235.632,166.36041666666668,NAVER Maps Directions 5 / traoptimal
+YAKMOK,BUSAN,156.557,130.8651,NAVER Maps Directions 5 / traoptimal

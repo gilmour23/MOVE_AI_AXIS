@@ -475,3 +475,11 @@
   letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
 }
+
+/* 철도 비용 구성(거리운임 + 하역비) 보조 표기 */
+.metricSub {
+  display: block;
+  font-size: var(--text-small);
+  color: var(--text-faint);
+  font-weight: 400;
+}

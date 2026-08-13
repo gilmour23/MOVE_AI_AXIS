@@ -95,13 +95,21 @@ class WeekRegistry:
 
         RESULTS_SUMMARY.csv 의 `week` 열은 W01 처럼 짧으므로 그것만으로 폴더를
         찾지 않고, 실제 존재하는 폴더를 정렬해서 쓴다.
+
+        단, 결과 root 에는 주차가 아닌 폴더도 함께 있다(`mode_comparison` 등).
+        이름 규칙 대신 **주차 결과 폴더의 내용**으로 판별한다. 이름으로 거르면
+        새 부속 폴더가 추가될 때마다 주차 목록에 섞여 들어온다.
         """
         if self._week_ids is None:
             if not self.root.exists():
                 self._week_ids = ()
             else:
                 self._week_ids = tuple(
-                    sorted(p.name for p in self.root.iterdir() if p.is_dir())
+                    sorted(
+                        p.name
+                        for p in self.root.iterdir()
+                        if p.is_dir() and (p / "SUMMARY.json").exists()
+                    )
                 )
         return self._week_ids
 

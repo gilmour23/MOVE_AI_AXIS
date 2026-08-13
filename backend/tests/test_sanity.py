@@ -16,6 +16,7 @@ from moveai.selectors import inventory as inv
 from moveai.selectors import korail as kr
 from moveai.selectors import optimization as opt
 from moveai.selectors import overview as ov
+from moveai.selectors import transport as tr
 from moveai.weeks import registry
 
 CARRIER = "CARRIER_A"
@@ -73,7 +74,11 @@ def store(week_id):
 # --------------------------------------------------------------- week manifest
 
 def test_canonical_week_ids():
-    """짧은 W01 이 아니라 폴더명이 canonical ID 다."""
+    """짧은 W01 이 아니라 폴더명이 canonical ID 다.
+
+    결과 root 에는 주차가 아닌 폴더도 있다(mode_comparison). 이름이 아니라
+    SUMMARY.json 존재로 판별하므로 부속 폴더가 늘어도 섞이지 않아야 한다.
+    """
     assert registry.week_ids() == WEEK_IDS
 
 
@@ -228,6 +233,56 @@ def test_rail_charge_is_present_and_not_labelled_revenue(store):
         # 철도거리와 운임산정거리는 다른 값이다. 섞어 쓰지 않는다.
         assert rec["physicalDistanceKm"] > 0
         assert rec["tariffDistanceKm"] > 0
+
+
+def test_truck_comparison_joins_every_recommendation(week_id, store):
+    """트럭 비교는 그 주차 추천 전건에 붙어야 한다.
+
+    REC ID 는 주차마다 1번부터 다시 매겨지므로 ID 일치만으로는 같은 건이
+    아니다. selector 가 선사·OD·규격·수량까지 확인하고 붙이므로,
+    불일치가 하나라도 있으면 엉뚱한 주차 파일을 읽고 있다는 뜻이다.
+    """
+    for carrier_id in sorted(store.carrier_allocation["carrier_id"].unique()):
+        payload = tr.transport_comparison(store, carrier_id)
+        assert payload["truckStatus"] == "OK", (week_id, carrier_id)
+        assert payload["missingTruckComparison"] == [], (week_id, carrier_id)
+        assert payload["mismatchedTruckComparison"] == [], (week_id, carrier_id)
+        assert payload["truckAvailable"] is True
+
+        for row in payload["rows"]:
+            assert row["truckCostKrw"] > 0
+            assert row["truckHours"] > 0
+            assert row["truckCo2Kg"] > 0
+            assert row["railCo2Kg"] > 0
+            # 비교용 철도비용 = 거리운임 + 하역비
+            assert (
+                row["railCompareCostKrw"]
+                == row["railDistanceFareKrw"] + row["railHandlingCostKrw"]
+            )
+
+
+def test_truck_comparison_is_week_scoped(store):
+    """다른 주차 파일을 읽지 않는다.
+
+    트럭 파일이 주차별 폴더 안에 있으므로 경로 자체가 스코프를 보장한다.
+    """
+    truck = store.truck_comparison
+    assert not truck.empty
+    own_recs = set(store.all_recommendations["recommendation_id"])
+    assert set(truck["recommendation_id"]) == own_recs
+
+
+def test_rail_compare_cost_differs_from_milp_charge(store):
+    """비교용 철도비용은 MILP 운임과 다른 값이다.
+
+    MILP 의 estimated_rail_charge_krw 는 거리운임만이라 하역비가 빠져 있다.
+    그대로 트럭과 비교하면 철도가 실제보다 싸 보인다.
+    """
+    payload = tr.transport_comparison(store, CARRIER)
+    assert payload["rows"]
+    for row in payload["rows"]:
+        assert row["railCompareCostKrw"] > row["railChargeKrw"]
+        assert row["railHandlingCostKrw"] > 0
 
 
 # ------------------------------------------------------------- 부족량 정합성

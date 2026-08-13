@@ -356,6 +356,13 @@ export interface TransportRow {
   railDistanceKm: number;
   participatingCarrierCount: number;
   trainLoadFactor: number;
+  /** 비교용 철도비용 = 거리운임 + 하역비. MILP railChargeKrw(거리운임만)와 다르다. */
+  railCompareCostKrw: number | null;
+  railDistanceFareKrw: number | null;
+  railHandlingCostKrw: number | null;
+  truckRateType: string | null;
+  truckCapacityRule: string | null;
+  truckCombineApplied: boolean | null;
   railLoadStartTime: string | null;
   railAvailableTime: string | null;
   railHours: number | null;
@@ -399,8 +406,10 @@ export interface TransportComparison {
   totals: TransportTotals | null;
   missingTruckComparison: string[];
   /** 트럭 데이터 연결 상태. 없으면 0 이나 임의값을 만들지 않고 사유를 표시한다. */
-  truckStatus: 'OK' | 'MISSING_FILE' | 'NOT_SCOPED_TO_WEEK' | 'NO_ROWS_FOR_WEEK';
+  truckStatus: 'OK' | 'MISSING_FILE' | 'NO_ROWS_FOR_WEEK';
   truckAvailable: boolean;
+  /** ID 는 같은데 선사·OD·규격·수량이 다른 건. 있으면 잘못된 파일을 읽은 것이다. */
+  mismatchedTruckComparison: string[];
   truckUnavailableReason: string | null;
   basis: Record<string, string>;
 }

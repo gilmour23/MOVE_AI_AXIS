@@ -171,32 +171,33 @@ class ResultStore:
     def _truck_source(self) -> tuple[pd.DataFrame, str]:
         """트럭 비교 입력과 그 사용 가능 여부.
 
-        MILP 산출물이 아니라 별도 계보의 입력이므로 **반드시 주차로 스코프**한다.
+        MILP 산출물이 아니라 별도 계보(`mode_comparison`)의 입력이지만,
+        **주차별 폴더 안에** 있으므로 경로 자체가 주차 스코프를 보장한다.
 
-        REC ID 는 주차마다 다시 매겨진다. 예전 파일은 `recommendation_id` 만
-        갖고 있어서, 그대로 join 하면 W01 의 REC0001(부강→약목 2개)에
-        전혀 다른 건(부강→신광양 8개)의 트럭 비용이 조용히 붙는다.
-        화면에는 그럴듯하게 보이므로 눈으로 잡을 수 없다.
+            reference_data/JULY_W1W2_RESULTS/
+              mode_comparison/outputs/<weekId>/TRUCK_COMPARISON_BY_RECOMMENDATION.csv
 
-        그래서 `week_id` 열이 없는 파일은 "어느 주차 것인지 알 수 없음"으로
-        보고 아예 쓰지 않는다. 주차가 명시된 자료가 들어오면 그때 자동으로 붙는다.
+        REC ID 는 주차마다 다시 매겨진다. 주차 밖에서 한 파일을 공유하면
+        W01 의 REC0001 에 W02 REC0001 의 트럭 비용이 조용히 붙고, 화면에는
+        그럴듯하게 보여 눈으로 못 잡는다. 그래서 다른 주차 파일은
+        구조적으로 읽을 수 없게 둔다.
         """
 
         def load() -> tuple[pd.DataFrame, str]:
-            path = Path(__file__).resolve().parents[2] / "data" / self.TRUCK_FILE
+            path = (
+                self.result_dir.parent
+                / "mode_comparison"
+                / "outputs"
+                / self.week_id
+                / self.TRUCK_FILE
+            )
             if not path.exists():
                 return pd.DataFrame(), "MISSING_FILE"
 
             df = _read_csv(path)
             if df.empty:
-                return df, "MISSING_FILE"
-            if "week_id" not in df.columns:
-                return pd.DataFrame(), "NOT_SCOPED_TO_WEEK"
-
-            scoped = df[df["week_id"] == self.week_id]
-            if scoped.empty:
-                return scoped, "NO_ROWS_FOR_WEEK"
-            return scoped, "OK"
+                return df, "NO_ROWS_FOR_WEEK"
+            return df, "OK"
 
         return self._cached("truck_comparison", load)
 

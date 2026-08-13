@@ -341,7 +341,11 @@ function ComparisonCard({
   priority: TransportPriority;
 }) {
   const overall = !row;
-  const railCost = row ? row.railChargeKrw : totals?.railChargeKrw ?? 0;
+  // 비교는 거리운임 + 하역비 기준. 트럭도 상·하차를 포함한 end-to-end 라
+  // MILP 운임(거리운임만)을 그대로 쓰면 철도가 실제보다 싸 보인다.
+  const railCost = row
+    ? row.railCompareCostKrw ?? row.railChargeKrw
+    : totals?.railChargeKrw ?? 0;
   const truckCost = row ? row.truckCostKrw ?? 0 : totals?.truckCostKrw ?? 0;
   const railHours = row ? row.railHours : totals?.avgRailHours ?? null;
   const truckHours = row ? row.truckHours : totals?.avgTruckHours ?? null;
@@ -587,7 +591,7 @@ function RecommendationTable({
               <td>
                 <SizeTag size={row.size} /> {row.boxes}개
               </td>
-              <td>{won(row.railChargeKrw)}</td>
+              <td>{won(row.railCompareCostKrw ?? row.railChargeKrw)}</td>
               <td>{row.truckCostKrw !== null ? won(row.truckCostKrw) : '-'}</td>
               <td className={styles.saving}>
                 {row.costSavingKrw !== null ? wonM(row.costSavingKrw) : '-'}
@@ -655,7 +659,15 @@ function DetailDrawer({
 
         <section>
           <div className={styles.metricList}>
-            <Metric label="철도 운임" value={won(row.railChargeKrw)} />
+            <Metric
+              label="철도 비용"
+              value={won(row.railCompareCostKrw ?? row.railChargeKrw)}
+              sub={
+                row.railDistanceFareKrw !== null
+                  ? `거리운임 ${won(row.railDistanceFareKrw)} + 하역 ${won(row.railHandlingCostKrw ?? 0)}`
+                  : undefined
+              }
+            />
             <Metric label="트럭 운임" value={row.truckCostKrw !== null ? won(row.truckCostKrw) : '-'} />
             <Metric
               label="비용 절감"
@@ -701,11 +713,22 @@ function DetailDrawer({
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+}) {
   return (
     <div className={styles.metricRow}>
       <span className={styles.metricLabel}>{label}</span>
-      <span className={styles.metricValue}>{value}</span>
+      <span className={styles.metricValue}>
+        {value}
+        {sub && <span className={styles.metricSub}>{sub}</span>}
+      </span>
     </div>
   );
 }
@@ -716,15 +739,27 @@ function BasisNote({ data }: { data: TransportComparison }) {
       <div className={styles.noteBox}>
         <strong>비교 기준</strong>
         <br />
-        철도 운임·수량·시각·열차는 MOVE-AI MILP 결과({data.basis.railCostSource})에서 읽습니다.
-        철도 리드타임은 {data.basis.rail} 기준입니다.
+        수량·OD·규격·열차·시각은 MOVE-AI MILP 결과에서 읽습니다. 철도 리드타임은{' '}
+        {data.basis.rail} 기준입니다.
         <br />
-        트럭 비용·소요시간·CO₂ 및 도로거리는 {data.basis.truckSource} 의 비교 산출자료이며,
-        철도 측 값과 충돌하면 MILP 결과가 우선합니다.
+        철도 비용은 {data.basis.railCost} 입니다. 트럭도 상·하차를 포함한
+        end-to-end 기준이라 같은 기준으로 맞췄습니다.{' '}
+        {data.basis.railModelCharge} 입니다.
+        <br />
+        트럭 비용은 {data.basis.truckCost} 입니다. 탄소는 {data.basis.co2} 입니다.
+        <br />
+        출처: {data.basis.truckSource}
         {data.missingTruckComparison.length > 0 && (
           <>
             <br />
             트럭 비교값이 없는 추천: {data.missingTruckComparison.join(', ')}
+          </>
+        )}
+        {data.mismatchedTruckComparison.length > 0 && (
+          <>
+            <br />
+            건 내용이 달라 연결하지 않은 추천:{' '}
+            {data.mismatchedTruckComparison.join(', ')}
           </>
         )}
       </div>
