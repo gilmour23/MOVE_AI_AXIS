@@ -14,12 +14,17 @@ import { ArrowRight, Leaf, Train, Truck, X } from 'lucide-react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Card } from '@/components/common/Card';
 import { StatusBadge } from '@/components/common/StatusBadge';
-import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/common/States';
+import {
+  EmptyState,
+  ErrorState,
+  InlineNotice,
+  LoadingSkeleton,
+} from '@/components/common/States';
 import { SizeTag } from '@/components/optimization/SizeTag';
 import { fetchTransportComparison } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
 import { useCarrierId, useMeta } from '@/app/MetaContext';
-import { formatDateShort, formatNumber, formatTime } from '@/lib/format';
+import { formatDateShort, formatNumber, formatTime, formatKrw } from '@/lib/format';
 import type {
   TransportComparison,
   TransportPriority,
@@ -93,8 +98,13 @@ export function TransportPage() {
   return (
     <PageContainer
       title="운송수단 비교"
-      description="MOVE-AI 철도 재배치안과 트럭 운송을 같은 기준으로 비교합니다."
+      description={
+        data && !data.truckAvailable
+          ? 'MOVE-AI 철도 재배치안의 추정 운임과 계획 시각입니다. 트럭 비교는 연결되지 않았습니다.'
+          : 'MOVE-AI 철도 재배치안과 트럭 운송을 같은 기준으로 비교합니다.'
+      }
       action={
+        !data || data.truckAvailable ? (
         <div className={styles.priorityRow}>
           {PRIORITIES.map((p) => (
             <button
@@ -110,6 +120,7 @@ export function TransportPage() {
             </button>
           ))}
         </div>
+        ) : undefined
       }
     >
       {error && <ErrorState error={error} onRetry={reload} />}
@@ -128,7 +139,60 @@ export function TransportPage() {
         </Card>
       )}
 
-      {data && data.rows.length > 0 && (
+      {data && data.rows.length > 0 && !data.truckAvailable && (
+        <>
+          <InlineNotice title="트럭 비교 데이터가 연결되지 않았습니다.">
+            {data.truckUnavailableReason ??
+              '트럭 비교 데이터가 연결되지 않았습니다.'}{' '}
+            현재는 MOVE-AI 철도 재배치안의 추정 운임과 계획 시각을 확인할 수 있습니다.
+            트럭 측 값을 임의로 만들지 않습니다.
+          </InlineNotice>
+
+          <Card
+            title="철도 재배치안"
+            subtitle={`${data.rows.length}건 · 추정 철도운임과 계획 시각`}
+          >
+            <div className={styles.railOnlyScroll}>
+              <table className={styles.railOnlyTable}>
+                <thead>
+                  <tr>
+                    <th>추천 ID</th>
+                    <th>구간</th>
+                    <th>규격</th>
+                    <th>물량</th>
+                    <th>계획 출발</th>
+                    <th>사용 가능</th>
+                    <th>철도거리</th>
+                    <th>추정 철도운임</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.rows.map((row) => (
+                    <tr key={row.recommendationId}>
+                      <td>{row.recommendationId}</td>
+                      <td>
+                        {row.originName} → {row.destinationName}
+                      </td>
+                      <td>{row.size}</td>
+                      <td>
+                        {row.boxes}개 · {row.teu} TEU
+                      </td>
+                      <td>{row.departureTime}</td>
+                      <td>{row.availableTime}</td>
+                      <td>{row.railDistanceKm} km</td>
+                      <td>{formatKrw(row.railChargeKrw)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          <BasisNote data={data} />
+        </>
+      )}
+
+      {data && data.rows.length > 0 && data.truckAvailable && (
         <>
           <Card>
             <div className={styles.controls}>
