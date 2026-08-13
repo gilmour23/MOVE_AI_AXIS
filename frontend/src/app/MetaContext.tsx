@@ -23,7 +23,19 @@ interface MetaContextValue {
   carrierId: string;
 }
 
-const MetaContext = createContext<MetaContextValue | null>(null);
+/** 이 파일은 component 와 hook 을 함께 export 해서 Fast Refresh 대상에서 벗어난다.
+ *  그래서 hot update 마다 모듈이 다시 평가되며 createContext 가 **새 객체**를 만들고,
+ *  이미 렌더된 소비자들은 옛 context 를 보게 되어 `Provider 안에서만` 오류가 난다.
+ *  화면은 리마운트로 복구되지만 편집할 때마다 콘솔이 오류로 덮인다.
+ *
+ *  hot data 에 보관해 context 정체성을 유지한다. 프로덕션 빌드에는 영향이 없다. */
+const MetaContext =
+  (import.meta.hot?.data.MetaContext as React.Context<MetaContextValue | null>) ??
+  createContext<MetaContextValue | null>(null);
+
+if (import.meta.hot) {
+  import.meta.hot.data.MetaContext = MetaContext;
+}
 
 export function MetaProvider({ children }: { children: ReactNode }) {
   const [searchParams, setSearchParams] = useSearchParams();

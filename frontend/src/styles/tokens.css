@@ -26,6 +26,13 @@
   --accent: #8a62d8;
   --accent-soft: #f0ebfb;
 
+  /* 운행축 — 노선도 전용.
+     상태색(success/danger)과 의미가 완전히 다르므로 토큰을 분리한다.
+     같은 색을 쓰면 초록 노선이 '정상', 빨강이 '위험'처럼 읽힌다. */
+  --corridor-trunk: #2f363d;
+  --corridor-gyeongbu: #1f6feb;
+  --corridor-honam: #1f8a4c;
+
   /* status */
   --success: #5aa56a;
   --success-soft: #eaf4ec;

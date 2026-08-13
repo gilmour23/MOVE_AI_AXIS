@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, X } from 'lucide-react';
-import { CORRIDORS, HUB_BY_CODE, HUB_SCHEMATIC } from '@/config/hubMeta';
+import { CORRIDORS, HUB_BY_CODE, HUB_SCHEMATIC, JUNCTION_HUB } from '@/config/hubMeta';
+import { useMeta } from '@/app/MetaContext';
 import { formatBoxes } from '@/lib/format';
 import type { ContainerSize, OverviewHub } from '@/types/domain';
 import styles from './RailHubMap.module.css';
@@ -14,10 +15,23 @@ interface RailHubMapProps {
   onSelectHub?: (hubCode: string) => void;
 }
 
-/** 6 hub + 두 corridor 를 schematic SVG 로 그린다.
- *  실제 lat/lon 이 확보되면 hubMeta.ts 좌표만 교체하면 된다 (핸드오프 §13). */
+const TONE_CLASS: Record<string, string> = {
+  trunk: styles.corridorTrunk,
+  gyeongbu: styles.corridorGyeongbu,
+  honam: styles.corridorHonam,
+};
+
+/** 6 거점과 운행축을 schematic 노선도로 그린다.
+ *
+ *  **지리 지도가 아니다.** 결과 파일에 거점 lat/lon 이 없고, 지도를 눈대중으로
+ *  그리면 거점이 실제와 다른 곳에 찍힌다. 그래서 지리를 주장하지 않는
+ *  노선도로 그리고 화면에도 그렇게 밝힌다. 실제 좌표가 확보되면
+ *  hubMeta.ts 의 x/y 만 교체하면 된다.
+ *
+ *  의왕→부강은 두 축이 함께 쓰는 공통구간이고 부강이 분기점이다. */
 export function RailHubMap({ hubs, selectedHub, onSelectHub }: RailHubMapProps) {
   const [openHub, setOpenHub] = useState<string | null>(null);
+  const { weekId } = useMeta();
 
   const byCode = new Map(hubs.map((hub) => [hub.hubCode, hub]));
   const active = openHub ? byCode.get(openHub) ?? null : null;
@@ -48,12 +62,7 @@ export function RailHubMap({ hubs, selectedHub, onSelectHub }: RailHubMapProps) 
               <polyline
                 key={corridor.id}
                 points={points}
-                className={[
-                  styles.corridorLine,
-                  corridor.id === 'GYEONGBU'
-                    ? styles.corridorGyeongbu
-                    : styles.corridorSouthwest,
-                ].join(' ')}
+                className={[styles.corridorLine, TONE_CLASS[corridor.tone]].join(' ')}
               />
             );
           })}
@@ -82,6 +91,9 @@ export function RailHubMap({ hubs, selectedHub, onSelectHub }: RailHubMapProps) 
               >
                 {hasShortage && (
                   <circle cx={hub.x} cy={hub.y} r={4.4} className={styles.nodeHalo} />
+                )}
+                {hub.code === JUNCTION_HUB && (
+                  <circle cx={hub.x} cy={hub.y} r={3.4} className={styles.junctionRing} />
                 )}
                 <circle
                   cx={hub.x}
@@ -118,6 +130,10 @@ export function RailHubMap({ hubs, selectedHub, onSelectHub }: RailHubMapProps) 
             );
           })}
         </svg>
+
+        <span className={styles.schematicNote}>
+          노선도 · 지리적 위치를 나타내지 않습니다
+        </span>
 
         {active && activeMeta && (
           <div
@@ -158,7 +174,7 @@ export function RailHubMap({ hubs, selectedHub, onSelectHub }: RailHubMapProps) 
                 <Link
                   key={size}
                   className={styles.popoverLink}
-                  to={`/carrier/inventory?hub=${active.hubCode}&size=${size}`}
+                  to={`/carrier/inventory?week=${weekId}&hub=${active.hubCode}&size=${size}`}
                 >
                   {size} 재고 상세 보기 <ArrowRight size={13} />
                 </Link>
@@ -169,20 +185,15 @@ export function RailHubMap({ hubs, selectedHub, onSelectHub }: RailHubMapProps) 
       </div>
 
       <div className={styles.legend}>
-        <span className={styles.legendItem}>
-          <span
-            className={styles.legendSwatch}
-            style={{ background: 'var(--brand)' }}
-          />
-          경부축
-        </span>
-        <span className={styles.legendItem}>
-          <span
-            className={styles.legendSwatch}
-            style={{ background: 'var(--accent)' }}
-          />
-          호남축
-        </span>
+        {CORRIDORS.map((corridor) => (
+          <span key={corridor.id} className={styles.legendItem}>
+            <span
+              className={styles.legendSwatch}
+              style={{ background: `var(--corridor-${corridor.tone})` }}
+            />
+            {corridor.label}
+          </span>
+        ))}
         <span className={styles.legendItem}>
           <span className={styles.legendDot} />
           이번 주 부족 예상 거점
