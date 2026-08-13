@@ -13,8 +13,16 @@ const ALLOWED_CONTEXT_SOURCES = [
 ];
 
 export default function handler(_request, response) {
+  // 키 풀(GEMINI_API_KEYS, 쉼표 구분) 또는 단일 키(GEMINI_API_KEY) 중 하나라도 있으면 연결된 것.
+  const configured = Boolean(
+    (process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || '')
+      .split(',')
+      .map((key) => key.trim())
+      .filter(Boolean).length,
+  );
+
   response.status(200).json({
-    configured: Boolean(process.env.GEMINI_API_KEY),
+    configured,
     readOnly: true,
     allowedSources: ALLOWED_CONTEXT_SOURCES,
   });

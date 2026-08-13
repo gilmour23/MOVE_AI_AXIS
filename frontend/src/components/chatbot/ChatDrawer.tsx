@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Bot, Send, X } from 'lucide-react';
 import { backendChatProvider, SUGGESTED_QUESTIONS } from '@/api/chat';
+import type { ChatHistoryTurn } from '@/api/chat';
+import { useMeta } from '@/app/MetaContext';
 import { ApiError } from '@/api/client';
 import { useAsync } from '@/hooks/useAsync';
 import styles from './Chat.module.css';
@@ -23,6 +25,7 @@ const NOT_CONFIGURED_TEXT =
 /** Copilot 은 read-only 설명 interface 다 (핸드오프 §19).
  *  API 가 없을 때 가짜 AI 답변을 하드코딩하지 않는다. */
 export function ChatDrawer({ carrierId, role, onClose }: ChatDrawerProps) {
+  const { weekId } = useMeta();
   const status = useAsync((signal) => backendChatProvider.getStatus(signal), []);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -57,11 +60,21 @@ export function ChatDrawer({ carrierId, role, onClose }: ChatDrawerProps) {
     setSending(true);
 
     try {
+      // 오류 턴은 이력에서 뺀다. 모델이 자기 오류 문구를 문맥으로 삼지 않도록.
+      const history: ChatHistoryTurn[] = messages
+        .filter((m) => m.role !== 'error')
+        .map((m) => ({
+          role: m.role === 'assistant' ? ('model' as const) : ('user' as const),
+          text: m.text,
+        }));
+
       const reply = await backendChatProvider.sendMessage({
         carrierId,
         role,
         message: trimmed,
         conversationId: conversationId.current,
+        weekId,
+        history,
       });
       conversationId.current = reply.conversationId ?? conversationId.current;
       setMessages((current) => [

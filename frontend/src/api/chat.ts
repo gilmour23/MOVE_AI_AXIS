@@ -4,12 +4,21 @@
 import { apiGet, apiPost } from './client';
 import type { ChatReply, ChatStatus } from '@/types/domain';
 
+export interface ChatHistoryTurn {
+  role: 'user' | 'model';
+  text: string;
+}
+
 export interface ChatSendInput {
   carrierId: string;
   message: string;
   conversationId?: string | null;
   /** 어느 화면에서 물었는지 — 서버리스 함수가 컨텍스트를 고를 때 쓴다. */
   role?: 'carrier' | 'korail';
+  /** 계획주차. 없으면 서버가 기본 주차로 대답하므로 화면과 어긋날 수 있다. */
+  weekId?: string | null;
+  /** 최근 대화 이력 (서버에서 10건으로 자른다). */
+  history?: ChatHistoryTurn[];
 }
 
 export interface ChatProvider {
@@ -30,6 +39,8 @@ export const backendChatProvider: ChatProvider = {
         message: input.message,
         conversationId: input.conversationId ?? null,
         role: input.role ?? 'carrier',
+        weekId: input.weekId ?? null,
+        history: input.history ?? [],
       },
       signal,
     );
