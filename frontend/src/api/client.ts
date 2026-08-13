@@ -86,6 +86,7 @@ function toStaticPath(path: string): string | null {
 
   if (rest[0] === 'overview') return `${base}/overview.json`;
   if (rest[0] === 'transport') return `${base}/transport_comparison.json`;
+  if (rest[0] === 'schedule') return `${base}/schedule.json`;
 
   if (rest[0] === 'inventory') {
     // /inventory?size=&mode=
@@ -93,6 +94,10 @@ function toStaticPath(path: string): string | null {
     // /inventory/{hub}/{size}/summary?mode=
     if (rest.length === 4 && rest[3] === 'summary') {
       return `${base}/inventory/${rest[1]}_${rest[2]}_${mode}_summary.json`;
+    }
+    // /inventory/{hub}/{size}/comparison — 재배치 전/후를 한 번에 받는다.
+    if (rest.length === 4 && rest[3] === 'comparison') {
+      return `${base}/inventory/${rest[1]}_${rest[2]}_comparison.json`;
     }
   }
 

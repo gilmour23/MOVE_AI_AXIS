@@ -188,6 +188,48 @@ def test_recommendation_times_come_from_own_stops(store):
     assert checked > 0
 
 
+def test_need_ids_join_within_carrier_and_week(store):
+    """recommendation.needIds 는 같은 주차·같은 선사의 detail 에만 붙어야 한다.
+
+    need_ids 는 파이프로 이어붙인 문자열이라 구분자를 잘못 잡으면 join 이
+    통째로 비는데, 화면에는 '연결된 수요 없음'처럼 보여서 오류로 안 읽힌다.
+    """
+    detail = store.recommendation_detail
+    own_details = detail[detail["carrier_id"] == CARRIER]
+    own_need_ids = set(own_details["need_id"])
+
+    joined = 0
+    for rec in opt.recommendations(store, CARRIER):
+        assert rec["needIds"], rec["recommendationId"]
+        assert len(rec["needIds"]) == rec["needCount"], rec["recommendationId"]
+        for need_id in rec["needIds"]:
+            assert need_id in own_need_ids, (rec["recommendationId"], need_id)
+            joined += 1
+    assert joined > 0
+
+
+def test_unserved_reason_is_not_treated_as_proven(store):
+    """미배정 사유는 모델 진단 분류다. 확정 원인으로 쓰지 않는다."""
+    rows = opt.unserved(store, CARRIER)
+    for row in rows:
+        assert isinstance(row["reasonIsProvenCause"], bool)
+        assert row["unservedBoxes"] > 0
+
+    summary = opt.carrier_service_summary(store, CARRIER)
+    assert sum(r["unservedTeu"] for r in rows) == summary["railUnservedTeu"]
+
+
+def test_rail_charge_is_present_and_not_labelled_revenue(store):
+    """추정 철도운임은 추천마다 있어야 한다. 매출/이익이 아니다."""
+    recs = opt.recommendations(store, CARRIER)
+    assert recs
+    for rec in recs:
+        assert rec["estimatedRailChargeKrw"] > 0
+        # 철도거리와 운임산정거리는 다른 값이다. 섞어 쓰지 않는다.
+        assert rec["physicalDistanceKm"] > 0
+        assert rec["tariffDistanceKm"] > 0
+
+
 # ------------------------------------------------------------- 부족량 정합성
 
 def _weekly_shortage(store, mode: str) -> dict[tuple[str, str], int]:

@@ -574,3 +574,17 @@
   background: var(--brand-soft);
   color: var(--brand-dark);
 }
+
+
+/* 이번 주 작업이 없는 거점.
+   거점을 목록에서 빼면 없어진 것처럼 보이므로 유지하되,
+   빈 상태를 경고색으로 과장하지 않는다. */
+.rowIdle td {
+  color: var(--text-faint);
+  background: var(--surface-soft);
+}
+
+.idleNote {
+  font-size: var(--text-small);
+  color: var(--text-faint);
+}

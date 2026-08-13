@@ -1,7 +1,9 @@
 import { apiGet } from './client';
 import type {
+  CarrierSchedule,
   ContainerSize,
   GlobalMeta,
+  HubInventoryComparison,
   InventoryMode,
   KorailInsights,
   KorailNeedRow,
@@ -85,6 +87,20 @@ export function fetchInventorySummary(
   );
 }
 
+/** 재배치 전/후 비교. 두 mode 를 각각 받지 않고 한 번에 받아 같은 축에 그린다. */
+export function fetchInventoryComparison(
+  carrierId: string,
+  weekId: string,
+  hubCode: string,
+  size: ContainerSize,
+  signal?: AbortSignal,
+): Promise<HubInventoryComparison> {
+  return apiGet<HubInventoryComparison>(
+    withWeek(`/api/carrier/${carrierId}/inventory/${hubCode}/${size}/comparison`, weekId),
+    signal,
+  );
+}
+
 export function fetchOptimization(
   carrierId: string,
   weekId: string,
@@ -107,6 +123,18 @@ export function fetchRecommendationDetail(
       `/api/carrier/${carrierId}/optimization/recommendations/${recommendationId}`,
       weekId,
     ),
+    signal,
+  );
+}
+
+/** 운송 일정 — 자사 공컨이 실린 계획열차와 stop 시각. 실시간 추적이 아니다. */
+export function fetchCarrierSchedule(
+  carrierId: string,
+  weekId: string,
+  signal?: AbortSignal,
+): Promise<CarrierSchedule> {
+  return apiGet<CarrierSchedule>(
+    withWeek(`/api/carrier/${carrierId}/schedule`, weekId),
     signal,
   );
 }

@@ -75,7 +75,7 @@ export function TrainDetailDrawer({
                         stop={stop}
                         index={index}
                         isLast={index === data.stops.length - 1}
-                      />
+                       weekId={weekId} />
                     ))}
                   </div>
                 </div>
@@ -126,7 +126,17 @@ export function TrainDetailDrawer({
  *
  *  상·하차가 0인 정차도 그대로 남기되, 작업 개시·사용 가능 시각을
  *  실제 컨테이너 작업처럼 오해시키지 않도록 조건부로만 보여준다. */
-function StopRow({ stop, index, isLast }: { stop: KorailStop; index: number; isLast: boolean }) {
+function StopRow({
+  stop,
+  index,
+  isLast,
+  weekId,
+}: {
+  stop: KorailStop;
+  index: number;
+  isLast: boolean;
+  weekId: string;
+}) {
   const hasHandling = stop.loadBoxesTotal + stop.unloadBoxesTotal > 0;
   const hasUnload = stop.unloadBoxesTotal > 0;
 
@@ -144,7 +154,7 @@ function StopRow({ stop, index, isLast }: { stop: KorailStop; index: number; isL
         <div className={styles.stopName}>
           <span className={styles.stopIndex}>{index + 1}</span>
           {/* 이 거점의 전체 작업 일정으로 이동 */}
-          <Link className={styles.stopLink} to={`/korail/operations?hub=${stop.hubCode}`}>
+          <Link className={styles.stopLink} to={`/korail/operations?week=${weekId}&hub=${stop.hubCode}`}>
             {stop.hubName}
           </Link>
         </div>

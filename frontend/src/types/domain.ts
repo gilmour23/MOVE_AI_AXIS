@@ -101,6 +101,32 @@ export interface WeeklyInventorySummaryData {
   railOutboundBoxes: number;
 }
 
+/** 재배치 전/후 비교의 하루치.
+ *  재고(잔량)와 이벤트(유량)는 단위가 달라 같은 축에 겹쳐 그리지 않는다. */
+export interface ComparisonDay {
+  date: string;
+  weekday: string;
+  baselineInventory: number;
+  postRailInventory: number;
+  baselineUnmet: number;
+  postRailUnmet: number;
+  demand: number;
+  externalSupply: number;
+  railInbound: number;
+  railOutbound: number;
+}
+
+export interface HubInventoryComparison {
+  hubCode: string;
+  hubName: string;
+  size: ContainerSize;
+  days: ComparisonDay[];
+  baseline: WeeklyInventorySummaryData;
+  postRail: WeeklyInventorySummaryData;
+  /** 재배치로 줄어든 미충족 수요. 최저재고 차이로 계산하지 않는다. */
+  shortageReductionBoxes: number;
+}
+
 export interface CarrierRecommendation {
   recommendationId: string;
   size: ContainerSize;
@@ -115,9 +141,103 @@ export interface CarrierRecommendation {
   arrivalTime: string;
   availableTime: string;
   needCount: number;
+  /** 이 추천이 덮는 수요의 납기 구간. 단일 시각이 아니라 범위다. */
+  serviceDueEarliest: string | null;
+  serviceDueLatest: string | null;
+  maxEarlinessHours: number;
+  /** 철도거리(physical)와 운임산정거리(tariff)는 다른 값이다. 섞어 쓰지 않는다. */
   physicalDistanceKm: number;
+  tariffDistanceKm: number;
+  /** 추정 철도운임. 매출·수익·이익이 아니다. */
+  estimatedRailChargeKrw: number;
   participatingCarrierCount: number;
   trainLoadFactor: number;
+  needIds: string[];
+}
+
+/** `왜 이 추천인가` 의 근거. 결과 파일에 있는 사실만 담는다.
+ *  solver 의 인과증명이 아니므로 원인을 단정하는 문구로 쓰지 않는다. */
+export interface RecommendationExplanation {
+  recommendationId: string;
+  destinationHub: string;
+  size: ContainerSize;
+  linkedServiceNeedTeu: number;
+  linkedNeedCount: number;
+  linkedNeedDueMin: string | null;
+  linkedNeedDueMax: string | null;
+  originHub: string;
+  sourceReleaseCapacityBoxes: number;
+  assignedOutboundBoxes: number;
+  sourceReleaseRemainingBoxes: number;
+  recommendedBoxes: number;
+  recommendedTeu: number;
+  earlinessHours: number;
+}
+
+/** 철도로 배정되지 못한 자사 수요. */
+export interface UnservedNeed {
+  needId: string;
+  destinationHub: string;
+  destinationName: string;
+  size: ContainerSize;
+  quantityBoxes: number;
+  quantityTeu: number;
+  dueTime: string | null;
+  priority: number;
+  needReason: string;
+  unservedBoxes: number;
+  unservedTeu: number;
+  /** 모델이 붙인 진단 분류. */
+  reason: string;
+  /** false 면 확정 원인이 아니다. 화면에서 원인으로 단정하지 않는다. */
+  reasonIsProvenCause: boolean;
+}
+
+/** 운송 일정의 stop. 각 시각은 독립된 계획값이며 인과 순서를 만들지 않는다. */
+export interface ScheduleStop {
+  sequence: number;
+  hubCode: string;
+  hubName: string;
+  loadStartTime: string | null;
+  arrivalTime: string | null;
+  departureTime: string | null;
+  availableTime: string | null;
+  ownLoadBoxes: Record<ContainerSize, number>;
+  ownUnloadBoxes: Record<ContainerSize, number>;
+  hasOwnWork: boolean;
+}
+
+export interface ScheduleAllocation {
+  originHub: string;
+  originName: string;
+  destinationHub: string;
+  destinationName: string;
+  size: ContainerSize;
+  boxes: number;
+  teu: number;
+}
+
+export interface ScheduleTrain {
+  trainId: string;
+  route: string | null;
+  formation: string | null;
+  wagons: number;
+  capacityTeu: number;
+  /** 열차 전체 배정. 공동운송 집계값이다. */
+  assignedTeu: number;
+  departureTime: string | null;
+  arrivalTime: string | null;
+  participatingCarrierCount: number;
+  ownBoxes: number;
+  ownTeu: number;
+  ownAllocations: ScheduleAllocation[];
+  recommendationIds: string[];
+  stops: ScheduleStop[];
+}
+
+export interface CarrierSchedule {
+  carrierId: string;
+  trains: ScheduleTrain[];
 }
 
 export interface RecommendationStop {
@@ -207,11 +327,14 @@ export interface OverviewData {
 }
 
 export interface OptimizationData {
+  weekId: string;
   carrierId: string;
   needs: ServiceNeedRow[];
   recommendations: CarrierRecommendation[];
   impacts: InventoryImpact[];
   serviceSummary: CarrierServiceSummary | null;
+  explanations: RecommendationExplanation[];
+  unserved: UnservedNeed[];
 }
 
 /** Rail vs Truck 비교. rail 값은 canonical MILP, truck 값은 비교 입력 데이터. */
@@ -270,10 +393,15 @@ export interface TransportTotals {
 }
 
 export interface TransportComparison {
+  weekId: string;
   carrierId: string;
   rows: TransportRow[];
   totals: TransportTotals | null;
   missingTruckComparison: string[];
+  /** 트럭 데이터 연결 상태. 없으면 0 이나 임의값을 만들지 않고 사유를 표시한다. */
+  truckStatus: 'OK' | 'MISSING_FILE' | 'NOT_SCOPED_TO_WEEK' | 'NO_ROWS_FOR_WEEK';
+  truckAvailable: boolean;
+  truckUnavailableReason: string | null;
   basis: Record<string, string>;
 }
 

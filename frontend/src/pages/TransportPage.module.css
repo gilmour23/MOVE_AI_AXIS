@@ -437,3 +437,41 @@
   font-weight: 500;
   box-shadow: var(--shadow-raised);
 }
+
+/* 트럭 데이터가 없을 때의 철도 전용 표.
+   비교 화면의 구조를 흉내내지 않는다 — 비교할 대상이 없기 때문이다. */
+.railOnlyScroll {
+  overflow-x: auto;
+}
+
+.railOnlyTable {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+  font-size: var(--text-small);
+}
+
+.railOnlyTable th {
+  text-align: left;
+  font-size: var(--text-table-head);
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-strong);
+  white-space: nowrap;
+}
+
+.railOnlyTable td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+
+/* 계획열차 ID 표시. KORAIL 운영 화면으로 링크하지 않는다 (역할 격리). */
+.trainId {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}

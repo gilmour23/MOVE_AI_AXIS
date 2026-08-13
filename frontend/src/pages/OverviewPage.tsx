@@ -136,7 +136,7 @@ export function OverviewPage() {
                   key={rec.recommendationId}
                   rec={rec}
                   onClick={() =>
-                    navigate(`/carrier/plan#${rec.recommendationId}`)
+                    navigate(`/carrier/plan?week=${weekId}#${rec.recommendationId}`)
                   }
                 />
               ))}

@@ -1,0 +1,119 @@
+.wrap {
+  display: grid;
+  gap: var(--section-gap);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--card-gap);
+}
+
+.stat {
+  display: grid;
+  gap: 3px;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+}
+
+.statLabel {
+  font-size: var(--text-small);
+  color: var(--text-faint);
+}
+
+.statValue {
+  font-size: var(--text-section-title);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.statSub {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.block {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.blockTitle {
+  margin: 0;
+  font-size: var(--text-card-title);
+  font-weight: 600;
+}
+
+.blockNote {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.chart {
+  height: 260px;
+  margin-top: var(--space-2);
+}
+
+.strip {
+  height: 190px;
+  margin-top: var(--space-2);
+}
+
+.tableScroll {
+  overflow-x: auto;
+  margin-top: var(--space-2);
+}
+
+.table {
+  width: 100%;
+  min-width: 480px;
+  border-collapse: collapse;
+  font-size: var(--text-body);
+}
+
+.table th {
+  text-align: left;
+  font-size: var(--text-table-head);
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-strong);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+
+.sub {
+  display: block;
+  font-size: var(--text-small);
+  color: var(--text-faint);
+}
+
+.remain {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+.cleared {
+  color: var(--success);
+  font-weight: 600;
+}
+
+@media (max-width: 1279px) {
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 959px) {
+  .stats {
+    grid-template-columns: 1fr;
+  }
+}

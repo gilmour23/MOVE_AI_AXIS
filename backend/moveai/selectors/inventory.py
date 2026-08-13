@@ -161,6 +161,64 @@ def hub_summary(
     }
 
 
+def hub_comparison(
+    store: ResultStore, carrier_id: str, hub_code: str, size: str
+) -> dict:
+    """재배치 전/후를 같은 날짜축에서 비교한다.
+
+    재고선(baseline / postRail)과 이벤트(수요·외부공급·철도 유입/반출)는
+    **단위와 의미가 다르다.** 재고는 시점의 잔량이고 이벤트는 그 날의 유량이다.
+    한 축에 겹쳐 그리면 크기 비교가 되는 것처럼 보이므로 분리해서 돌려준다.
+
+    부족 판정은 최저재고가 0 인지로 하지 않는다. 재고는 0 에서 clip 되므로
+    0 이어도 충족된 날이 있고, 반대로 0 이 아니어도 미충족이 있을 수 있다.
+    반드시 unmet 값을 쓴다.
+    """
+    df = _slice(store, carrier_id, size)
+    df = df[df["hub_code"] == hub_code]
+
+    baseline = hub_summary(store, carrier_id, hub_code, size, "baseline")
+    post_rail = hub_summary(store, carrier_id, hub_code, size, "postRail")
+
+    base_by_date = {d["date"]: d for d in baseline["daily"]}
+    post_by_date = {d["date"]: d for d in post_rail["daily"]}
+
+    days = []
+    for date in horizon_dates(store):
+        rows = df[df["date"] == date] if not df.empty else df
+        base = base_by_date.get(date)
+        post = post_by_date.get(date)
+        days.append(
+            {
+                "date": date,
+                "weekday": weekday_ko(date),
+                "baselineInventory": base["closingInventory"] if base else 0,
+                "postRailInventory": post["closingInventory"] if post else 0,
+                "baselineUnmet": base["unmetDemand"] if base else 0,
+                "postRailUnmet": post["unmetDemand"] if post else 0,
+                # 유량 이벤트 — 재고선과 같은 축에 두지 않는다.
+                "demand": int(rows["demand"].sum()) if len(rows) else 0,
+                "externalSupply": int(rows["external_supply"].sum()) if len(rows) else 0,
+                "railInbound": int(rows["rail_inbound_boxes"].sum()) if len(rows) else 0,
+                "railOutbound": int(rows["rail_outbound_boxes"].sum())
+                if len(rows)
+                else 0,
+            }
+        )
+
+    return {
+        "hubCode": hub_code,
+        "hubName": hub_name(hub_code),
+        "size": size,
+        "days": days,
+        "baseline": baseline,
+        "postRail": post_rail,
+        # 재배치로 줄어든 미충족 수요. 최저재고 차이로 계산하지 않는다.
+        "shortageReductionBoxes": baseline["weeklyUnmetDemand"]
+        - post_rail["weeklyUnmetDemand"],
+    }
+
+
 def weekly_min_by_hub_size(
     store: ResultStore, carrier_id: str, mode: str
 ) -> dict[tuple[str, str], int]:

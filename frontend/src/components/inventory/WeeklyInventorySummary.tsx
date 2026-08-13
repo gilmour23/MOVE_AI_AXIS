@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { useMeta } from '@/app/MetaContext';
 import { ArrowRight } from 'lucide-react';
 import { formatNumber, formatSigned } from '@/lib/format';
 import type { WeeklyInventorySummaryData } from '@/types/domain';
@@ -17,6 +18,7 @@ export function WeeklyInventorySummary({
   summary,
   showOptimizationLink = false,
 }: WeeklyInventorySummaryProps) {
+  const { weekId } = useMeta();
   const isPostRail = summary.mode === 'postRail';
   const hasShortage = summary.weeklyUnmetDemand > 0;
   const change = summary.weeklyInventoryChange;
@@ -88,7 +90,7 @@ export function WeeklyInventorySummary({
       {hasShortage && showOptimizationLink && (
         <Link
           className={styles.link}
-          to={`/carrier/plan?hub=${summary.hubCode}&size=${summary.size}`}
+          to={`/carrier/plan?week=${weekId}&hub=${summary.hubCode}&size=${summary.size}`}
         >
           MOVE-AI 재배치안 보기 <ArrowRight size={14} />
         </Link>

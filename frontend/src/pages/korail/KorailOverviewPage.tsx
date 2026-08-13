@@ -34,8 +34,8 @@ function firstPlanTime(hub: KorailStationHub): string | null {
 export function KorailOverviewPage() {
   const { weekMeta, weekId } = useMeta();
   const navigate = useNavigate();
-  const trains = useAsync((signal) => fetchKorailTrains(weekId, signal), []);
-  const operations = useAsync((signal) => fetchKorailOperations(weekId, signal), []);
+  const trains = useAsync((signal) => fetchKorailTrains(weekId, signal), [weekId]);
+  const operations = useAsync((signal) => fetchKorailOperations(weekId, signal), [weekId]);
 
   const summary = useMemo(() => {
     const rows = trains.data?.trains ?? [];
@@ -47,14 +47,15 @@ export function KorailOverviewPage() {
     };
   }, [trains.data]);
 
-  const hubs = useMemo(
-    () => (operations.data?.hubs ?? []).filter((hub) => hub.operationCount > 0),
-    [operations.data],
-  );
+  /** canonical 6 거점을 항상 유지한다.
+   *  이번 주 작업이 없는 거점을 목록에서 빼면 거점 자체가 없어진 것처럼 보인다.
+   *  (W02 는 경부축만 운행해 동산·신광양항에 작업이 없다 — 정상 상태다) */
+  const hubs = operations.data?.hubs ?? [];
 
   const error = trains.error ?? operations.error;
   const loading = trains.loading || operations.loading;
-  const openTrain = (trainId: string) => navigate(`/korail/trains?train=${trainId}`);
+  const openTrain = (trainId: string) =>
+    navigate(`/korail/trains?week=${weekId}&train=${trainId}`);
 
   return (
     <PageContainer title="공컨 전용열차 종합계획">
@@ -110,11 +111,26 @@ export function KorailOverviewPage() {
               <tbody>
                 {hubs.map((hub) => {
                   const trainIds = [...new Set(hub.operations.map((op) => op.trainId))];
+                  const idle = hub.operations.length === 0;
+
+                  if (idle) {
+                    return (
+                      <tr key={hub.hubCode} className={styles.rowIdle}>
+                        <td>{hub.hubName}</td>
+                        <td colSpan={4} className={styles.idleNote}>
+                          이번 계획주차에 예정된 작업이 없습니다
+                        </td>
+                      </tr>
+                    );
+                  }
+
                   return (
                     <tr
                       key={hub.hubCode}
                       className={styles.rowClickable}
-                      onClick={() => navigate(`/korail/operations?hub=${hub.hubCode}`)}
+                      onClick={() =>
+                        navigate(`/korail/operations?week=${weekId}&hub=${hub.hubCode}`)
+                      }
                     >
                       <td>{hub.hubName}</td>
                       <td className={styles.mono}>{trainIds.join(' · ')}</td>

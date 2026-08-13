@@ -27,20 +27,41 @@ export const HUB_BY_CODE: Record<string, HubSchematic> = Object.fromEntries(
   HUB_SCHEMATIC.map((hub) => [hub.code, hub]),
 );
 
-/** 노선 schematic (§13) */
-export const CORRIDORS: { id: string; label: string; path: string[] }[] = [
+export type CorridorTone = 'trunk' | 'gyeongbu' | 'honam';
+
+/** 노선 schematic.
+ *
+ *  두 축을 각각 의왕부터 그리면 의왕→부강 구간이 겹쳐서, 서로 다른 두 노선이
+ *  나란히 가는 것처럼 보인다. 실제로는 **한 구간을 공유**하고 부강에서 갈라진다.
+ *  그래서 공통구간을 따로 두고 부강을 분기점으로 그린다. */
+export const CORRIDORS: {
+  id: string;
+  label: string;
+  tone: CorridorTone;
+  path: string[];
+}[] = [
+  {
+    id: 'TRUNK',
+    label: '공통구간',
+    tone: 'trunk',
+    path: ['UIWANG', 'BUGANG'],
+  },
   {
     id: 'GYEONGBU',
     label: '경부축',
-    path: ['UIWANG', 'BUGANG', 'YAKMOK', 'BUSAN'],
+    tone: 'gyeongbu',
+    path: ['BUGANG', 'YAKMOK', 'BUSAN'],
   },
   {
-    // internal id 는 유지하고 사용자에게 보이는 label 만 '호남축'으로 통일한다.
-    id: 'SOUTHWEST',
+    id: 'HONAM',
     label: '호남축',
-    path: ['UIWANG', 'BUGANG', 'DONGSAN', 'GWANGYANG'],
+    tone: 'honam',
+    path: ['BUGANG', 'DONGSAN', 'GWANGYANG'],
   },
 ];
+
+/** 부강은 두 축이 갈라지는 분기점이다. 노선도에서 다르게 그린다. */
+export const JUNCTION_HUB = 'BUGANG';
 
 export function hubShortName(code: string): string {
   return HUB_BY_CODE[code]?.shortName ?? code;

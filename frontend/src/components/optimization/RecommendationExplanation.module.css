@@ -1,0 +1,62 @@
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-3);
+}
+
+.item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  padding: var(--space-4);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+
+.recId {
+  font-weight: 700;
+  font-size: var(--text-card-title);
+  letter-spacing: -0.01em;
+}
+
+.route {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.facts {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.fact {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: var(--space-3);
+  align-items: baseline;
+}
+
+.fact dt {
+  font-size: var(--text-small);
+  color: var(--text-faint);
+}
+
+.fact dd {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 960px) {
+  .list {
+    grid-template-columns: 1fr;
+  }
+}

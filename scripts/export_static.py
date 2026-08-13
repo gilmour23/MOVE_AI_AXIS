@@ -113,11 +113,14 @@ def export_carrier(store, carrier_id: str) -> None:
     write(
         f"{base}/optimization.json",
         {
+            "weekId": store.week_id,
             "carrierId": carrier_id,
             "needs": opt.service_needs(store, carrier_id),
             "recommendations": opt.recommendations(store, carrier_id),
             "impacts": opt.inventory_impacts(store, carrier_id),
             "serviceSummary": opt.carrier_service_summary(store, carrier_id),
+            "explanations": opt.explanation_context(store, carrier_id),
+            "unserved": opt.unserved(store, carrier_id),
         },
     )
 
@@ -133,10 +136,21 @@ def export_carrier(store, carrier_id: str) -> None:
                     inv.hub_summary(store, carrier_id, hub["code"], size, mode),
                 )
 
+    # 재배치 전/후 비교 — mode 와 무관하므로 규격 x 거점으로만 만든다.
+    for size in CONTAINER_SIZES:
+        for hub in HUBS:
+            write(
+                f"{base}/inventory/{hub['code']}_{size}_comparison.json",
+                inv.hub_comparison(store, carrier_id, hub["code"], size),
+            )
+
     for rec in opt.recommendations(store, carrier_id):
         rec_id = rec["recommendationId"]
         detail = opt.recommendation_detail(store, carrier_id, rec_id)
         write(f"{base}/optimization/recommendations/{rec_id}.json", detail)
+
+    # 운송 일정 — 자사 allocation 이 실린 계획열차와 stop 시각
+    write(f"{base}/schedule.json", opt.carrier_schedule(store, carrier_id))
 
     # Rail vs Truck 비교 — rail 값은 canonical, truck 값만 data/ 입력
     write(f"{base}/transport_comparison.json", tr.transport_comparison(store, carrier_id))
