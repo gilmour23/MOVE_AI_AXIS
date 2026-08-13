@@ -1,0 +1,7 @@
+# Windows 에서 작업하고 Vercel(Linux) 에서 빌드하므로 저장소에는 LF 로 고정한다.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.xlsx binary
+*.pptx binary

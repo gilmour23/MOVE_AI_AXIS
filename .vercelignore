@@ -1,0 +1,16 @@
+# 배포에 올라가는 것은 frontend/ (정적 빌드) 와 api/ (서버리스 함수) 뿐이다.
+#
+# 나머지(로컬 데이터 생성기·최적화 엔진·스크립트·문서)는 배포 대상이 아니다.
+# 특히 Python backend 를 남겨두면 Vercel 이 이를 별도 웹서비스로 감지해
+# 멀티 서비스 프로젝트로 잡고 배포를 막는다.
+#
+# 주의: .gitignore 와 같은 문법이라 `data/` 처럼 쓰면 모든 깊이의 data 폴더가
+# 제외되어 frontend/public/data/ 까지 사라진다. 반드시 앞에 / 를 붙여
+# 저장소 루트에만 적용한다.
+
+/backend/
+/optimizer/
+/scripts/
+/data/
+/docs/
+/*.bat
