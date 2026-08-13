@@ -193,6 +193,53 @@ export interface UnservedNeed {
   reasonIsProvenCause: boolean;
 }
 
+/** 운송 일정의 stop. 각 시각은 독립된 계획값이며 인과 순서를 만들지 않는다. */
+export interface ScheduleStop {
+  sequence: number;
+  hubCode: string;
+  hubName: string;
+  loadStartTime: string | null;
+  arrivalTime: string | null;
+  departureTime: string | null;
+  availableTime: string | null;
+  ownLoadBoxes: Record<ContainerSize, number>;
+  ownUnloadBoxes: Record<ContainerSize, number>;
+  hasOwnWork: boolean;
+}
+
+export interface ScheduleAllocation {
+  originHub: string;
+  originName: string;
+  destinationHub: string;
+  destinationName: string;
+  size: ContainerSize;
+  boxes: number;
+  teu: number;
+}
+
+export interface ScheduleTrain {
+  trainId: string;
+  route: string | null;
+  formation: string | null;
+  wagons: number;
+  capacityTeu: number;
+  /** 열차 전체 배정. 공동운송 집계값이다. */
+  assignedTeu: number;
+  departureTime: string | null;
+  arrivalTime: string | null;
+  participatingCarrierCount: number;
+  ownBoxes: number;
+  ownTeu: number;
+  ownAllocations: ScheduleAllocation[];
+  recommendationIds: string[];
+  stops: ScheduleStop[];
+}
+
+export interface CarrierSchedule {
+  carrierId: string;
+  trains: ScheduleTrain[];
+}
+
 export interface RecommendationStop {
   sequence: number;
   hubCode: string;

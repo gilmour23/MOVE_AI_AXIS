@@ -86,6 +86,7 @@ function toStaticPath(path: string): string | null {
 
   if (rest[0] === 'overview') return `${base}/overview.json`;
   if (rest[0] === 'transport') return `${base}/transport_comparison.json`;
+  if (rest[0] === 'schedule') return `${base}/schedule.json`;
 
   if (rest[0] === 'inventory') {
     // /inventory?size=&mode=

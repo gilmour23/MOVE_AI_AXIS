@@ -294,6 +294,109 @@ def recommendation_detail(
     }
 
 
+def carrier_schedule(store: ResultStore, carrier_id: str) -> dict:
+    """운송 일정 — 자사 공컨이 어떤 계획열차에 실려 언제 움직이는가.
+
+    실시간 추적이 아니다. 결과에 없는 진행 상태(운송중·완료·지연)를 만들지 않고,
+    현재 시각과 비교해 상태를 유도하지도 않는다. 전부 계획 시각이다.
+
+    자사 allocation 에 존재하는 열차만 담는다. 열차 전체 물량은 공동운송
+    집계값이므로 노출하되, 타 선사의 개별 배정은 절대 담지 않는다.
+    """
+    own_alloc = store.carrier_allocation
+    own_alloc = own_alloc[own_alloc["carrier_id"] == carrier_id]
+    if own_alloc.empty:
+        return {"carrierId": carrier_id, "trains": []}
+
+    recs = store.recommendations(carrier_id)
+    summary = {t["train_id"]: t for _, t in store.train_operation_summary.iterrows()}
+    stops_all = store.stop_work_plan
+
+    trains = []
+    for train_id in sorted(own_alloc["train_id"].unique()):
+        rows = own_alloc[own_alloc["train_id"] == train_id]
+        head = summary.get(train_id)
+        own_on_train = recs[recs["train_id"] == train_id] if not recs.empty else recs
+
+        stops_df = stops_all[stops_all["train_id"] == train_id].sort_values(
+            "stop_sequence"
+        )
+        stops = []
+        for _, s in stops_df.iterrows():
+            work = _own_stop_work(own_on_train, s["hub"])
+            stops.append(
+                {
+                    "sequence": int(s["stop_sequence"]),
+                    "hubCode": s["hub"],
+                    "hubName": s.get("hub_name") or hub_name(s["hub"]),
+                    # 각 시각은 독립된 계획값이다. 인과 순서를 만들지 않는다.
+                    "loadStartTime": _fmt_time(s.get("actual_load_start_time")),
+                    "arrivalTime": _fmt_time(s.get("actual_arrival_time")),
+                    "departureTime": _fmt_time(s.get("actual_departure_time")),
+                    "availableTime": _fmt_time(s.get("actual_available_time")),
+                    "ownLoadBoxes": {"20FT": work["load20"], "40FT": work["load40"]},
+                    "ownUnloadBoxes": {
+                        "20FT": work["unload20"],
+                        "40FT": work["unload40"],
+                    },
+                    "hasOwnWork": any(work.values()),
+                }
+            )
+
+        allocations = [
+            {
+                "originHub": r["origin"],
+                "originName": hub_name(r["origin"]),
+                "destinationHub": r["destination"],
+                "destinationName": hub_name(r["destination"]),
+                "size": r["container_size"],
+                "boxes": int(_num(r["boxes"])),
+                "teu": int(_num(r["teu"])),
+            }
+            for _, r in rows.iterrows()
+        ]
+        allocations.sort(
+            key=lambda a: (
+                hub_sort_key(a["originHub"]),
+                hub_sort_key(a["destinationHub"]),
+                a["size"],
+            )
+        )
+
+        trains.append(
+            {
+                "trainId": train_id,
+                "route": head["route"] if head is not None else None,
+                "formation": head["formation"] if head is not None else None,
+                "wagons": int(_num(head["wagons"])) if head is not None else 0,
+                "capacityTeu": int(_num(head["capacity_teu"])) if head is not None else 0,
+                "assignedTeu": int(_num(head["assigned_teu"])) if head is not None else 0,
+                "departureTime": _fmt_time(
+                    head["actual_origin_departure"] if head is not None else None
+                ),
+                "arrivalTime": _fmt_time(
+                    head["actual_final_arrival"] if head is not None else None
+                ),
+                # 공동운송 집계값만 노출한다. 어느 선사인지는 담지 않는다.
+                "participatingCarrierCount": int(
+                    _num(head["participating_carrier_count"]) if head is not None else 0
+                ),
+                "ownBoxes": int(rows["boxes"].sum()),
+                "ownTeu": int(rows["teu"].sum()),
+                "ownAllocations": allocations,
+                "recommendationIds": sorted(
+                    own_on_train["recommendation_id"].tolist()
+                )
+                if not own_on_train.empty
+                else [],
+                "stops": stops,
+            }
+        )
+
+    trains.sort(key=lambda t: (t["departureTime"] or "", t["trainId"]))
+    return {"carrierId": carrier_id, "trains": trains}
+
+
 def _role(inbound: int, outbound: int) -> str:
     if outbound > 0 and inbound == 0:
         return "출발"
