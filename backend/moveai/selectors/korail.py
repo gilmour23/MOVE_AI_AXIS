@@ -120,17 +120,89 @@ def stop_box_counts(store: ResultStore) -> dict[tuple[str, str], dict]:
     return counts
 
 
-def _stop_timeline(store: ResultStore, train_id: str) -> list[dict]:
+def _handling_sort_key(row: dict) -> tuple:
+    """breakdown 배열의 deterministic 정렬 키.
+
+    같은 canonical 결과에서 렌더링할 때마다 순서가 달라지지 않게 한다.
+    선사 → 출발거점 → 도착거점 → 규격(20FT 먼저).
+    """
+    size = row["size"]
+    return (
+        row["carrierId"],
+        hub_sort_key(row["originHub"]),
+        hub_sort_key(row["destinationHub"]),
+        CONTAINER_SIZES.index(size) if size in CONTAINER_SIZES else len(CONTAINER_SIZES),
+    )
+
+
+def _stop_breakdowns(allocation: list[dict]) -> dict[str, dict[str, list[dict]]]:
+    """hub 별 상·하차 breakdown (선사 × 규격 × OD).
+
+    상차: allocation.origin == stop.hub
+    하차: allocation.destination == stop.hub
+
+    stop 의 loadBoxesTotal/loadTeu 는 이 배열의 합과 일치해야 한다.
+    (export_static.verify_stop_breakdowns 에서 검증)
+    """
+    out: dict[str, dict[str, list[dict]]] = {}
+
+    def bucket(hub: str) -> dict[str, list[dict]]:
+        return out.setdefault(hub, {"load": [], "unload": []})
+
+    for row in allocation:
+        bucket(row["originHub"])["load"].append(dict(row))
+        bucket(row["destinationHub"])["unload"].append(dict(row))
+
+    for entry in out.values():
+        entry["load"].sort(key=_handling_sort_key)
+        entry["unload"].sort(key=_handling_sort_key)
+    return out
+
+
+def _onboard_items(
+    allocation: list[dict], sequence_by_hub: dict[str, int], from_hub: str
+) -> list[dict]:
+    """구간을 실제로 통과하는 물량 (segment onboard manifest).
+
+    segment 의 from-stop sequence 기준으로,
+    `originSequence <= fromSequence < destinationSequence` 인 배정만 실려 있다.
+    합계 TEU 는 SEGMENT_LOAD.loaded_teu 와 일치해야 한다.
+    """
+    from_sequence = sequence_by_hub.get(from_hub)
+    if from_sequence is None:
+        return []
+
+    items = []
+    for row in allocation:
+        origin_sequence = sequence_by_hub.get(row["originHub"])
+        destination_sequence = sequence_by_hub.get(row["destinationHub"])
+        if origin_sequence is None or destination_sequence is None:
+            continue
+        if origin_sequence <= from_sequence < destination_sequence:
+            items.append(dict(row))
+
+    items.sort(key=_handling_sort_key)
+    return items
+
+
+def _stop_timeline(
+    store: ResultStore, train_id: str, allocation: list[dict]
+) -> list[dict]:
     """역별 작업 타임라인 (STOP_WORK_PLAN).
 
     KORAIL 화면이므로 열차 전체 load_teu/unload_teu 를 그대로 쓸 수 있다.
+
+    시각은 stop 역할(origin / intermediate / final)에 따라 의미가 다르다.
+    여기서는 canonical 값을 그대로 싣고, 해석은 화면이 한다.
     """
     df = store.stop_work_plan
     df = df[df["train_id"] == train_id].sort_values("stop_sequence")
     boxes = stop_box_counts(store)
+    breakdowns = _stop_breakdowns(allocation)
 
     stops = []
     for _, s in df.iterrows():
+        handling = breakdowns.get(s["hub"], {"load": [], "unload": []})
         stops.append(
             {
                 "sequence": int(s["stop_sequence"]),
@@ -144,33 +216,48 @@ def _stop_timeline(store: ResultStore, train_id: str) -> list[dict]:
                 "loadTeu": int(_num(s.get("load_teu"))),
                 "unloadTeu": int(_num(s.get("unload_teu"))),
                 **boxes.get((train_id, s["hub"]), dict(EMPTY_BOX_COUNTS)),
+                "loadBreakdown": handling["load"],
+                "unloadBreakdown": handling["unload"],
             }
         )
     return stops
 
 
-def _segments(store: ResultStore, train_id: str) -> list[dict]:
-    """구간별 적재율 (SEGMENT_LOAD).
+def _segments(
+    store: ResultStore, train_id: str, allocation: list[dict], stops: list[dict]
+) -> list[dict]:
+    """구간별 적재율 (SEGMENT_LOAD) + 구간을 통과하는 선사별 onboard manifest.
 
     capacity 는 열차 총량이 아니라 각 구간을 실제 통과하는 물량 기준 모델을 유지한다.
     """
     df = store.segment_load
     df = df[df["train_id"] == train_id].sort_values("segment_sequence")
 
-    return [
-        {
-            "sequence": int(s["segment_sequence"]),
-            "fromHub": s["from_hub"],
-            "fromHubName": hub_name(s["from_hub"]),
-            "toHub": s["to_hub"],
-            "toHubName": hub_name(s["to_hub"]),
-            "loadedTeu": int(_num(s["loaded_teu"])),
-            "capacityTeu": int(_num(s["capacity_teu"])),
-            "loadFactor": float(_num(s["load_factor"])),
-            "physicalDistanceKm": float(_num(s["physical_distance_km"])),
-        }
-        for _, s in df.iterrows()
-    ]
+    # 한 열차에서 같은 hub 가 두 번 서지 않는다는 canonical 전제.
+    # 반복 정차가 생기면 첫 정차 기준이 되므로 그때 stop_sequence 기반으로 바꿔야 한다.
+    sequence_by_hub = {s["hubCode"]: s["sequence"] for s in stops}
+
+    segments = []
+    for _, s in df.iterrows():
+        onboard = _onboard_items(allocation, sequence_by_hub, s["from_hub"])
+        segments.append(
+            {
+                "sequence": int(s["segment_sequence"]),
+                "fromHub": s["from_hub"],
+                "fromHubName": hub_name(s["from_hub"]),
+                "toHub": s["to_hub"],
+                "toHubName": hub_name(s["to_hub"]),
+                "loadedTeu": int(_num(s["loaded_teu"])),
+                "capacityTeu": int(_num(s["capacity_teu"])),
+                "loadFactor": float(_num(s["load_factor"])),
+                "physicalDistanceKm": float(_num(s["physical_distance_km"])),
+                "onboardBoxes": sum(i["boxes"] for i in onboard),
+                "onboardTeu": sum(i["teu"] for i in onboard),
+                "onboardCarrierCount": len({i["carrierId"] for i in onboard}),
+                "onboardBreakdown": onboard,
+            }
+        )
+    return segments
 
 
 def _allocation(store: ResultStore, train_id: str) -> list[dict]:
@@ -192,7 +279,7 @@ def _allocation(store: ResultStore, train_id: str) -> list[dict]:
         }
         for _, a in df.iterrows()
     ]
-    rows.sort(key=lambda x: (x["carrierId"], x["size"]))
+    rows.sort(key=_handling_sort_key)
     return rows
 
 
@@ -228,10 +315,12 @@ def train_detail(store: ResultStore, train_id: str) -> dict | None:
 
     carriers = sorted(by_carrier.values(), key=lambda x: -x["teu"])
 
+    stops = _stop_timeline(store, train_id, allocation)
+
     return {
         **summary[train_id],
-        "stops": _stop_timeline(store, train_id),
-        "segments": _segments(store, train_id),
+        "stops": stops,
+        "segments": _segments(store, train_id, allocation, stops),
         "allocation": allocation,
         "carrierBreakdown": carriers,
     }

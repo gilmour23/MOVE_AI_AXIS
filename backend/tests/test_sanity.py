@@ -265,6 +265,74 @@ def test_stop_box_counts_match_stop_teu():
     assert checked > 0
 
 
+# ----------------------------------------- KORAIL stop breakdown / segment onboard
+
+def test_stop_breakdown_matches_stop_total():
+    """stop 의 선사×규격×OD breakdown 합은 그 stop 의 총량과 같아야 한다.
+
+    breakdown 은 화면이 '누구의 무엇을' 보여주는 근거다. 합이 어긋나면
+    화면이 canonical 결과와 다른 이야기를 하게 된다.
+    """
+    checked = 0
+    for train in kr.trains(store):
+        detail = kr.train_detail(store, train["trainId"])
+        for stop in detail["stops"]:
+            assert sum(i["boxes"] for i in stop["loadBreakdown"]) == stop["loadBoxesTotal"]
+            assert sum(i["teu"] for i in stop["loadBreakdown"]) == stop["loadTeu"]
+            assert (
+                sum(i["boxes"] for i in stop["unloadBreakdown"]) == stop["unloadBoxesTotal"]
+            )
+            assert sum(i["teu"] for i in stop["unloadBreakdown"]) == stop["unloadTeu"]
+            checked += 1
+    assert checked > 0
+
+
+def test_segment_onboard_matches_loaded_teu():
+    """구간 onboard 합은 SEGMENT_LOAD 의 loaded_teu 와 같아야 한다.
+
+    onboard 는 stop sequence 로 derive 하므로, 어긋나면 통과 판정
+    (origin <= from < destination) 이 틀어진 것이다.
+    """
+    checked = 0
+    for train in kr.trains(store):
+        detail = kr.train_detail(store, train["trainId"])
+        for segment in detail["segments"]:
+            assert segment["onboardTeu"] == segment["loadedTeu"], segment
+            assert segment["onboardBoxes"] == sum(
+                i["boxes"] for i in segment["onboardBreakdown"]
+            )
+            assert segment["onboardCarrierCount"] == len(
+                {i["carrierId"] for i in segment["onboardBreakdown"]}
+            )
+            checked += 1
+    assert checked > 0
+
+
+def test_breakdown_ordering_is_deterministic():
+    """같은 데이터에서 두 번 만들면 순서까지 같아야 한다."""
+    for train in kr.trains(store):
+        first = kr.train_detail(store, train["trainId"])
+        second = kr.train_detail(store, train["trainId"])
+        assert first["stops"] == second["stops"]
+        assert first["segments"] == second["segments"]
+
+
+def test_no_handling_stop_has_empty_breakdown():
+    """상하차가 없는 stop 은 breakdown 도 비어 있어야 한다.
+
+    화면이 이 stop 에 작업창을 그리지 않는 근거가 된다 (CAND0156 BUGANG).
+    """
+    seen_no_handling = False
+    for train in kr.trains(store):
+        detail = kr.train_detail(store, train["trainId"])
+        for stop in detail["stops"]:
+            if stop["loadTeu"] == 0 and stop["unloadTeu"] == 0:
+                assert stop["loadBreakdown"] == []
+                assert stop["unloadBreakdown"] == []
+                seen_no_handling = True
+    assert seen_no_handling, "현재 결과에 무작업 stop 이 없다면 이 전제를 다시 확인해야 한다"
+
+
 def test_hub_totals_match_operation_sum():
     """거점 total 은 해당 거점 작업 row 합계와 같아야 한다."""
     ops = kr.station_operations(store)

@@ -275,6 +275,38 @@ export interface KorailTrain {
   workStops: string[];
 }
 
+/**
+ * stop 에서 상차/하차하는 물량 한 줄 (선사 × 규격 × OD).
+ * 상차는 origin == stop.hub, 하차는 destination == stop.hub 인 배정이다.
+ */
+export interface KorailHandlingItem {
+  carrierId: string;
+  carrierLabel: string;
+  originHub: string;
+  originName: string;
+  destinationHub: string;
+  destinationName: string;
+  size: ContainerSize;
+  boxes: number;
+  teu: number;
+}
+
+/**
+ * 구간을 통과 중인 물량 한 줄. 구조는 KorailHandlingItem 과 같지만 의미가 다르다.
+ * handling 은 그 거점에서 '작업하는' 물량, onboard 는 그 구간에 '실려 있는' 물량이다.
+ */
+export interface KorailOnboardItem {
+  carrierId: string;
+  carrierLabel: string;
+  originHub: string;
+  originName: string;
+  destinationHub: string;
+  destinationName: string;
+  size: ContainerSize;
+  boxes: number;
+  teu: number;
+}
+
 export interface KorailStop {
   sequence: number;
   hubCode: string;
@@ -293,6 +325,9 @@ export interface KorailStop {
   unloadBoxes20ft: number;
   unloadBoxes40ft: number;
   unloadBoxesTotal: number;
+  /** 합계는 loadBoxesTotal / loadTeu 와 일치한다 (export 시 검증). */
+  loadBreakdown: KorailHandlingItem[];
+  unloadBreakdown: KorailHandlingItem[];
 }
 
 export interface KorailSegment {
@@ -305,6 +340,11 @@ export interface KorailSegment {
   capacityTeu: number;
   loadFactor: number;
   physicalDistanceKm: number;
+  onboardBoxes: number;
+  /** loadedTeu 와 일치한다 (export 시 검증). */
+  onboardTeu: number;
+  onboardCarrierCount: number;
+  onboardBreakdown: KorailOnboardItem[];
 }
 
 export interface KorailAllocationRow {

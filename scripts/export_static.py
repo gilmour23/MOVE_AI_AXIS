@@ -245,6 +245,53 @@ def verify_stop_box_counts() -> None:
     )
 
 
+def verify_korail_breakdowns() -> None:
+    """stop 상하차 breakdown 과 segment onboard manifest 의 정합성 검증.
+
+    breakdown 은 화면이 '누구의 무엇을' 보여주는 근거이므로, 합이 stop/segment
+    총량과 어긋나면 화면이 canonical 결과와 다른 이야기를 하게 된다.
+    """
+    stop_count = 0
+    segment_count = 0
+
+    for train in kr.trains(store):
+        train_id = train["trainId"]
+        detail = kr.train_detail(store, train_id)
+
+        for stop in detail["stops"]:
+            for kind, boxes_key, teu_key in (
+                ("loadBreakdown", "loadBoxesTotal", "loadTeu"),
+                ("unloadBreakdown", "unloadBoxesTotal", "unloadTeu"),
+            ):
+                boxes = sum(i["boxes"] for i in stop[kind])
+                teu = sum(i["teu"] for i in stop[kind])
+                if boxes != stop[boxes_key] or teu != stop[teu_key]:
+                    raise SystemExit(
+                        f"{train_id} @ {stop['hubCode']} {kind} 합 불일치: "
+                        f"{boxes}개/{teu}TEU vs {stop[boxes_key]}개/{stop[teu_key]}TEU"
+                    )
+            stop_count += 1
+
+        for segment in detail["segments"]:
+            if segment["onboardTeu"] != segment["loadedTeu"]:
+                raise SystemExit(
+                    f"{train_id} {segment['fromHub']}>{segment['toHub']} "
+                    f"onboard TEU 불일치: {segment['onboardTeu']} vs {segment['loadedTeu']}"
+                )
+            if segment["onboardBoxes"] != sum(
+                i["boxes"] for i in segment["onboardBreakdown"]
+            ):
+                raise SystemExit(
+                    f"{train_id} {segment['fromHub']}>{segment['toHub']} onboard 박스 합 불일치"
+                )
+            segment_count += 1
+
+    print(
+        f"  [breakdown] {stop_count}개 stop 상하차 합 = stop total · "
+        f"{segment_count}개 구간 onboard TEU = loaded TEU  OK"
+    )
+
+
 def verify_transport_allocations() -> None:
     """운송물량이 열차 요약과 맞고, 시각이 실제 stop 에서 온 값인지 검증."""
     payload = kr.transport_allocations(store)
@@ -327,6 +374,7 @@ def main() -> None:
 
     verify_consistency()
     verify_stop_box_counts()
+    verify_korail_breakdowns()
     verify_transport_allocations()
     print("\n  [Transport]")
     verify_transport_join()
