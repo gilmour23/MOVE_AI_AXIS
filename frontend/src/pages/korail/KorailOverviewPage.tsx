@@ -54,7 +54,8 @@ export function KorailOverviewPage() {
 
   const error = trains.error ?? operations.error;
   const loading = trains.loading || operations.loading;
-  const openTrain = (trainId: string) => navigate(`/korail/trains?train=${trainId}`);
+  const openTrain = (trainId: string) =>
+    navigate(`/korail/trains?week=${weekId}&train=${trainId}`);
 
   return (
     <PageContainer title="공컨 전용열차 종합계획">

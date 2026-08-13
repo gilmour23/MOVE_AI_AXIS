@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
   Bar,
   BarChart,
@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { ArrowRight, Leaf, Train, Truck, X } from 'lucide-react';
+import { Leaf, Train, Truck, X } from 'lucide-react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Card } from '@/components/common/Card';
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -308,9 +308,8 @@ function OverviewCard({
         />
         <div className={styles.field}>
           <span className={styles.fieldLabel}>배정 열차</span>
-          <Link className={styles.trainLink} to={`/korail/trains?train=${row.trainId}`}>
-            {row.trainId} <ArrowRight size={13} />
-          </Link>
+          {/* KORAIL 운영 화면으로 링크하지 않는다 (역할 격리). */}
+          <span className={styles.trainId}>{row.trainId}</span>
           <span className={styles.fieldSub}>
             공동 운송 {row.participatingCarrierCount}개 선사
           </span>

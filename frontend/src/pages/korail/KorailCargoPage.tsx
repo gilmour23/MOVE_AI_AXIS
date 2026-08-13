@@ -184,7 +184,7 @@ export function KorailCargoPage() {
                     <tr
                       key={`${row.trainId}-${row.carrierId}-${row.originHub}-${row.destinationHub}-${row.size}-${index}`}
                       className={styles.rowClickable}
-                      onClick={() => navigate(`/korail/trains?train=${row.trainId}`)}
+                      onClick={() => navigate(`/korail/trains?week=${weekId}&train=${row.trainId}`)}
                     >
                       <td>{row.carrierLabel}</td>
                       <td>

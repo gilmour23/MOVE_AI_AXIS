@@ -1,5 +1,3 @@
-import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ErrorState, LoadingSkeleton } from '@/components/common/States';
 import { fetchRecommendationDetail } from '@/api/carrier';
@@ -88,9 +86,9 @@ export function RecommendationRouteDetail({
         />
         <div className={styles.metaItem}>
           <span className={styles.metaLabel}>열차 ID</span>
-          <Link className={styles.trainLink} to={`/korail/trains?train=${data.trainId}`}>
-            {data.trainId} <ArrowRight size={12} />
-          </Link>
+          {/* KORAIL 운영 화면으로 링크하지 않는다.
+              선사 사용자가 전 선사 배정을 보게 되는 역할 격리 누수다. */}
+          <span className={styles.trainId}>{data.trainId}</span>
         </div>
         <MetaItem
           label="공동 운송"
