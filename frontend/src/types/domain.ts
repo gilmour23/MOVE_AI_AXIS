@@ -101,6 +101,32 @@ export interface WeeklyInventorySummaryData {
   railOutboundBoxes: number;
 }
 
+/** 재배치 전/후 비교의 하루치.
+ *  재고(잔량)와 이벤트(유량)는 단위가 달라 같은 축에 겹쳐 그리지 않는다. */
+export interface ComparisonDay {
+  date: string;
+  weekday: string;
+  baselineInventory: number;
+  postRailInventory: number;
+  baselineUnmet: number;
+  postRailUnmet: number;
+  demand: number;
+  externalSupply: number;
+  railInbound: number;
+  railOutbound: number;
+}
+
+export interface HubInventoryComparison {
+  hubCode: string;
+  hubName: string;
+  size: ContainerSize;
+  days: ComparisonDay[];
+  baseline: WeeklyInventorySummaryData;
+  postRail: WeeklyInventorySummaryData;
+  /** 재배치로 줄어든 미충족 수요. 최저재고 차이로 계산하지 않는다. */
+  shortageReductionBoxes: number;
+}
+
 export interface CarrierRecommendation {
   recommendationId: string;
   size: ContainerSize;

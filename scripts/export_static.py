@@ -136,6 +136,14 @@ def export_carrier(store, carrier_id: str) -> None:
                     inv.hub_summary(store, carrier_id, hub["code"], size, mode),
                 )
 
+    # 재배치 전/후 비교 — mode 와 무관하므로 규격 x 거점으로만 만든다.
+    for size in CONTAINER_SIZES:
+        for hub in HUBS:
+            write(
+                f"{base}/inventory/{hub['code']}_{size}_comparison.json",
+                inv.hub_comparison(store, carrier_id, hub["code"], size),
+            )
+
     for rec in opt.recommendations(store, carrier_id):
         rec_id = rec["recommendationId"]
         detail = opt.recommendation_detail(store, carrier_id, rec_id)

@@ -2,6 +2,7 @@ import { apiGet } from './client';
 import type {
   ContainerSize,
   GlobalMeta,
+  HubInventoryComparison,
   InventoryMode,
   KorailInsights,
   KorailNeedRow,
@@ -81,6 +82,20 @@ export function fetchInventorySummary(
       weekId,
       `mode=${mode}`,
     ),
+    signal,
+  );
+}
+
+/** 재배치 전/후 비교. 두 mode 를 각각 받지 않고 한 번에 받아 같은 축에 그린다. */
+export function fetchInventoryComparison(
+  carrierId: string,
+  weekId: string,
+  hubCode: string,
+  size: ContainerSize,
+  signal?: AbortSignal,
+): Promise<HubInventoryComparison> {
+  return apiGet<HubInventoryComparison>(
+    withWeek(`/api/carrier/${carrierId}/inventory/${hubCode}/${size}/comparison`, weekId),
     signal,
   );
 }
