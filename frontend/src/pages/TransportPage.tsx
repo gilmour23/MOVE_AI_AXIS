@@ -18,7 +18,7 @@ import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/common/Sta
 import { SizeTag } from '@/components/optimization/SizeTag';
 import { fetchTransportComparison } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
-import { useCarrierId } from '@/app/MetaContext';
+import { useCarrierId, useMeta } from '@/app/MetaContext';
 import { formatDateShort, formatNumber, formatTime } from '@/lib/format';
 import type {
   TransportComparison,
@@ -46,6 +46,7 @@ const co2 = (v: number | null) =>
  *  transport_comparison.json(= canonical MILP + 트럭 비교 입력)에서 읽는다. */
 export function TransportPage() {
   const carrierId = useCarrierId();
+  const { weekId } = useMeta();
   const [params, setParams] = useSearchParams();
   const [priority, setPriority] = useState<TransportPriority>('cost');
   const [drawerId, setDrawerId] = useState<string | null>(null);
@@ -54,7 +55,7 @@ export function TransportPage() {
 
   const { data, loading, error, reload } = useAsync(
     (signal) =>
-      carrierId ? fetchTransportComparison(carrierId, signal) : Promise.resolve(null),
+      carrierId ? fetchTransportComparison(carrierId, weekId, signal) : Promise.resolve(null),
     [carrierId],
   );
 

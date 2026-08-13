@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Container } from 'lucide-react';
 import { TopNav } from './TopNav';
 import { RoleSwitch } from './RoleSwitch';
+import { WeekSelector } from './WeekSelector';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { useMeta } from '@/app/MetaContext';
 import { ROLES, roleFromPath } from '@/app/roles';
@@ -12,8 +13,9 @@ import styles from './AppShell.module.css';
  *
  *  데모 데이터라는 사실은 숨기지 않되, 사용자에게는 내부 필드명 대신
  *  읽을 수 있는 표현만 보여준다. 실제 데이터로 교체되면 자동으로 사라진다. */
-function buildDataSourceBadge(meta: ReturnType<typeof useMeta>['meta']) {
-  if (!meta) return null;
+function buildDataSourceBadge(weekMeta: ReturnType<typeof useMeta>['weekMeta']) {
+  if (!weekMeta) return null;
+  const meta = weekMeta;
   const parts: string[] = [];
   const details: string[] = [];
   if (meta.isSyntheticCarrierData) {
@@ -30,7 +32,7 @@ function buildDataSourceBadge(meta: ReturnType<typeof useMeta>['meta']) {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { meta, carrierId, setCarrierId } = useMeta();
+  const { weekMeta, carrierId } = useMeta();
   const location = useLocation();
   const roleId = roleFromPath(location.pathname);
   const role = roleId ? ROLES[roleId] : null;
@@ -40,7 +42,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isKorail = roleId === 'korail';
   // KORAIL header 는 navigation 과 역할 전환에 폭을 우선 배분한다.
   // 계획주기·데이터 출처 배지는 Carrier Portal 에서만 유지한다.
-  const dataSourceBadge = isKorail ? null : buildDataSourceBadge(meta);
+  const dataSourceBadge = isKorail ? null : buildDataSourceBadge(weekMeta);
 
   return (
     <div className={styles.shell}>
@@ -73,23 +75,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               )}
             </div>
 
-            {roleId && <RoleSwitch current={roleId} />}
+            {role && <WeekSelector />}
 
-            {meta?.devMode && meta.availableCarriers.length > 1 && !isKorail && (
-              <select
-                className={styles.devSelect}
-                value={carrierId}
-                onChange={(event) => setCarrierId(event.target.value)}
-                aria-label="개발용 선사 선택"
-                title="dev mode 전용 — 실제 선사 화면에는 노출되지 않습니다"
-              >
-                {meta.availableCarriers.map((id) => (
-                  <option key={id} value={id}>
-                    {id}
-                  </option>
-                ))}
-              </select>
-            )}
+            {roleId && <RoleSwitch current={roleId} />}
 
             <div className={styles.carrier}>
               <span className={styles.carrierAvatar}>{isKorail ? 'KR' : initial}</span>

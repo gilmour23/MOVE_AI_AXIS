@@ -4,6 +4,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { ErrorState, LoadingSkeleton } from '@/components/common/States';
 import { fetchRecommendationDetail } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
+import { useMeta } from '@/app/MetaContext';
 import {
   formatDateShort,
   formatKrw,
@@ -26,9 +27,10 @@ export function RecommendationRouteDetail({
   carrierId,
   recommendation,
 }: RecommendationRouteDetailProps) {
+  const { weekId } = useMeta();
   const { data, loading, error, reload } = useAsync(
     (signal) =>
-      fetchRecommendationDetail(carrierId, recommendation.recommendationId, signal),
+      fetchRecommendationDetail(carrierId, weekId, recommendation.recommendationId, signal),
     [carrierId, recommendation.recommendationId],
   );
 

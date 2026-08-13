@@ -156,24 +156,47 @@ class ResultStore:
         """전 선사 추천. KORAIL 관점 집계에만 사용한다."""
         return self._result_csv("CARRIER_RECOMMENDATIONS.csv")
 
-    @property
-    def truck_comparison(self) -> pd.DataFrame:
-        """MILP 산출물이 아닌 트럭 비교 입력 (data/ 폴더).
+    TRUCK_FILE = "TRUCK_COMPARISON_BY_RECOMMENDATION.csv"
 
-        철도 측 값과 충돌하면 MILP 결과가 우선한다.
+    def _truck_source(self) -> tuple[pd.DataFrame, str]:
+        """트럭 비교 입력과 그 사용 가능 여부.
+
+        MILP 산출물이 아니라 별도 계보의 입력이므로 **반드시 주차로 스코프**한다.
+
+        REC ID 는 주차마다 다시 매겨진다. 예전 파일은 `recommendation_id` 만
+        갖고 있어서, 그대로 join 하면 W01 의 REC0001(부강→약목 2개)에
+        전혀 다른 건(부강→신광양 8개)의 트럭 비용이 조용히 붙는다.
+        화면에는 그럴듯하게 보이므로 눈으로 잡을 수 없다.
+
+        그래서 `week_id` 열이 없는 파일은 "어느 주차 것인지 알 수 없음"으로
+        보고 아예 쓰지 않는다. 주차가 명시된 자료가 들어오면 그때 자동으로 붙는다.
         """
 
-        def load() -> pd.DataFrame:
-            path = (
-                Path(__file__).resolve().parents[2]
-                / "data"
-                / "TRUCK_COMPARISON_BY_RECOMMENDATION.csv"
-            )
+        def load() -> tuple[pd.DataFrame, str]:
+            path = Path(__file__).resolve().parents[2] / "data" / self.TRUCK_FILE
             if not path.exists():
-                return pd.DataFrame()
-            return _read_csv(path)
+                return pd.DataFrame(), "MISSING_FILE"
+
+            df = _read_csv(path)
+            if df.empty:
+                return df, "MISSING_FILE"
+            if "week_id" not in df.columns:
+                return pd.DataFrame(), "NOT_SCOPED_TO_WEEK"
+
+            scoped = df[df["week_id"] == self.week_id]
+            if scoped.empty:
+                return scoped, "NO_ROWS_FOR_WEEK"
+            return scoped, "OK"
 
         return self._cached("truck_comparison", load)
+
+    @property
+    def truck_comparison(self) -> pd.DataFrame:
+        return self._truck_source()[0]
+
+    @property
+    def truck_comparison_status(self) -> str:
+        return self._truck_source()[1]
 
     @property
     def initial_inventory(self) -> pd.DataFrame:

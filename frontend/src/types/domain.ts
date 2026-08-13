@@ -10,23 +10,51 @@ export interface HubMeta {
   shortName: string;
 }
 
-export interface Meta {
+/** 주차 목록의 한 항목.
+ *
+ *  `weekId` 가 canonical 식별자(폴더명)이고 `shortId`/`label` 은 표시용이다.
+ *  W01 같은 짧은 키를 내부 식별자로 쓰지 않는다 — 같은 CAND ID 가
+ *  두 주차에 모두 있어서 주차를 잃으면 조용히 다른 열차를 가리킨다. */
+export interface WeekSummary {
+  weekId: string;
+  shortId: string;
+  start: string;
+  end: string;
+  label: string;
+  sourceFolder: string;
+  selectedTrainCount: number;
+  needTeu: number;
+  servedTeu: number;
+  unservedTeu: number;
+  coverage: number;
+}
+
+/** 주차와 무관한 전역 메타. week selector 가 이것만 보고 그린다. */
+export interface GlobalMeta {
+  weeks: WeekSummary[];
+  defaultWeekId: string | null;
+  hubs: HubMeta[];
+  currentCarrierId: string;
+  devMode: boolean;
+  availableCarriers: string[];
+}
+
+/** 선택 주차의 horizon 과 provenance. */
+export interface WeekMeta extends WeekSummary {
   scenario: string;
   horizonStart: string;
   horizonEnd: string;
   horizonDates: string[];
   carrierDataSource: string;
   candidateTimetableSource: string;
+  /** 수요는 실측이어도 열차 시각표 후보는 합성일 수 있다. 둘을 구분해서 표기한다. */
   isSyntheticCarrierData: boolean;
   isPrototypeTimetable: boolean;
   allStagesProvenOptimal: boolean;
   carrierKorailViewConsistent: boolean;
-  selectedTrainCount: number;
+  operationalConstraintsActive: boolean;
+  returnWagonMovementIncluded: boolean;
   recommendationCount: number;
-  hubs: HubMeta[];
-  currentCarrierId: string;
-  devMode: boolean;
-  availableCarriers: string[];
 }
 
 export interface DayAxisEntry {

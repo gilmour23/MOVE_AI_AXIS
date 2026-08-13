@@ -5,6 +5,7 @@ import { Card } from '@/components/common/Card';
 import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/common/States';
 import { fetchKorailCargo } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
+import { useMeta } from '@/app/MetaContext';
 import { formatDateTimeCompact, formatNumber, parseWallClock } from '@/lib/format';
 import type { KorailTransportAllocation } from '@/types/domain';
 import styles from './Korail.module.css';
@@ -41,8 +42,12 @@ function departureDate(row: KorailTransportAllocation): string {
  *  어떤 열차가 담당하는지를 배정 결과 기준으로 보여준다. */
 export function KorailCargoPage() {
   const navigate = useNavigate();
+  const { weekId } = useMeta();
   const [filters, setFilters] = useState<Filters>(EMPTY);
-  const { data, loading, error, reload } = useAsync((signal) => fetchKorailCargo(signal), []);
+  const { data, loading, error, reload } = useAsync(
+    (signal) => fetchKorailCargo(weekId, signal),
+    [weekId],
+  );
 
   const setFilter = (key: keyof Filters, value: string) =>
     setFilters((prev) => ({ ...prev, [key]: value }));

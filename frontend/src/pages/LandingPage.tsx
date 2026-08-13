@@ -11,8 +11,11 @@ const ICONS = { carrier: Ship, korail: TowerControl } as const;
 
 /** 역할 선택 진입 화면. B2B 플랫폼 entry 수준으로 간결하게 유지한다. */
 export function LandingPage() {
-  const { meta } = useMeta();
-  const { data } = useAsync((signal) => fetchKorailOverview(signal), []);
+  const { weekMeta, weekId } = useMeta();
+  const { data } = useAsync(
+    (signal) => (weekId ? fetchKorailOverview(weekId, signal) : Promise.resolve(null)),
+    [weekId],
+  );
 
   return (
     <div className={styles.wrap}>
@@ -57,9 +60,9 @@ export function LandingPage() {
 
       <p className={styles.note}>
         화면에 표시되는 모든 최적화 수치는 AXIS MOVE-AI MILP v7.1 결과
-        ({meta?.scenario ?? 'AXIS_INTEGRATED'})에서 계산됩니다.
-        {meta?.isSyntheticCarrierData && ' 현재 데이터는 합성 데모 데이터입니다.'}
-        {meta?.isPrototypeTimetable && ' 운행시각은 프로토타입 운행후보 기준입니다.'}
+        ({weekMeta?.label ?? '계획주차'})에서 계산됩니다.
+        {weekMeta?.isSyntheticCarrierData && ' 현재 데이터는 합성 데모 데이터입니다.'}
+        {weekMeta?.isPrototypeTimetable && ' 운행시각은 프로토타입 운행후보 기준입니다.'}
       </p>
     </div>
   );

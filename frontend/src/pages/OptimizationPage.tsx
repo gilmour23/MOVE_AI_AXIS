@@ -24,7 +24,7 @@ import styles from './OptimizationPage.module.css';
 
 /** PDF 3~4페이지는 하나의 긴 scroll 페이지다 (핸드오프 §17). */
 export function OptimizationPage() {
-  const { meta, carrierId } = useMeta();
+  const { weekMeta, carrierId, weekId } = useMeta();
   const [params, setParams] = useSearchParams();
   const location = useLocation();
 
@@ -37,7 +37,7 @@ export function OptimizationPage() {
 
   const { data, loading, error, reload } = useAsync(
     (signal) =>
-      carrierId ? fetchOptimization(carrierId, signal) : Promise.resolve(null),
+      carrierId ? fetchOptimization(carrierId, weekId, signal) : Promise.resolve(null),
     [carrierId],
   );
 
@@ -84,7 +84,7 @@ export function OptimizationPage() {
       title="공컨 최적화"
       description="MOVE-AI MILP가 계산한 자사 철도 기반 공컨 재배치 제안과 그 영향입니다."
       action={
-        meta?.isPrototypeTimetable ? (
+        weekMeta?.isPrototypeTimetable ? (
           <StatusBadge
             tone="neutral"
             small
@@ -95,7 +95,7 @@ export function OptimizationPage() {
         ) : undefined
       }
     >
-      {meta && !meta.allStagesProvenOptimal && (
+      {weekMeta && !weekMeta.allStagesProvenOptimal && (
         <InlineNotice title="최적화 결과가 최적해로 증명되지 않았습니다." danger>
           SUMMARY.json 의 all_stages_proven_optimal 값이 true 가 아닙니다.
         </InlineNotice>

@@ -22,18 +22,18 @@ import styles from './OverviewPage.module.css';
 const SIZES: ContainerSize[] = ['20FT', '40FT'];
 
 export function OverviewPage() {
-  const { meta, carrierId } = useMeta();
+  const { weekMeta, carrierId, weekId } = useMeta();
   const navigate = useNavigate();
   const [selectedHub, setSelectedHub] = useState<string | null>(null);
 
   const { data, loading, error, reload } = useAsync(
-    (signal) => (carrierId ? fetchOverview(carrierId, signal) : Promise.resolve(null)),
+    (signal) => (carrierId ? fetchOverview(carrierId, weekId, signal) : Promise.resolve(null)),
     [carrierId],
   );
 
   const transport = useAsync(
     (signal) =>
-      carrierId ? fetchTransportComparison(carrierId, signal) : Promise.resolve(null),
+      carrierId ? fetchTransportComparison(carrierId, weekId, signal) : Promise.resolve(null),
     [carrierId],
   );
 
@@ -42,7 +42,7 @@ export function OverviewPage() {
       title="Overview"
       description="이번 주 자사 공컨 재고 위험과 MOVE-AI 재배치 권고를 한눈에 확인합니다."
     >
-      {meta && !meta.allStagesProvenOptimal && (
+      {weekMeta && !weekMeta.allStagesProvenOptimal && (
         <InlineNotice title="최적화 결과가 최적해로 증명되지 않았습니다." danger>
           SUMMARY.json 의 all_stages_proven_optimal 값이 true 가 아닙니다. 아래 수치는
           참고용으로만 사용해주세요.

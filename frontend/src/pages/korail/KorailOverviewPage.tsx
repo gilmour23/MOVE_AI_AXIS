@@ -32,10 +32,10 @@ function firstPlanTime(hub: KorailStationHub): string | null {
  *  이번 계획에서 어떤 열차가 언제 어디를 운행하고,
  *  각 거점에 어떤 열차 작업이 예정되어 있는지만 보여준다. */
 export function KorailOverviewPage() {
-  const { meta } = useMeta();
+  const { weekMeta, weekId } = useMeta();
   const navigate = useNavigate();
-  const trains = useAsync((signal) => fetchKorailTrains(signal), []);
-  const operations = useAsync((signal) => fetchKorailOperations(signal), []);
+  const trains = useAsync((signal) => fetchKorailTrains(weekId, signal), []);
+  const operations = useAsync((signal) => fetchKorailOperations(weekId, signal), []);
 
   const summary = useMemo(() => {
     const rows = trains.data?.trains ?? [];
@@ -82,12 +82,12 @@ export function KorailOverviewPage() {
         </p>
       )}
 
-      {trains.data && meta?.horizonStart && meta?.horizonEnd && (
+      {trains.data && weekMeta?.horizonStart && weekMeta?.horizonEnd && (
         <Card title="주간 운행 스케줄">
           <WeeklyTimeline
             trains={trains.data.trains}
-            horizonStart={meta.horizonStart}
-            horizonEnd={meta.horizonEnd}
+            horizonStart={weekMeta.horizonStart}
+            horizonEnd={weekMeta.horizonEnd}
             showCargo
             onSelect={openTrain}
           />

@@ -19,9 +19,12 @@ import styles from './Korail.module.css';
 export function KorailTrainsPage() {
   const [params, setParams] = useSearchParams();
   const trainId = params.get('train');
-  const { meta } = useMeta();
+  const { weekMeta, weekId } = useMeta();
 
-  const { data, loading, error, reload } = useAsync((signal) => fetchKorailTrains(signal), []);
+  const { data, loading, error, reload } = useAsync(
+    (signal) => fetchKorailTrains(weekId, signal),
+    [weekId],
+  );
 
   const setTrainId = useCallback(
     (next: string | null) => {
@@ -48,12 +51,12 @@ export function KorailTrainsPage() {
         </Card>
       )}
 
-      {data && data.trains.length > 0 && meta?.horizonStart && meta?.horizonEnd && (
+      {data && data.trains.length > 0 && weekMeta?.horizonStart && weekMeta?.horizonEnd && (
         <Card title="주간 운행 시간표">
           <WeeklyTimeline
             trains={data.trains}
-            horizonStart={meta.horizonStart}
-            horizonEnd={meta.horizonEnd}
+            horizonStart={weekMeta.horizonStart}
+            horizonEnd={weekMeta.horizonEnd}
             onSelect={setTrainId}
           />
         </Card>

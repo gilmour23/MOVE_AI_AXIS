@@ -41,33 +41,45 @@ function toStaticPath(path: string): string | null {
   const params = new URLSearchParams(rawQuery ?? '');
   const segments = rawPath.replace(/^\/api\//, '').split('/');
 
+  // 주차 무관 전역 메타 (week 목록·hub·현재 선사)
   if (segments[0] === 'meta') return '/data/meta.json';
+
+  // 주차별 메타 — /api/weeks/{weekId}/meta
+  if (segments[0] === 'weeks' && segments[1] && segments[2] === 'meta') {
+    return `/data/shared/weeks/${segments[1]}/meta.json`;
+  }
+
+  // week 은 모든 결과 조회의 필수 스코프다.
+  // 같은 CAND0158 이 두 주차에 모두 있으므로, week 없는 경로를 허용하면
+  // 조용히 다른 주차의 열차를 보여주게 된다. 그래서 없으면 매핑하지 않는다.
+  const week = params.get('week');
 
   // KORAIL Control Tower
   if (segments[0] === 'korail') {
+    if (!week) return null;
+    const base = `/data/korail/weeks/${week}`;
     const view = segments[1];
     if (view === 'trains') {
       // /korail/trains 또는 /korail/trains/{trainId}
       return segments[2]
-        ? `/data/korail/train_details/${segments[2]}.json`
-        : '/data/korail/trains.json';
+        ? `${base}/train_details/${segments[2]}.json`
+        : `${base}/trains.json`;
     }
     const fileByView: Record<string, string> = {
       cargo: 'transport_allocations.json',
       operations: 'station_operations.json',
-      // legacy — 현재 KORAIL 4페이지에서는 사용하지 않는다.
       overview: 'overview.json',
       needs: 'service_needs.json',
       inventory: 'inventory.json',
       insights: 'insights.json',
     };
     const file = view ? fileByView[view] : undefined;
-    return file ? `/data/korail/${file}` : null;
+    return file ? `${base}/${file}` : null;
   }
 
-  if (segments[0] !== 'carrier' || !segments[1]) return null;
+  if (segments[0] !== 'carrier' || !segments[1] || !week) return null;
 
-  const base = `/data/carrier/${segments[1]}`;
+  const base = `/data/carrier/${segments[1]}/weeks/${week}`;
   const rest = segments.slice(2);
   const mode = params.get('mode') ?? 'baseline';
   const size = params.get('size') ?? '20FT';

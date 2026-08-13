@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { ErrorState, LoadingSkeleton } from '@/components/common/States';
 import { fetchKorailTrainDetail } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
+import { useMeta } from '@/app/MetaContext';
 import { formatDateTime, formatDateTimeCompact } from '@/lib/format';
 import { hubShortName } from '@/config/hubMeta';
 import type { KorailStop } from '@/types/domain';
@@ -19,9 +20,10 @@ export function TrainDetailDrawer({
   trainId: string;
   onClose: () => void;
 }) {
+  const { weekId } = useMeta();
   const { data, loading, error, reload } = useAsync(
-    (signal) => fetchKorailTrainDetail(trainId, signal),
-    [trainId],
+    (signal) => fetchKorailTrainDetail(weekId, trainId, signal),
+    [weekId, trainId],
   );
 
   const od = data

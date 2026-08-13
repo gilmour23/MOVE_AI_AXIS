@@ -14,6 +14,7 @@ import { WeeklyInventorySummary } from './WeeklyInventorySummary';
 import { SizeSelector } from './SizeSelector';
 import { fetchInventoryMatrix, fetchInventorySummary } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
+import { useMeta } from '@/app/MetaContext';
 import { sizeTabLabel } from '@/lib/format';
 import type { ContainerSize, InventoryMode } from '@/types/domain';
 import styles from './InventorySection.module.css';
@@ -42,8 +43,9 @@ export function InventorySection({
   matrixSubtitle,
   showOptimizationLink = false,
 }: InventorySectionProps) {
+  const { weekId } = useMeta();
   const matrix = useAsync(
-    (signal) => fetchInventoryMatrix(carrierId, size, mode, signal),
+    (signal) => fetchInventoryMatrix(carrierId, weekId, size, mode, signal),
     [carrierId, size, mode],
   );
 
@@ -58,7 +60,7 @@ export function InventorySection({
   const summary = useAsync(
     (signal) =>
       selectedHub
-        ? fetchInventorySummary(carrierId, selectedHub, size, mode, signal)
+        ? fetchInventorySummary(carrierId, weekId, selectedHub, size, mode, signal)
         : Promise.resolve(null),
     [carrierId, selectedHub, size, mode],
   );

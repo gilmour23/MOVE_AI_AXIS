@@ -1,0 +1,46 @@
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: var(--text-small);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.select {
+  appearance: none;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-small);
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 6px 26px 6px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  /* 화살표를 직접 그린다 — 브라우저 기본 화살표는 높이 정렬이 제각각이다. */
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position: calc(100% - 14px) center, calc(100% - 9px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.select:hover {
+  border-color: var(--brand);
+}
+
+.select:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+
+.placeholder {
+  font-size: var(--text-small);
+  color: var(--text-faint);
+  padding: 6px 10px;
+}

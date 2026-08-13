@@ -5,6 +5,7 @@ import { Card } from '@/components/common/Card';
 import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/common/States';
 import { fetchKorailOperations } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
+import { useMeta } from '@/app/MetaContext';
 import { formatDateTimeCompact } from '@/lib/format';
 import type { KorailStationHub, KorailStationOperation } from '@/types/domain';
 import styles from './Korail.module.css';
@@ -25,13 +26,14 @@ function trainCount(hub: KorailStationHub): number {
  *
  *  ?hub=BUSAN 으로 진입하면 해당 거점이 선택된 상태로 열린다. */
 export function KorailOperationsPage() {
+  const { weekId } = useMeta();
   const [params] = useSearchParams();
   const requestedHub = params.get('hub');
   const [hubCode, setHubCode] = useState<string | null>(null);
   const [selectedOp, setSelectedOp] = useState<string | null>(null);
   const { data, loading, error, reload } = useAsync(
-    (signal) => fetchKorailOperations(signal),
-    [],
+    (signal) => fetchKorailOperations(weekId, signal),
+    [weekId],
   );
 
   useEffect(() => {

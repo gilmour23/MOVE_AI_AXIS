@@ -7,7 +7,7 @@ import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/common/Sta
 import { SizeTag } from '@/components/optimization/SizeTag';
 import { fetchOptimization } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
-import { useCarrierId } from '@/app/MetaContext';
+import { useCarrierId, useMeta } from '@/app/MetaContext';
 import { formatBoxes, formatDateShort, formatTime } from '@/lib/format';
 import styles from './TrackingPage.module.css';
 
@@ -17,8 +17,9 @@ import styles from './TrackingPage.module.css';
  *  실제 운행 실적 데이터가 없으므로 상태를 임의로 만들지 않는다. */
 export function TrackingPage() {
   const carrierId = useCarrierId();
+  const { weekId } = useMeta();
   const { data, loading, error, reload } = useAsync(
-    (signal) => (carrierId ? fetchOptimization(carrierId, signal) : Promise.resolve(null)),
+    (signal) => (carrierId ? fetchOptimization(carrierId, weekId, signal) : Promise.resolve(null)),
     [carrierId],
   );
 

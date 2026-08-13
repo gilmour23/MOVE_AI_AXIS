@@ -18,6 +18,17 @@ from moveai.result_store import ResultStore
 from moveai.selectors import optimization as opt
 
 
+TRUCK_STATUS_TEXT = {
+    "MISSING_FILE": "트럭 비교 데이터가 연결되지 않았습니다.",
+    "NOT_SCOPED_TO_WEEK": (
+        "보유한 트럭 비교 데이터가 어느 계획주차의 것인지 확인되지 않아 "
+        "연결하지 않았습니다."
+    ),
+    "NO_ROWS_FOR_WEEK": "이 계획주차의 트럭 비교 데이터가 아직 없습니다.",
+    "OK": None,
+}
+
+
 def _num(value, default=0.0):
     if value is None or (isinstance(value, float) and math.isnan(value)):
         return default
@@ -187,11 +198,18 @@ def transport_comparison(store: ResultStore, carrier_id: str) -> dict:
             else None,
         }
 
+    status = store.truck_comparison_status
+
     return {
+        "weekId": store.week_id,
         "carrierId": carrier_id,
         "rows": rows,
         "totals": totals,
         "missingTruckComparison": missing_truck,
+        # 화면이 "왜 비었는지"를 말할 수 있어야 한다. 0 이나 임의값을 만들지 않는다.
+        "truckStatus": status,
+        "truckAvailable": status == "OK",
+        "truckUnavailableReason": TRUCK_STATUS_TEXT.get(status),
         "basis": {
             "rail": "출발역 상차 시작 → 도착역 사용 가능 (STOP_WORK_PLAN)",
             "truck": "상·하차 포함 end-to-end",
