@@ -422,7 +422,8 @@ function ComparisonCard({
         truckValue={hrs(truckHours)}
         deltaValue={timeGap !== null ? `${timeGap > 0 ? '+' : ''}${timeGap.toFixed(1)} h` : '-'}
         deltaRate="철도 − 트럭"
-        good={(timeGap ?? 0) >= 0}
+        // 철도 − 트럭이므로 음수여야 철도가 빠른 것이다.
+        good={(timeGap ?? 0) <= 0}
       />
       <CompareRow
         title={overall ? '총 탄소배출량' : '탄소배출량'}

@@ -102,14 +102,16 @@ export function OverviewPage() {
                       sub={`${((transport.data.totals.carbonSavingRate ?? 0) * 100).toFixed(1)}% 저감`}
                     />
                   </div>
+                  {/* timeGapHours 는 철도 − 트럭이다. 양수면 철도가 더 걸린다.
+                      현재 결과에서 철도가 5~7시간 더 걸리므로 뒤집어 쓰지 않는다. */}
                   <p className={styles.comparisonText}>
                     철도 리드타임은 트럭 대비 건당 평균{' '}
                     {Math.abs(transport.data.totals.timeGapHours).toFixed(1)}시간
-                    {transport.data.totals.timeGapHours < 0 ? ' 더 걸립니다' : ' 짧습니다'}.
+                    {transport.data.totals.timeGapHours > 0 ? ' 더 걸립니다' : ' 짧습니다'}.
                   </p>
                 </>
               )}
-              <Link className={styles.comparisonLink} to="/carrier/transport">
+              <Link className={styles.comparisonLink} to={`/carrier/transport?week=${weekId}`}>
                 상세 비교 <ArrowRight size={14} />
               </Link>
             </div>
