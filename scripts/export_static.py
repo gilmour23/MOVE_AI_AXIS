@@ -113,11 +113,14 @@ def export_carrier(store, carrier_id: str) -> None:
     write(
         f"{base}/optimization.json",
         {
+            "weekId": store.week_id,
             "carrierId": carrier_id,
             "needs": opt.service_needs(store, carrier_id),
             "recommendations": opt.recommendations(store, carrier_id),
             "impacts": opt.inventory_impacts(store, carrier_id),
             "serviceSummary": opt.carrier_service_summary(store, carrier_id),
+            "explanations": opt.explanation_context(store, carrier_id),
+            "unserved": opt.unserved(store, carrier_id),
         },
     )
 

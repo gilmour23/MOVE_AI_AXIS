@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { EmptyState } from '@/components/common/States';
 import { SizeTag } from './SizeTag';
 import { RecommendationRouteDetail } from './RecommendationRouteDetail';
-import { formatBoxes, formatDateShort, formatTime } from '@/lib/format';
+import { formatKrw, formatBoxes, formatDateShort, formatTime } from '@/lib/format';
 import type { CarrierRecommendation } from '@/types/domain';
 import styles from './RecommendationTable.module.css';
 
@@ -42,12 +42,13 @@ export function RecommendationTable({
         {/* 남는 폭이 출발/도착 컬럼에만 몰리지 않도록 비율로 배분한다. */}
         <colgroup>
           <col style={{ width: 44 }} />
-          <col style={{ width: '19%' }} />
-          <col style={{ width: '19%' }} />
+          <col style={{ width: '16%' }} />
+          <col style={{ width: '16%' }} />
+          <col style={{ width: '8%' }} />
           <col style={{ width: '9%' }} />
-          <col style={{ width: '11%' }} />
-          <col style={{ width: '19%' }} />
-          <col style={{ width: '23%' }} />
+          <col style={{ width: '17%' }} />
+          <col style={{ width: '20%' }} />
+          <col style={{ width: '14%' }} />
         </colgroup>
         <thead>
           <tr>
@@ -60,6 +61,7 @@ export function RecommendationTable({
             <th scope="col">물량</th>
             <th scope="col">출발시간</th>
             <th scope="col">도착시간</th>
+            <th scope="col">추정 철도운임</th>
           </tr>
         </thead>
         <tbody>
@@ -111,10 +113,12 @@ export function RecommendationTable({
                       사용 가능 {formatTime(row.availableTime)}
                     </div>
                   </td>
+                  {/* 추정 철도운임. 매출/수익/이익이 아니다. */}
+                  <td className={styles.timeCell}>{formatKrw(row.estimatedRailChargeKrw)}</td>
                 </tr>
                 {open && (
                   <tr className={styles.detailRow}>
-                    <td colSpan={7}>
+                    <td colSpan={8}>
                       <RecommendationRouteDetail
                         carrierId={carrierId}
                         recommendation={row}

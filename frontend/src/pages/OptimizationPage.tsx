@@ -13,11 +13,13 @@ import {
 import { ServiceNeedTable } from '@/components/optimization/ServiceNeedTable';
 import { RecommendationTable } from '@/components/optimization/RecommendationTable';
 import { InventoryImpactTable } from '@/components/optimization/InventoryImpactTable';
+import { UnservedPanel } from '@/components/optimization/UnservedPanel';
+import { RecommendationExplanationPanel } from '@/components/optimization/RecommendationExplanation';
 import { InventorySection } from '@/components/inventory/InventorySection';
 import { fetchOptimization } from '@/api/carrier';
 import { useAsync } from '@/hooks/useAsync';
 import { useMeta } from '@/app/MetaContext';
-import { formatNumber, formatPercent } from '@/lib/format';
+import { formatKrw, formatNumber, formatPercent } from '@/lib/format';
 import { hubFullName } from '@/config/hubMeta';
 import type { ContainerSize } from '@/types/domain';
 import styles from './OptimizationPage.module.css';
@@ -38,7 +40,7 @@ export function OptimizationPage() {
   const { data, loading, error, reload } = useAsync(
     (signal) =>
       carrierId ? fetchOptimization(carrierId, weekId, signal) : Promise.resolve(null),
-    [carrierId],
+    [carrierId, weekId],
   );
 
   // Overview 의 preview row 클릭 → /optimization#REC0004 로 진입 시 해당 행을 펼치고 강조한다.
@@ -78,11 +80,16 @@ export function OptimizationPage() {
   }, [params, setParams]);
 
   const summary = data?.serviceSummary ?? null;
+  // 운임 합계는 추천 행에서 더한다. 별도 총계 필드를 만들지 않는다.
+  const railChargeTotal = (data?.recommendations ?? []).reduce(
+    (total, rec) => total + rec.estimatedRailChargeKrw,
+    0,
+  );
 
   return (
     <PageContainer
-      title="공컨 최적화"
-      description="MOVE-AI MILP가 계산한 자사 철도 기반 공컨 재배치 제안과 그 영향입니다."
+      title="재배치안"
+      description="MOVE-AI가 자사 공컨을 어디서 어디로 몇 개, 어떤 계획열차에 배정했는지 보여줍니다."
       action={
         weekMeta?.isPrototypeTimetable ? (
           <StatusBadge
@@ -124,6 +131,11 @@ export function OptimizationPage() {
             label="재배치 제안"
             value={`${formatNumber(summary.recommendationCount)}건`}
             sub={`열차 ${formatNumber(summary.assignedTrainCount)}편`}
+          />
+          <SummaryItem
+            label="추정 철도운임"
+            value={formatKrw(railChargeTotal)}
+            sub="MILP 추정치 · 매출이 아님"
           />
         </div>
       )}
@@ -204,6 +216,32 @@ export function OptimizationPage() {
             matrixSubtitle="재배치 후 · 각 요일 마지막 시각의 예상 재고(개)"
           />
         )}
+      </Section>
+
+      {/* Section E */}
+      <Section
+        index="E"
+        title="왜 이 추천인가"
+        description="결과 파일에 기록된 연결 수요와 출발거점 가용량입니다. 최적화 인과증명이 아닙니다."
+      >
+        {loading && (
+          <Card>
+            <LoadingSkeleton rows={3} height={24} />
+          </Card>
+        )}
+        {data && <RecommendationExplanationPanel rows={data.explanations} />}
+      </Section>
+
+      {/* Section F */}
+      <Section
+        index="F"
+        title="미배정 수요"
+        description="철도로 배정되지 못한 자사 수요입니다. 사유는 모델 진단 분류이며 확정 원인이 아닙니다."
+      >
+        <Card>
+          {loading && <TableSkeleton rows={4} columns={6} />}
+          {data && <UnservedPanel rows={data.unserved} />}
+        </Card>
       </Section>
     </PageContainer>
   );

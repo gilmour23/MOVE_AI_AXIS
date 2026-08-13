@@ -39,9 +39,9 @@ export const ROLES: Record<RoleId, RoleDefinition> = {
     nav: [
       { to: '/carrier', label: 'Overview', icon: LayoutDashboard, end: true },
       { to: '/carrier/inventory', label: '재고', icon: Boxes },
-      { to: '/carrier/plan', label: '공컨 최적화', icon: Route },
+      { to: '/carrier/plan', label: '재배치안', icon: Route },
       { to: '/carrier/transport', label: '운송비교', icon: GitCompareArrows },
-      { to: '/carrier/tracking', label: '운송 현황', icon: Radar },
+      { to: '/carrier/tracking', label: '운송 일정', icon: Radar },
     ],
   },
   korail: {
@@ -52,10 +52,10 @@ export const ROLES: Record<RoleId, RoleDefinition> = {
     home: '/korail',
     // 전체 → 화물 → 열차 → 거점 순서로 읽히게 한다.
     nav: [
-      { to: '/korail', label: '종합계획', icon: LayoutDashboard, end: true },
-      { to: '/korail/cargo', label: '운송물량', icon: Boxes },
-      { to: '/korail/trains', label: '열차운행', icon: Train },
-      { to: '/korail/operations', label: '거점작업', icon: MapPinned },
+      { to: '/korail', label: '주간 통합계획', icon: LayoutDashboard, end: true },
+      { to: '/korail/cargo', label: '공컨 운송물량', icon: Boxes },
+      { to: '/korail/trains', label: '열차별 운행계획', icon: Train },
+      { to: '/korail/operations', label: '거점별 작업계획', icon: MapPinned },
     ],
   },
 };

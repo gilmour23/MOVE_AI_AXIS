@@ -94,12 +94,114 @@ def recommendations(store: ResultStore, carrier_id: str) -> list[dict]:
                 "arrivalTime": _fmt_time(r["arrival_time"]),
                 "availableTime": _fmt_time(r["available_time"]),
                 "needCount": int(_num(r.get("need_count"))),
+                # 이 추천이 덮는 수요의 납기 구간. 단일 시각이 아니라 범위다.
+                "serviceDueEarliest": _fmt_time(r.get("service_due_time_earliest")),
+                "serviceDueLatest": _fmt_time(r.get("service_due_time_latest")),
+                "maxEarlinessHours": float(_num(r.get("max_earliness_hours"))),
+                # 철도거리(physical)와 운임산정거리(tariff)는 다르다. 섞어 쓰지 않는다.
                 "physicalDistanceKm": float(_num(r.get("physical_distance_km"))),
+                "tariffDistanceKm": float(_num(r.get("tariff_distance_km"))),
+                # 추정 철도운임. 매출·수익·이익이 아니다.
+                "estimatedRailChargeKrw": float(
+                    _num(r.get("estimated_rail_charge_krw"))
+                ),
                 # 공동운송 집계값은 노출 허용 (§10)
                 "participatingCarrierCount": int(
                     _num(r.get("participating_carrier_count"))
                 ),
                 "trainLoadFactor": float(_num(r.get("train_load_factor"))),
+                "needIds": _split_need_ids(r.get("need_ids")),
+            }
+        )
+    return rows
+
+
+def _split_need_ids(value) -> list[str]:
+    """`need_ids` 는 파이프로 이어붙인 문자열이다 (NEED0012|NEED0013).
+
+    구분자를 하나로 단정하지 않는다. 잘못 자르면 need join 이 통째로 비는데,
+    화면에는 '연결된 수요 없음'처럼 보여서 오류로 안 읽힌다.
+    """
+    text = "" if value is None else str(value)
+    if not text or text.lower() == "nan":
+        return []
+    for separator in ("|", ";", ","):
+        text = text.replace(separator, "\x00")
+    return [part.strip() for part in text.split("\x00") if part.strip()]
+
+
+def explanation_context(store: ResultStore, carrier_id: str) -> list[dict]:
+    """`왜 이 추천인가` 의 근거. 결과 파일에 있는 사실만 옮긴다.
+
+    solver 의 인과증명이 아니다. 수치를 해석하거나 원인을 추론하지 않는다.
+    """
+    df = store.explanation_context(carrier_id)
+    if df.empty:
+        return []
+
+    rows = []
+    for _, r in df.iterrows():
+        rows.append(
+            {
+                "recommendationId": r["recommendation_id"],
+                "destinationHub": r.get("destination_hub"),
+                "size": r.get("container_size"),
+                "linkedServiceNeedTeu": int(_num(r.get("linked_service_need_teu"))),
+                "linkedNeedCount": int(_num(r.get("linked_need_count"))),
+                "linkedNeedDueMin": _fmt_time(r.get("linked_need_due_min")),
+                "linkedNeedDueMax": _fmt_time(r.get("linked_need_due_max")),
+                "originHub": r.get("origin_hub"),
+                # 출발거점에서 그 시점까지 실제로 내어줄 수 있었던 물량과 그 소진 상황.
+                "sourceReleaseCapacityBoxes": int(
+                    _num(r.get("source_release_capacity_cumulative_boxes"))
+                ),
+                "assignedOutboundBoxes": int(
+                    _num(r.get("assigned_outbound_cumulative_boxes_through_load"))
+                ),
+                "sourceReleaseRemainingBoxes": int(
+                    _num(r.get("source_release_remaining_after_assignment_boxes"))
+                ),
+                "recommendedBoxes": int(_num(r.get("recommended_boxes"))),
+                "recommendedTeu": int(_num(r.get("recommended_teu"))),
+                "earlinessHours": float(_num(r.get("earliness_hours"))),
+            }
+        )
+    rows.sort(key=lambda x: x["recommendationId"])
+    return rows
+
+
+def unserved(store: ResultStore, carrier_id: str) -> list[dict]:
+    """철도로 배정되지 못한 자사 수요.
+
+    `reasonIsProvenCause=False` 는 모델이 붙인 진단 분류일 뿐 확정 원인이 아니다.
+    화면에서 미배정의 확정 원인처럼 표현하지 않는다.
+    """
+    df = store.rail_unserved
+    if df.empty:
+        return []
+    df = df[df["carrier_id"] == carrier_id]
+    if df.empty:
+        return []
+
+    rows = []
+    for _, r in df.sort_values("due_time").iterrows():
+        rows.append(
+            {
+                "needId": r["need_id"],
+                "destinationHub": r["destination"],
+                "destinationName": r.get("destination_name")
+                or hub_name(r["destination"]),
+                "size": r["container_size"],
+                "quantityBoxes": int(_num(r.get("quantity"))),
+                "quantityTeu": int(_num(r.get("teu"))),
+                "dueTime": _fmt_time(r.get("due_time")),
+                "priority": int(_num(r.get("priority"))),
+                "needReason": r.get("need_reason"),
+                "unservedBoxes": int(_num(r.get("rail_unserved_boxes"))),
+                "unservedTeu": int(_num(r.get("rail_unserved_teu"))),
+                "reason": r.get("reason"),
+                "reasonIsProvenCause": str(r.get("reason_is_proven_cause")).strip().lower()
+                == "true",
             }
         )
     return rows

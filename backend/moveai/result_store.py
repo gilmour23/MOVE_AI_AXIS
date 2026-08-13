@@ -152,6 +152,16 @@ class ResultStore:
         return self._result_csv("SEGMENT_LOAD.csv")
 
     @property
+    def rail_unserved(self) -> pd.DataFrame:
+        """철도로 배정되지 못한 수요. reason 은 모델 진단 분류다."""
+        return self._result_csv("RAIL_UNSERVED.csv")
+
+    @property
+    def recommendation_detail(self) -> pd.DataFrame:
+        """need 단위 추천 상세. recommendation.need_ids 와 need_id 로 join 한다."""
+        return self._result_csv("CARRIER_RECOMMENDATION_DETAIL.csv")
+
+    @property
     def all_recommendations(self) -> pd.DataFrame:
         """전 선사 추천. KORAIL 관점 집계에만 사용한다."""
         return self._result_csv("CARRIER_RECOMMENDATIONS.csv")
